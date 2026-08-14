@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" role="img" aria-label="Aquí Estamos">
+  <defs>
+    <clipPath id="ae-pin">
+      <path d="M12 1.6c-4.6 0-8.3 3.7-8.3 8.3 0 5.9 8.3 12.5 8.3 12.5s8.3-6.6 8.3-12.5c0-4.6-3.7-8.3-8.3-8.3z"/>
+    </clipPath>
+  </defs>
+  <g clip-path="url(#ae-pin)">
+    <rect x="0"  y="0" width="12" height="24" fill="#F2B705"/>
+    <rect x="12" y="0" width="12" height="24" fill="#D62828"/>
+  </g>
+  <!-- dos manos que se encuentran -->
+  <path d="M5.9 9.1h6.4a1.35 1.35 0 0 1 0 2.7H5.9z" fill="#fff"/>
+  <path d="M18.1 12.2h-6.4a1.35 1.35 0 0 0 0 2.7h6.4z" fill="#fff"/>
+</svg>
