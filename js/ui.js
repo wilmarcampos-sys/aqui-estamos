@@ -42,6 +42,17 @@ document.addEventListener('click', e=>{
   }
 });
 
+/* Estados vacíos: una base sin datos no es un error, pero tiene que decirlo
+   con palabras y no con un rectángulo negro. */
+function vacio(titulo, texto, boton){
+  return `<div class="vacio">
+    <div class="vic">${ico('search')}</div>
+    <b>${esc(titulo)}</b>
+    <p>${esc(texto)}</p>
+    ${boton?`<button class="btn red" onclick="document.querySelector('nav button[data-v=\\'map\\']').click()">${esc(boton)}</button>`:''}
+  </div>`;
+}
+
 /* ---------- vistas ---------- */
 let filtro='todas';
 document.querySelectorAll('#filtros button').forEach(b=>b.onclick=()=>{
@@ -78,7 +89,10 @@ function render(){
         <span class="lnk" data-coordpt="${f.lat},${f.lng}">Hacerme cargo</span>
       </div>
       <div>${f.needs.slice(0,4).map(x=>`<span class="chip ${x.u===3?'u3':x.u===2?'u2':''}">${esc(NEED[x.k]?.n||x.k)}${x.n>1?` ×${x.n}`:''}</span>`).join('')}</div>
-    </div>`).join('') : '<p class="muted">Todos los puntos reportados tienen alguien a cargo.</p>';
+    </div>`).join('') : (S.reportes.length
+      ? '<p class="muted">Todos los puntos reportados tienen alguien a cargo.</p>'
+      : vacio('Todavía nadie ha reportado',
+              'Cuando alguien pida ayuda, aquí van a salir los sitios donde no hay quien responda.'));
 
   // lista de zonas
   let lz = todos.filter(s=>s.lista.length).sort((a,b)=>b.idx-a.idx);
@@ -99,7 +113,10 @@ function render(){
       <div class="bar"><span style="width:${s.idx}%;background:${color(s.idx)}"></span></div>
       <div>${s.pend.slice(0,5).map(p=>`<span class="chip ${p.u===3?'u3':p.u===2?'u2':''}">${esc(NEED[p.k]?.n||p.k)}${p.corrob>1?` ×${p.corrob}`:''}${p.subio?' ↑':''}</span>`).join('')}
       ${s.pend.length>5?`<span class="chip">+${s.pend.length-5} más</span>`:''}</div>
-    </div>`).join('') || '<p class="muted">Sin zonas en este filtro.</p>';
+    </div>`).join('') || vacio('El mapa está limpio',
+       S.reportes.length ? 'Ninguna zona coincide con este filtro.'
+       : 'Nadie ha reportado necesidades todavía. Si usted sabe de un sitio que necesita ayuda, tóquelo en el mapa y repórtelo.',
+       'Reportar una necesidad');
   document.querySelectorAll('#lista-zonas .card').forEach(c=>c.onclick=()=>abrirZona(c.dataset.zona));
 
   // sectores con una sola persona
@@ -114,7 +131,8 @@ function render(){
         </div>
         <span class="lnk" data-coordpt="${f.lat},${f.lng}">Sumarme</span>
       </div>
-    </div>`).join('') : '<p class="muted">Ningún sector depende de una sola persona.</p>';
+    </div>`).join('') : (S.reportes.length
+      ? '<p class="muted">Ningún sector depende de una sola persona.</p>' : '');
 
   // reparto de la carga entre personas
   const pers = porPersona();
@@ -130,7 +148,8 @@ function render(){
       </div>
       <div class="bar" style="width:52px;margin:0;flex:0 0 auto"><span
         style="width:${Math.min(100, p.n/Math.max(1,pers[0].n)*100)}%;background:${p.exceso?'#d97706':'#4f9cf9'}"></span></div>
-    </div>`).join('') || '<p class="muted">Sin coordinadores todavía.</p>';
+    </div>`).join('') || vacio('Sin coordinadores todavía',
+       'Cualquier persona puede inscribirse para responder por un sector de máximo 1 km.');
 
   // coordinadores
   const byZone = {};
@@ -146,7 +165,7 @@ function render(){
         </div>
         <a class="mini" href="${waLink(c.tel)}" target="_blank" rel="noopener">WhatsApp</a>
       </div>`).join('')}</div>`;
-  }).join('') || '<p class="muted">Todavía no hay coordinadores.</p>';
+  }).join('') || '';
 
   // entregas
   $('#lista-entregas').innerHTML = S.entregas.slice().sort((a,b)=>b.ts-a.ts).slice(0,15).map(e=>`
@@ -154,7 +173,8 @@ function render(){
       <span class="dot" style="background:#3f8f5f"></span>
       <div class="grow"><div style="font-size:13.5px">${esc(NEED[e.k]?.n||e.k)} → ${esc(ZONAS.find(z=>z.id===e.z)?.n||e.z)}</div>
       <div class="cnt">${esc(e.quien)}${e.cant?' · '+esc(e.cant):''} · ${hace(e.ts)}</div></div>
-    </div>`).join('') || '<p class="muted">Sin entregas registradas.</p>';
+    </div>`).join('') || vacio('Sin entregas registradas',
+       'Cuando llegue ayuda a algún punto, márquela. Eso es lo que apaga las alertas del mapa.');
 }
 
 /* ---------- soporte de la app por WhatsApp ---------- */
@@ -222,7 +242,26 @@ $('#fab-loc').onclick = ()=>{
   }, ()=>toast('No se pudo obtener la ubicación'), {enableHighAccuracy:true, timeout:9000});
 };
 $('#btn-add-coord').onclick = ()=>{ const pt = mainPt || ptDe('centro'); abrirCoord(pt.z, pt); };
-$('#btn-demo').onclick = ()=>{ demo(); render(); toast('Datos de demostración recargados'); };
+/* Ver ejemplo: para mostrarle la app a alguien sin ensuciar el mapa real.
+   Los datos de ejemplo viven solo en este teléfono y no se envían a nadie. */
+function pintarBotonEjemplo(){
+  const b = $('#btn-demo'); if(!b) return;
+  b.textContent = MODO_EJEMPLO ? 'Salir del ejemplo y ver los datos reales' : 'Ver un ejemplo de cómo se llena';
+  b.classList.toggle('red', MODO_EJEMPLO);
+  let av = document.getElementById('aviso-ejemplo');
+  if(MODO_EJEMPLO && !av){
+    av = document.createElement('div');
+    av.id = 'aviso-ejemplo'; av.className = 'avisoej';
+    av.innerHTML = ico('alert') + ' <b>Ejemplo</b> · nada de lo que ve aquí es real y nada se envía';
+    document.getElementById('app').prepend(av);
+  } else if(!MODO_EJEMPLO && av) av.remove();
+}
+$('#btn-demo').onclick = async ()=>{
+  MODO_EJEMPLO = !MODO_EJEMPLO;
+  if(MODO_EJEMPLO){ demo(); render(); toast('Ejemplo cargado. Solo lo ve usted.'); }
+  else { S = {reportes:[], entregas:[], coords:[]}; await dbCargar(); render(); toast('De vuelta a los datos reales'); }
+  pintarBotonEjemplo();
+};
 $('#btn-export').onclick = ()=>{
   const blob = new Blob([JSON.stringify({zonas:ZONAS, ...S}, null, 2)], {type:'application/json'});
   const a = document.createElement('a');
@@ -233,8 +272,7 @@ $('#btn-export').onclick = ()=>{
 initMainPin();
 render();
 iniciarDatos().then(ok=>{
-  const b = document.getElementById('btn-demo');
-  if(ok && b) b.style.display = 'none';       // sin datos de mentira cuando ya hay datos reales
+  pintarBotonEjemplo();
   if(!ok){ const e=document.getElementById('estado');
     if(e){ e.className='estado demo'; e.textContent='Modo demostración · los datos no se comparten'; } }
 });
