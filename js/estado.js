@@ -12,7 +12,8 @@ const now = () => Date.now();
    ============================================================ */
 let db = null, EN_LINEA = false;
 
-// identidad anónima del aparato: sirve para el freno anti-abuso, no identifica a nadie
+// identidad anónima del aparato: sirve para el freno anti-abuso y para que
+// la persona recupere su propia inscripción. No identifica a nadie.
 const DEVICE = (()=>{ try{
   let v = localStorage.getItem('fh_device');
   if(!v){ v = uid()+uid()+uid(); localStorage.setItem('fh_device', v); }
@@ -64,7 +65,8 @@ const deEnt  = e=>({id:e.id, z:e.zona, k:e.necesidad, lat:+e.lat, lng:+e.lng,
                     quien:e.quien||'Anónimo', cant:e.cantidad||'', ts:+new Date(e.creado)});
 const deCoo  = c=>({id:c.id, z:c.zona, micro:c.micro||'', radio:c.radio||500, lat:+c.lat, lng:+c.lng,
                     nom:c.nombre, rol:c.rol||'', tel:c.tel, email:c.email||'', nota:c.nota||'',
-                    foto:c.foto||null, ver:!!c.verificado});
+                    foto:c.foto||null, ver:!!c.verificado, codigo:c.codigo||'',
+                    device:c.device||'', anulado:!!c.anulado});
 
 /* Modo ejemplo: carga los datos de demostración SOLO en este teléfono, para
    poder mostrar la app sin inventar necesidades falsas en el mapa real.
@@ -82,7 +84,7 @@ async function dbCargar(){
   if(r.error||e.error||c.error){ console.warn(r.error||e.error||c.error); return; }
   S.reportes = (r.data||[]).map(deRep);
   S.entregas = (e.data||[]).map(deEnt);
-  S.coords   = (c.data||[]).map(deCoo);
+  S.coords   = (c.data||[]).map(deCoo).filter(c=>!c.anulado);
   render();
 }
 
@@ -158,8 +160,10 @@ async function iniciarDatos(){
     pintarEstado(); return false;
   }
   try{
-    db = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY,
-      {realtime:{params:{eventsPerSecond:3}}});
+    db = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY, {
+      realtime:{params:{eventsPerSecond:3}},
+      global:{headers:{'x-aparato': DEVICE}},   // para poder corregir lo propio
+    });
     EN_LINEA = true;
     S = {reportes:[], entregas:[], coords:[]};   // fuera los datos de demostración
     await dbCargar();
