@@ -66,8 +66,13 @@ const deCoo  = c=>({id:c.id, z:c.zona, micro:c.micro||'', radio:c.radio||500, la
                     nom:c.nombre, rol:c.rol||'', tel:c.tel, email:c.email||'', nota:c.nota||'',
                     foto:c.foto||null, ver:!!c.verificado});
 
+/* Modo ejemplo: carga los datos de demostración SOLO en este teléfono, para
+   poder mostrar la app sin inventar necesidades falsas en el mapa real.
+   Mientras está activo, no se traen ni se envían datos de la base.        */
+let MODO_EJEMPLO = false;
+
 async function dbCargar(){
-  if(!EN_LINEA) return;
+  if(!EN_LINEA || MODO_EJEMPLO) return;
   const desde = new Date(now() - 30*24*H).toISOString();
   const [r,e,c] = await Promise.all([
     db.from('reportes').select('*').gte('creado', desde).order('creado',{ascending:false}).limit(5000),
@@ -83,8 +88,10 @@ async function dbCargar(){
 
 let recargaPendiente = null;
 function dbSuscribir(){
-  db.channel('flashhelp')
-    .on('postgres_changes', {event:'INSERT', schema:'public'}, ()=>{
+  // '*' y no 'INSERT': si alguien borra o corrige un dato desde Supabase,
+  // las pantallas abiertas también tienen que enterarse.
+  db.channel('aqui-estamos')
+    .on('postgres_changes', {event:'*', schema:'public'}, ()=>{
       clearTimeout(recargaPendiente);           // agrupa ráfagas de cambios
       recargaPendiente = setTimeout(dbCargar, 700);
     })
@@ -123,6 +130,7 @@ function presenciaIniciar(){
 /* Guardar: primero se pinta local (para que se sienta instantáneo),
    luego se manda. Si falla la red, queda en cola.                     */
 async function guardar(tabla, fila, local){
+  if(MODO_EJEMPLO){ toast('Está en modo ejemplo: esto no se envía a nadie.'); return false; }
   if(!permitido(tabla)){ toast('Va muy rápido. Espere unos minutos.'); return false; }
   if(local) (tabla==='reportes'?S.reportes:tabla==='entregas'?S.entregas:S.coords).push(local);
   render();
