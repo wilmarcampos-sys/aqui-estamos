@@ -169,6 +169,7 @@ Eso vive en el servidor. La app lo dice con esas palabras en vez de fallar en si
 | `admin.html` | Panel para autorizar coordinadores — se entra por correo |
 | `css/app.css` | Todo el estilo |
 | `js/config.js` | Claves y ciudad — lo único que se toca para desplegar |
+| `js/version.js` | El número de versión que sale en el pie — se sube en cada despliegue |
 | `js/data.js` | Iconos SVG, las 31 zonas de Pereira, el catálogo de 121 artículos |
 | `js/estado.js` | Supabase, tiempo real, presencia, cola sin señal, freno anti-abuso |
 | `js/calc.js` | Índice de desatención, focos, micro-zonas |

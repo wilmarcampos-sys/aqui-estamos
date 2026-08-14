@@ -31,6 +31,10 @@
     justify-content:center;gap:7px}
   footer button:active{color:var(--txt)}
   footer .fic{display:inline-flex;color:#4f9cf9}
+  /* Discreta a propósito: sirve para diagnosticar, no es información
+     que a un vecino le haga falta leer. */
+  .version{text-align:center;color:var(--dim);font-size:11px;opacity:.6;
+    letter-spacing:.3px;padding-bottom:4px}
 
   .ic{width:1.05em;height:1.05em;vertical-align:-.16em;flex:0 0 auto;display:inline-block}
   .ic.lg{width:1.35em;height:1.35em;vertical-align:-.28em}
