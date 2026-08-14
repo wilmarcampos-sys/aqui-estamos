@@ -14,7 +14,8 @@
   .wrap{max-width:720px;margin:0 auto;padding:16px 14px calc(28px + var(--safe))}
   .fila{background:var(--card);border:1px solid var(--line);border-radius:14px;
     padding:13px;margin-bottom:10px}
-  .fila.pend{border-color:#7c4a10}
+  .fila.pendiente{border-color:#7c4a10}
+  .fila.anulada{opacity:.62}
   .campo{display:flex;gap:8px;font-size:13px;padding:3px 0}
   .campo span:first-child{color:var(--dim);min-width:88px;flex:0 0 auto}
   .cod{font-family:ui-monospace,Menlo,monospace;font-size:17px;font-weight:800;
@@ -23,7 +24,40 @@
   .acc .btn{margin:0;width:auto;flex:1 1 auto;padding:12px 14px;font-size:14px}
   .login{max-width:400px;margin:8vh auto;text-align:center}
   .login .mark{width:56px;height:56px;margin-bottom:14px}
-  .tot{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px}
+  .tot{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}
+
+  /* ---- el menú ----
+     Antes eran tres listas largas una debajo de otra: para llegar a los
+     anulados había que pasar por todos los autorizados. Ahora cada cosa
+     vive en su sitio y el número dice si hay que entrar o no. */
+  nav{border-radius:13px;border:1px solid var(--line);overflow:hidden;margin-bottom:12px}
+  nav button{padding:12px 3px;font-size:12.5px;white-space:nowrap}
+  nav button .n{display:inline-block;min-width:19px;padding:1px 5px;margin-left:5px;
+    border-radius:7px;background:#233149;color:var(--dim);font-size:11px;font-weight:800}
+  nav button.on .n{background:#2b3d5e;color:var(--txt)}
+  nav button.on .n.hay{background:#7c4a10;color:#fcd34d}
+
+  /* ---- buscar ---- */
+  .buscabox{position:relative;margin-bottom:12px}
+  .buscabox input{margin:0;padding-right:40px}
+  .buscabox .limpiar{position:absolute;right:6px;top:50%;transform:translateY(-50%);
+    background:none;border:0;color:var(--dim);font-size:20px;cursor:pointer;padding:6px 10px;
+    font-family:inherit;line-height:1}
+
+  /* ---- la persona, no la fila ----
+     Una persona puede cubrir varios sectores, y antes salía repetida una vez
+     por cada uno. Aquí sale una sola vez y adentro están sus micro-zonas. */
+  .pers{display:flex;align-items:center;gap:11px;width:100%;text-align:left;
+    background:var(--card);border:1px solid var(--line);border-radius:14px;
+    padding:11px 13px;margin-bottom:9px;cursor:pointer;font-family:inherit;color:var(--txt)}
+  .pers:hover{border-color:#3f5478}
+  .pers .chev{color:var(--dim);font-size:20px;flex:0 0 auto}
+  .pers b{font-size:15px;display:block}
+  .pers .muted{display:block}
+  .volver{margin-bottom:12px}
+  .cabeza{background:var(--card);border:1px solid var(--line);border-radius:14px;
+    padding:14px;margin-bottom:14px}
+  .badges{display:flex;gap:6px;flex-wrap:wrap;margin-top:5px}
 </style>
 </head>
 <body>
@@ -54,20 +88,19 @@
 
     <div class="tot" id="tot"></div>
 
-    <button class="btn flat" id="exportar">Exportar todo (JSON)</button>
-    <p class="muted" style="margin:-4px 0 6px;font-size:13px">Baja reportes, entregas y
-      coordinadores completos, para respaldo o para pasarle cifras a la Alcaldía.</p>
+    <nav id="menu">
+      <button data-v="esperando" class="on">Esperando <span class="n" id="n-esperando">0</span></button>
+      <button data-v="personas">Personas <span class="n" id="n-personas">0</span></button>
+      <button data-v="anulados">Anulados <span class="n" id="n-anulados">0</span></button>
+      <button data-v="herramientas">Datos</button>
+    </nav>
 
-    <div class="sec">Esperando autorización</div>
-    <p class="muted" style="margin:-2px 0 10px">Cuando le llegue el código por WhatsApp, búsquelo aquí y autorice.
-      Si el número coincide con el que le escribió, es esa persona.</p>
-    <div id="pendientes"></div>
+    <div class="buscabox" id="buscabox">
+      <input id="q" type="search" autocomplete="off" placeholder="Buscar por nombre, celular, sector o código">
+      <button class="limpiar" id="limpiar" hidden aria-label="Limpiar la búsqueda">×</button>
+    </div>
 
-    <div class="sec">Ya autorizados</div>
-    <div id="listos"></div>
-
-    <div class="sec">Anulados</div>
-    <div id="anulados"></div>
+    <div id="pane"></div>
   </div>
 
 </div></div>
@@ -91,6 +124,11 @@ const hace = ts => { const h=(Date.now()-new Date(ts))/3600e3;
   return h<1 ? 'hace '+Math.max(1,Math.round(h*60))+' min'
      : h<48 ? 'hace '+Math.round(h)+' h' : 'hace '+Math.round(h/24)+' días'; };
 
+/* Sin tildes y en minúscula: quien busca "Cañaveral" no debería tener que
+   acordarse de la eñe, ni quien busca "jose" del acento de José. */
+const norm = s => String(s??'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+const soloDigitos = s => String(s??'').replace(/\D/g,'');
+
 /* ---------- entrar ---------- */
 $('#enviar').onclick = async ()=>{
   const email = $('#mail').value.trim();
@@ -103,67 +141,308 @@ $('#enviar').onclick = async ()=>{
 };
 $('#salir').onclick = async ()=>{ await db.auth.signOut(); location.reload(); };
 
-/* ---------- pintar ---------- */
-function tarjeta(c, tipo){
-  const wa = waDigitos(c.tel);
-  const msg = encodeURIComponent(`Hola ${c.nombre||''}, le escribo de Aquí Estamos para confirmar su inscripción como coordinador de ${c.micro||c.zona}.`);
-  return `<div class="fila ${tipo==='pend'?'pend':''}">
-    <div class="row">
-      ${c.foto ? `<div class="avatar" style="background-image:url('${c.foto}')"></div>`
-               : `<div class="avatar">${esc((c.nombre||'?').split(/\s+/).slice(0,2).map(x=>x[0]||'').join('').toUpperCase())}</div>`}
+/* ============================================================
+   ESTADO
+   ============================================================
+   Una fila de "coordinadores" es una micro-zona, no una persona: quien cubre
+   tres sectores tiene tres filas. Autorizar y anular siguen siendo por
+   micro-zona — es lo que se verifica — pero mirar y buscar se hace por
+   persona, que es como uno piensa cuando le llega un WhatsApp.            */
+let DATOS   = [];
+let VISTA   = 'esperando';
+let PERSONA = null;      // clave de la persona abierta, null = la lista
+let BUSCA   = '';
+
+/* La cuenta es el dueño de verdad; el celular es el respaldo para las filas
+   viejas, de antes de que existieran las cuentas. */
+const clave = c => c.cuenta || c.tel_e164 || c.tel || c.id;
+
+function agrupar(filas){
+  const m = new Map();
+  for(const c of filas){
+    const k = clave(c);
+    let p = m.get(k);
+    if(!p){ p = {clave:k, zonas:[], desde:c.creado, ultima:null}; m.set(k, p); }
+    p.zonas.push(c);
+    /* Sin fiarse del orden en que vengan: el nombre y la foto salen de la
+       inscripción más nueva — es la que la persona corrigió de última — y
+       "desde" es la más vieja, que es cuando llegó. */
+    if(new Date(c.creado) < new Date(p.desde)) p.desde = c.creado;
+    if(!p.ultima || new Date(c.creado) > new Date(p.ultima)){
+      p.ultima = c.creado;
+      p.nombre = c.nombre; p.tel = c.tel; p.tel_e164 = c.tel_e164; p.rol = c.rol;
+    }
+    if(!p.foto  && c.foto)  p.foto  = c.foto;
+    if(!p.email && c.email) p.email = c.email;
+  }
+  for(const p of m.values()){
+    p.esperando = p.zonas.filter(z=>!z.verificado && !z.anulado).length;
+    p.activas   = p.zonas.filter(z=>!z.anulado).length;
+    p.anuladas  = p.zonas.filter(z=> z.anulado).length;
+  }
+  return [...m.values()];
+}
+
+/* Busca en todo lo que un administrador tiene a mano cuando le escriben:
+   el nombre, el número que aparece en el WhatsApp, el sector o el código. */
+function coincideZona(c, q, qd){
+  if(qd && qd.length >= 3 && soloDigitos(c.tel_e164 + ' ' + c.tel).includes(qd)) return true;
+  return norm([c.nombre, c.micro, c.zona, c.rol, c.codigo, c.nota, c.email, c.tel]
+    .join(' ')).includes(q);
+}
+function filtrar(filas){
+  const q = norm(BUSCA).trim(); if(!q) return filas;
+  const qd = soloDigitos(BUSCA);
+  return filas.filter(c=>coincideZona(c, q, qd));
+}
+
+/* ============================================================
+   PINTAR
+   ============================================================ */
+function avatar(p){
+  if(p.foto) return `<div class="avatar" style="background-image:url('${esc(p.foto)}')"></div>`;
+  const ini = (p.nombre||'?').split(/\s+/).slice(0,2).map(x=>x[0]||'').join('').toUpperCase();
+  return `<div class="avatar">${esc(ini)}</div>`;
+}
+function sello(c){
+  return c.anulado ? '<span class="pend">anulado</span>'
+       : c.verificado ? '<span class="verif">verificado</span>'
+       : '<span class="pend">esperando</span>';
+}
+function botonWA(c, nombre){
+  const wa = waDigitos(c.tel_e164 || c.tel);
+  const msg = encodeURIComponent(`Hola ${nombre||c.nombre||''}, le escribo de Aquí Estamos para confirmar su inscripción como coordinador de ${c.micro||c.zona}.`);
+  return `<a class="btn wa" href="https://wa.me/${wa}?text=${msg}" target="_blank" rel="noopener">WhatsApp</a>`;
+}
+
+/* Una micro-zona. Con nombre arriba cuando va suelta en una lista; sin él
+   cuando ya está dentro de la ficha de su dueño, que sería repetirlo. */
+function tarjetaZona(c, conNombre){
+  const clases = 'fila' + (c.anulado ? ' anulada' : (!c.verificado ? ' pendiente' : ''));
+  return `<div class="${clases}">
+    ${conNombre ? `<div class="row">
+      ${avatar(c)}
       <div class="grow">
         <div style="font-weight:700;font-size:15px">${esc(c.nombre)}</div>
-        <div class="muted">${esc(c.micro||'sin micro-zona')} · ${esc(c.zona)} · ${c.radio||500} m</div>
+        <div class="muted">${esc(c.micro||'sin nombre de sector')} · ${esc(c.zona)} · ${c.radio||500} m</div>
       </div>
-      ${c.verificado ? '<span class="verif">verificado</span>'
-        : c.anulado ? '<span class="pend">anulado</span>' : '<span class="pend">pendiente</span>'}
-    </div>
+      ${sello(c)}
+    </div>`
+    : `<div class="row">
+      <div class="grow">
+        <div style="font-weight:700;font-size:15px">${esc(c.micro||'sin nombre de sector')}</div>
+        <div class="muted">${esc(c.zona)} · ${c.radio||500} m</div>
+      </div>
+      ${sello(c)}
+    </div>`}
     <div style="margin-top:9px">
       <div class="campo"><span>Código</span><span class="cod">${esc(c.codigo||'—')}</span></div>
-      <div class="campo"><span>Celular</span><span>${esc(c.tel)}</span></div>
-      <div class="campo"><span>Rol</span><span>${esc(c.rol||'—')}</span></div>
+      ${conNombre ? `<div class="campo"><span>Celular</span><span>${esc(c.tel)}</span></div>
+      <div class="campo"><span>Rol</span><span>${esc(c.rol||'—')}</span></div>` : ''}
       ${c.nota ? `<div class="campo"><span>Nota</span><span>${esc(c.nota)}</span></div>` : ''}
-      ${c.email ? `<div class="campo"><span>Correo</span><span>${esc(c.email)}</span></div>` : ''}
       <div class="campo"><span>Inscrito</span><span>${hace(c.creado)}</span></div>
     </div>
     <div class="acc">
-      <a class="btn wa" href="https://wa.me/${wa}?text=${msg}" target="_blank" rel="noopener">WhatsApp</a>
+      ${botonWA(c)}
       ${!c.verificado && !c.anulado ? `<button class="btn green" data-ok="${c.id}">Autorizar</button>` : ''}
-      ${!c.anulado ? `<button class="btn flat" data-no="${c.id}">Anular</button>` : ''}
+      ${!c.anulado ? `<button class="btn flat" data-no="${c.id}">Anular</button>`
+                   : `<button class="btn flat" data-si="${c.id}">Reactivar</button>`}
     </div>
   </div>`;
+}
+
+function vacio(txt){ return `<p class="muted">${esc(txt)}</p>`; }
+
+function paneEsperando(){
+  // el que lleva más tiempo esperando va primero: es a quien le estamos fallando
+  const pend = filtrar(DATOS.filter(c=>!c.verificado && !c.anulado))
+    .slice().sort((a,b)=> new Date(a.creado) - new Date(b.creado));
+  return `<p class="muted" style="margin:0 0 12px">Cuando le llegue el código por WhatsApp,
+      búsquelo aquí y autorice. Si el número coincide con el que le escribió, es esa persona.
+      Arriba está quien lleva más tiempo esperando.</p>`
+    + (pend.map(c=>tarjetaZona(c, true)).join('')
+       || vacio(BUSCA ? 'Nadie esperando con esa búsqueda.' : 'Nadie esperando. Todo al día.'));
+}
+
+function paneAnulados(){
+  const nul = filtrar(DATOS.filter(c=>c.anulado));
+  return (nul.map(c=>tarjetaZona(c, true)).join('')
+    || vacio(BUSCA ? 'Ningún anulado con esa búsqueda.' : 'Ninguno.'));
+}
+
+function panePersonas(){
+  if(PERSONA) return paneUnaPersona();
+
+  const q = norm(BUSCA).trim(), qd = soloDigitos(BUSCA);
+  let gente = agrupar(DATOS);
+  if(q) gente = gente.filter(p=>p.zonas.some(c=>coincideZona(c, q, qd)));
+  // primero quien está esperando algo, después el resto
+  gente.sort((a,b)=> (b.esperando - a.esperando) || (a.nombre||'').localeCompare(b.nombre||'', 'es'));
+
+  if(!gente.length) return vacio(BUSCA ? 'Nadie con esa búsqueda.' : 'Todavía no hay nadie inscrito.');
+
+  return `<p class="muted" style="margin:0 0 12px">Una línea por persona, no por sector.
+      Tóquela para ver todas sus micro-zonas y autorizarlas.</p>`
+    + gente.map(p=>{
+    const partes = [];
+    partes.push(p.activas === 1 ? '1 micro-zona' : p.activas + ' micro-zonas');
+    if(p.anuladas) partes.push(p.anuladas === 1 ? '1 anulada' : p.anuladas + ' anuladas');
+    return `<button class="pers" data-pers="${esc(p.clave)}">
+      ${avatar(p)}
+      <span class="grow">
+        <b>${esc(p.nombre)}</b>
+        <span class="muted">${esc(p.tel)} · ${partes.join(' · ')}</span>
+        <span class="badges">${p.esperando
+          ? `<span class="pend">${p.esperando} esperando</span>`
+          : (p.activas ? '<span class="verif">al día</span>' : '')}</span>
+      </span>
+      <span class="chev">›</span>
+    </button>`;
+  }).join('');
+}
+
+function paneUnaPersona(){
+  const p = agrupar(DATOS).find(x=>x.clave === PERSONA);
+  if(!p){ PERSONA = null; return panePersonas(); }
+
+  // de la más nueva a la más vieja, y las anuladas al final
+  const zs = p.zonas.slice().sort((a,b)=>
+    (a.anulado - b.anulado) || (new Date(b.creado) - new Date(a.creado)));
+
+  return `<button class="mini volver" data-volver>‹ Todas las personas</button>
+    <div class="cabeza">
+      <div class="row">
+        ${avatar(p)}
+        <div class="grow">
+          <div style="font-weight:700;font-size:17px">${esc(p.nombre)}</div>
+          <div class="muted">${esc(p.tel)}</div>
+        </div>
+      </div>
+      <div style="margin-top:11px">
+        ${p.email ? `<div class="campo"><span>Correo</span><span>${esc(p.email)}</span></div>` : ''}
+        <div class="campo"><span>Rol</span><span>${esc(p.rol||'—')}</span></div>
+        <div class="campo"><span>Cubre</span><span>${p.activas} de ${p.zonas.length} micro-zonas${p.anuladas ? ' (' + p.anuladas + ' anulada' + (p.anuladas>1?'s':'') + ')' : ''}</span></div>
+        <div class="campo"><span>Desde</span><span>${hace(p.desde)}</span></div>
+      </div>
+      <div class="acc">
+        ${botonWA(zs[0], p.nombre)}
+        ${p.esperando > 1
+          ? `<button class="btn green" data-ok-todas="${esc(p.clave)}">Autorizar las ${p.esperando}</button>`
+          : ''}
+      </div>
+    </div>
+    <div class="sec">Sus micro-zonas</div>
+    ${zs.map(c=>tarjetaZona(c, false)).join('')}`;
+}
+
+function paneHerramientas(){
+  return `<button class="btn flat" id="exportar">Exportar todo (JSON)</button>
+    <p class="muted" style="margin:-4px 0 6px;font-size:13px">Baja reportes, entregas y
+      coordinadores completos, para respaldo o para pasarle cifras a la Alcaldía.
+      Hoy es el único respaldo que hay.</p>`;
+}
+
+function pintar(){
+  const pend = DATOS.filter(c=>!c.verificado && !c.anulado);
+  const ok   = DATOS.filter(c=> c.verificado && !c.anulado);
+  const nul  = DATOS.filter(c=> c.anulado);
+  const gente = agrupar(DATOS);
+
+  $('#tot').innerHTML = `
+    <div class="kpi"><b style="color:#d97706">${pend.length}</b><span>esperando</span></div>
+    <div class="kpi"><b style="color:#3f8f5f">${ok.length}</b><span>autorizadas</span></div>
+    <div class="kpi"><b>${gente.length}</b><span>personas</span></div>`;
+
+  $('#n-esperando').textContent = pend.length;
+  $('#n-esperando').classList.toggle('hay', pend.length > 0);
+  $('#n-personas').textContent  = gente.length;
+  $('#n-anulados').textContent  = nul.length;
+
+  $('#menu').querySelectorAll('button').forEach(b=>
+    b.classList.toggle('on', b.dataset.v === VISTA));
+
+  // en Herramientas no hay nada que buscar
+  $('#buscabox').hidden = (VISTA === 'herramientas');
+  $('#limpiar').hidden  = !BUSCA;
+
+  $('#pane').innerHTML =
+      VISTA === 'esperando'    ? paneEsperando()
+    : VISTA === 'personas'     ? panePersonas()
+    : VISTA === 'anulados'     ? paneAnulados()
+    :                            paneHerramientas();
+
+  if(VISTA === 'herramientas') $('#exportar').onclick = exportar;
 }
 
 async function cargar(){
   const {data, error} = await db.from('coordinadores').select('*').order('creado',{ascending:false});
   if(error) return toast('No se pudo leer: '+error.message);
-  const pend = data.filter(c=>!c.verificado && !c.anulado);
-  const ok   = data.filter(c=> c.verificado && !c.anulado);
-  const nul  = data.filter(c=> c.anulado);
-  $('#tot').innerHTML = `
-    <div class="kpi"><b style="color:#d97706">${pend.length}</b><span>esperando</span></div>
-    <div class="kpi"><b style="color:#3f8f5f">${ok.length}</b><span>autorizados</span></div>
-    <div class="kpi"><b>${nul.length}</b><span>anulados</span></div>`;
-  $('#pendientes').innerHTML = pend.map(c=>tarjeta(c,'pend')).join('')
-    || '<p class="muted">Nadie esperando. Todo al día.</p>';
-  $('#listos').innerHTML = ok.map(c=>tarjeta(c,'ok')).join('')
-    || '<p class="muted">Todavía no hay coordinadores autorizados.</p>';
-  $('#anulados').innerHTML = nul.map(c=>tarjeta(c,'nul')).join('')
-    || '<p class="muted">Ninguno.</p>';
+  DATOS = data || [];
+  pintar();
 }
 
-document.addEventListener('click', async e=>{
-  const ok = e.target.closest('[data-ok]'), no = e.target.closest('[data-no]');
+/* ---------- el menú y la búsqueda ---------- */
+$('#menu').addEventListener('click', e=>{
+  const b = e.target.closest('button[data-v]'); if(!b) return;
+  VISTA = b.dataset.v; PERSONA = null;
+  pintar();
+});
+$('#q').addEventListener('input', e=>{
+  BUSCA = e.target.value;
+  PERSONA = null;             // buscando se busca en la lista, no dentro de una ficha
+  pintar();
+});
+$('#limpiar').onclick = ()=>{ BUSCA = ''; $('#q').value = ''; $('#q').focus(); pintar(); };
+
+/* ---------- acciones ---------- */
+async function marcar(id, campo, valor, aviso){
+  const {error} = await db.from('coordinadores').update({[campo]:valor}).eq('id', id);
+  toast(error ? 'No se pudo: '+error.message : aviso);
+  await cargar();
+}
+
+$('#pane').addEventListener('click', async e=>{
+  const pers = e.target.closest('[data-pers]');
+  if(pers){ PERSONA = pers.dataset.pers; return pintar(); }
+  if(e.target.closest('[data-volver]')){ PERSONA = null; return pintar(); }
+
+  const ok = e.target.closest('[data-ok]');
   if(ok){
     ok.disabled = true; ok.textContent = 'Autorizando…';
-    const {error} = await db.from('coordinadores').update({verificado:true}).eq('id', ok.dataset.ok);
-    toast(error ? 'No se pudo: '+error.message : 'Autorizado. Ya aparece con el sello verde.');
-    cargar();
+    return marcar(ok.dataset.ok, 'verificado', true, 'Autorizado. Ya aparece con el sello verde.');
   }
+
+  const si = e.target.closest('[data-si]');
+  if(si){
+    si.disabled = true;
+    return marcar(si.dataset.si, 'anulado', false, 'Reactivado. Vuelve a aparecer en el mapa.');
+  }
+
+  /* Anular en dos toques. No hay forma de deshacerlo desde el mapa — solo
+     desde aquí, con Reactivar — así que no debería salirse por un roce. */
+  const no = e.target.closest('[data-no]');
   if(no){
-    const {error} = await db.from('coordinadores').update({anulado:true}).eq('id', no.dataset.no);
-    toast(error ? 'No se pudo: '+error.message : 'Anulado.');
-    cargar();
+    if(no.dataset.seguro !== '1'){
+      no.dataset.seguro = '1';
+      no.textContent = '¿Seguro? Toque otra vez';
+      no.classList.add('red');
+      setTimeout(()=>{ if(no.isConnected && no.dataset.seguro === '1'){
+        no.dataset.seguro = ''; no.textContent = 'Anular'; no.classList.remove('red'); } }, 4000);
+      return;
+    }
+    no.disabled = true; no.textContent = 'Anulando…';
+    return marcar(no.dataset.no, 'anulado', true, 'Anulado. Sale del mapa.');
+  }
+
+  const todas = e.target.closest('[data-ok-todas]');
+  if(todas){
+    const p = agrupar(DATOS).find(x=>x.clave === todas.dataset.okTodas);
+    if(!p) return;
+    const ids = p.zonas.filter(z=>!z.verificado && !z.anulado).map(z=>z.id);
+    todas.disabled = true; todas.textContent = 'Autorizando…';
+    const {error} = await db.from('coordinadores').update({verificado:true}).in('id', ids);
+    toast(error ? 'No se pudo: '+error.message : `Autorizadas las ${ids.length} de ${p.nombre}.`);
+    await cargar();
   }
 });
 
@@ -171,7 +450,7 @@ document.addEventListener('click', async e=>{
    Se fue del lado del usuario: al vecino que necesita agua no le sirve un
    JSON. Aquí sí, y de paso es el único respaldo que hay hoy. Trae las tablas
    enteras, no lo que alcanzó a cargar el mapa.                            */
-$('#exportar').onclick = async ()=>{
+async function exportar(){
   const b = $('#exportar');
   b.disabled = true; b.textContent = 'Bajando…';
   try{
@@ -197,7 +476,7 @@ $('#exportar').onclick = async ()=>{
   } finally {
     b.disabled = false; b.textContent = 'Exportar todo (JSON)';
   }
-};
+}
 
 /* ---------- arranque ---------- */
 async function arrancar(){
