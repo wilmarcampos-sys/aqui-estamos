@@ -12,6 +12,6 @@
 const CONFIG = {
   SUPABASE_URL:      'https://iknscwnuvlggibkmuhcv.supabase.co',
   SUPABASE_ANON_KEY: 'sb_publishable_UeJRpwzSaddEvYwmXRUShg_tBDFyBn-',
-  WHATSAPP_SOPORTE:  '572322314100',     // soporte y verificación de coordinadores
+  WHATSAPP_SOPORTE:  '573232314100',     // soporte y verificación de coordinadores
   CIUDAD:            'Pereira',
 };
