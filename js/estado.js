@@ -51,12 +51,21 @@ async function vaciarCola(){
   if(!EN_LINEA) return;
   const c = colaLeer(); if(!c.length) return;
   const quedan = [];
+  let enviados = 0, viejos = 0;
   for(const item of c){
+    /* Solo reportes y entregas se encolan. Inscribirse se hacía así antes y
+       ahora va por ae_guardar_zona, que exige la cuenta: al navegador se le
+       quitó el insert. Lo que quedó encolado de esa época ya no entra nunca,
+       y reintentarlo deja un "1 pendiente" que no baja jamás. */
+    if(item.tabla !== 'reportes' && item.tabla !== 'entregas'){ viejos++; continue; }
     const {error} = await db.from(item.tabla).insert(item.fila);
-    if(error && !/Demasiad|ya se envió|Ya está/.test(error.message)) quedan.push(item);
+    if(error && !/Demasiad|ya se envió|Ya está/.test(error.message)){ quedan.push(item); continue; }
+    enviados++;
   }
   colaEscribir(quedan);
-  if(c.length !== quedan.length){ await dbCargar(); toast(`${c.length-quedan.length} pendiente(s) enviados`); }
+  if(enviados){ await dbCargar(); toast(`${enviados} pendiente(s) enviados`); }
+  // Se le dice, no se borra callado: esa inscripción nunca llegó a existir.
+  else if(viejos) toast('Una inscripción vieja no se pudo enviar. Vuelva a inscribirse: ahora es más corto.');
   pintarEstado();
 }
 
