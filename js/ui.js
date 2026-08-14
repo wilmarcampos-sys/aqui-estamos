@@ -102,7 +102,7 @@ function render(){
     <div class="kpi"><b style="color:#8b1a1a">${orf.length}</b><span>puntos sin coordinador</span></div>
     <div class="kpi"><b>${personas.toLocaleString('es-CO')}</b><span>personas sin cubrir</span></div>`;
   // ---- MI CUENTA: que nadie pierda su registro ----
-  // El registro ya no depende del navegador: vive en la cuenta (celular + PIN).
+  // El registro no depende del navegador: vive en la cuenta (celular + PIN).
   // Por eso desde cualquier teléfono se recupera con solo entrar.
   seccion('sec-mias','lista-mias', ico('user') + (YO ? ' Mi cuenta' : ' Su registro'),
     YO
@@ -303,32 +303,24 @@ $('#fab-loc').onclick = ()=>{
   }, ()=>toast('No se pudo obtener la ubicación'), {enableHighAccuracy:true, timeout:9000});
 };
 $('#btn-add-coord').onclick = ()=>{ const pt = mainPt || ptDe('centro'); abrirCoord(pt.z, pt); };
+
 /* Ver ejemplo: para mostrarle la app a alguien sin ensuciar el mapa real.
-   Los datos de ejemplo viven solo en este teléfono y no se envían a nadie. */
+   Ya no es un botón — al vecino que necesita agua no le sirve de nada y solo
+   estorba. Se enciende abriendo la app con ?ejemplo=1 al final de la
+   dirección. Los datos viven solo en este teléfono y no se envían a nadie.
+   Exportar se fue a admin.html, que es donde se piden cifras.            */
 function pintarBotonEjemplo(){
-  const b = $('#btn-demo'); if(!b) return;
-  b.textContent = MODO_EJEMPLO ? 'Salir del ejemplo y ver los datos reales' : 'Ver un ejemplo de cómo se llena';
-  b.classList.toggle('red', MODO_EJEMPLO);
-  let av = document.getElementById('aviso-ejemplo');
-  if(MODO_EJEMPLO && !av){
-    av = document.createElement('div');
-    av.id = 'aviso-ejemplo'; av.className = 'avisoej';
-    av.innerHTML = ico('alert') + ' <b>Ejemplo</b> · nada de lo que ve aquí es real y nada se envía';
-    document.getElementById('app').prepend(av);
-  } else if(!MODO_EJEMPLO && av) av.remove();
+  if(!MODO_EJEMPLO) return;
+  if(document.getElementById('aviso-ejemplo')) return;
+  const av = document.createElement('div');
+  av.id = 'aviso-ejemplo'; av.className = 'avisoej';
+  av.innerHTML = ico('alert') + ' <b>Ejemplo</b> · nada de lo que ve aquí es real y nada se envía';
+  document.getElementById('app').prepend(av);
 }
-$('#btn-demo').onclick = async ()=>{
-  MODO_EJEMPLO = !MODO_EJEMPLO;
-  if(MODO_EJEMPLO){ demo(); render(); toast('Ejemplo cargado. Solo lo ve usted.'); }
-  else { S = {reportes:[], entregas:[], coords:[]}; await dbCargar(); render(); toast('De vuelta a los datos reales'); }
-  pintarBotonEjemplo();
-};
-$('#btn-export').onclick = ()=>{
-  const blob = new Blob([JSON.stringify({zonas:ZONAS, ...S}, null, 2)], {type:'application/json'});
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob); a.download = 'aqui-estamos.json'; a.click();
-  toast('Datos exportados');
-};
+if(/[?&]ejemplo=1/.test(location.search)){
+  MODO_EJEMPLO = true;
+  demo();
+}
 
 initMainPin();
 render();

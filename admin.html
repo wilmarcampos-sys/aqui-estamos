@@ -54,6 +54,10 @@
 
     <div class="tot" id="tot"></div>
 
+    <button class="btn flat" id="exportar">Exportar todo (JSON)</button>
+    <p class="muted" style="margin:-4px 0 6px;font-size:13px">Baja reportes, entregas y
+      coordinadores completos, para respaldo o para pasarle cifras a la Alcaldía.</p>
+
     <div class="sec">Esperando autorización</div>
     <p class="muted" style="margin:-2px 0 10px">Cuando le llegue el código por WhatsApp, búsquelo aquí y autorice.
       Si el número coincide con el que le escribió, es esa persona.</p>
@@ -162,6 +166,38 @@ document.addEventListener('click', async e=>{
     cargar();
   }
 });
+
+/* ---------- exportar ----------
+   Se fue del lado del usuario: al vecino que necesita agua no le sirve un
+   JSON. Aquí sí, y de paso es el único respaldo que hay hoy. Trae las tablas
+   enteras, no lo que alcanzó a cargar el mapa.                            */
+$('#exportar').onclick = async ()=>{
+  const b = $('#exportar');
+  b.disabled = true; b.textContent = 'Bajando…';
+  try{
+    const [r,e,c] = await Promise.all([
+      db.from('reportes').select('*').order('creado',{ascending:false}),
+      db.from('entregas').select('*').order('creado',{ascending:false}),
+      db.from('coordinadores').select('*').order('creado',{ascending:false}),
+    ]);
+    const err = r.error || e.error || c.error;
+    if(err) return toast('No se pudo exportar: ' + err.message);
+
+    const hoy = new Date().toISOString().slice(0,10);
+    const blob = new Blob([JSON.stringify({
+      exportado: new Date().toISOString(),
+      reportes: r.data || [], entregas: e.data || [], coordinadores: c.data || [],
+    }, null, 2)], {type:'application/json'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `aqui-estamos-${hoy}.json`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+    toast(`Exportado: ${(r.data||[]).length} reportes, ${(e.data||[]).length} entregas, ${(c.data||[]).length} coordinadores.`);
+  } finally {
+    b.disabled = false; b.textContent = 'Exportar todo (JSON)';
+  }
+};
 
 /* ---------- arranque ---------- */
 async function arrancar(){
