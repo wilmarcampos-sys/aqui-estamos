@@ -108,6 +108,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script src="js/config.js"></script>
+<script src="js/data.js"></script>
 <script>
 const $ = s => document.querySelector(s);
 const esc = s => String(s??'').replace(/[<>&"]/g, m=>({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[m]));
@@ -128,6 +129,13 @@ const hace = ts => { const h=(Date.now()-new Date(ts))/3600e3;
    acordarse de la eñe, ni quien busca "jose" del acento de José. */
 const norm = s => String(s??'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
 const soloDigitos = s => String(s??'').replace(/\D/g,'');
+
+/* En la base la zona se guarda con su identificador ("eloso"), que es lo que
+   nunca cambia. Para leerlo hace falta el nombre ("El Oso"), y esa tabla vive
+   en js/data.js, que es de donde la saca el mapa. Si el id no est\u00e1 en la
+   lista se muestra tal cual: mejor un nombre feo que un hueco. */
+const NOMBRE_ZONA = new Map((typeof ZONAS !== 'undefined' ? ZONAS : []).map(z=>[z.id, z.n]));
+const zonaNombre = id => NOMBRE_ZONA.get(id) || id || '\u2014';
 
 /* ---------- entrar ---------- */
 $('#enviar').onclick = async ()=>{
@@ -187,7 +195,7 @@ function agrupar(filas){
    el nombre, el número que aparece en el WhatsApp, el sector o el código. */
 function coincideZona(c, q, qd){
   if(qd && qd.length >= 3 && soloDigitos(c.tel_e164 + ' ' + c.tel).includes(qd)) return true;
-  return norm([c.nombre, c.micro, c.zona, c.rol, c.codigo, c.nota, c.email, c.tel]
+  return norm([c.nombre, c.micro, c.zona, zonaNombre(c.zona), c.rol, c.codigo, c.nota, c.email, c.tel]
     .join(' ')).includes(q);
 }
 function filtrar(filas){
@@ -209,9 +217,16 @@ function sello(c){
        : c.verificado ? '<span class="verif">verificado</span>'
        : '<span class="pend">esperando</span>';
 }
-function botonWA(c, nombre){
-  const wa = waDigitos(c.tel_e164 || c.tel);
-  const msg = encodeURIComponent(`Hola ${nombre||c.nombre||''}, le escribo de Aquí Estamos para confirmar su inscripción como coordinador de ${c.micro||c.zona}.`);
+/* Un solo WhatsApp por persona, no uno por sector: es el mismo número todas
+   las veces. Lo que cambia es el mensaje, que nombra el sector cuando es uno
+   y los enumera cuando son varios, para que la persona sepa de qué le hablan. */
+const listar = ns => ns.length <= 2 ? ns.join(' y ')
+                   : ns.slice(0,2).join(', ') + ' y ' + (ns.length - 2) + ' más';
+
+function botonWA(tel, nombre, sectores){
+  const wa = waDigitos(tel);
+  const de = sectores.length ? ' como coordinador de ' + listar(sectores) : '';
+  const msg = encodeURIComponent(`Hola ${nombre||''}, le escribo de Aquí Estamos para confirmar su inscripción${de}.`);
   return `<a class="btn wa" href="https://wa.me/${wa}?text=${msg}" target="_blank" rel="noopener">WhatsApp</a>`;
 }
 
@@ -224,14 +239,14 @@ function tarjetaZona(c, conNombre){
       ${avatar(c)}
       <div class="grow">
         <div style="font-weight:700;font-size:15px">${esc(c.nombre)}</div>
-        <div class="muted">${esc(c.micro||'sin nombre de sector')} · ${esc(c.zona)} · ${c.radio||500} m</div>
+        <div class="muted">${esc(c.micro||'sin nombre de sector')} · ${esc(zonaNombre(c.zona))} · ${c.radio||500} m</div>
       </div>
       ${sello(c)}
     </div>`
     : `<div class="row">
       <div class="grow">
         <div style="font-weight:700;font-size:15px">${esc(c.micro||'sin nombre de sector')}</div>
-        <div class="muted">${esc(c.zona)} · ${c.radio||500} m</div>
+        <div class="muted">${esc(zonaNombre(c.zona))} · ${c.radio||500} m</div>
       </div>
       ${sello(c)}
     </div>`}
@@ -243,7 +258,7 @@ function tarjetaZona(c, conNombre){
       <div class="campo"><span>Inscrito</span><span>${hace(c.creado)}</span></div>
     </div>
     <div class="acc">
-      ${botonWA(c)}
+      ${conNombre ? botonWA(c.tel_e164 || c.tel, c.nombre, [c.micro || zonaNombre(c.zona)]) : ''}
       ${!c.verificado && !c.anulado ? `<button class="btn green" data-ok="${c.id}">Autorizar</button>` : ''}
       ${!c.anulado ? `<button class="btn flat" data-no="${c.id}">Anular</button>`
                    : `<button class="btn flat" data-si="${c.id}">Reactivar</button>`}
@@ -325,7 +340,9 @@ function paneUnaPersona(){
         <div class="campo"><span>Desde</span><span>${hace(p.desde)}</span></div>
       </div>
       <div class="acc">
-        ${botonWA(zs[0], p.nombre)}
+        ${botonWA(p.tel_e164 || p.tel, p.nombre,
+            (p.zonas.filter(z=>!z.anulado).length ? p.zonas.filter(z=>!z.anulado) : p.zonas)
+              .map(z=>z.micro || zonaNombre(z.zona)))}
         ${p.esperando > 1
           ? `<button class="btn green" data-ok-todas="${esc(p.clave)}">Autorizar las ${p.esperando}</button>`
           : ''}
