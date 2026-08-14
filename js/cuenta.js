@@ -295,7 +295,7 @@ async function abrirMiCuenta(){
 
     <div class="sec">Micro-zonas que cubro</div>
     ${zs.length ? zs.map(z=>`
-      <div class="fila-mia">
+      <div class="fila-mia ${z.verificado ? 'ok' : ''}">
         <div class="row">
           <div class="grow">
             <div style="font-weight:700">${esc(z.micro || 'Sin nombre')}</div>
@@ -303,7 +303,16 @@ async function abrirMiCuenta(){
           </div>
           ${z.verificado ? '<span class="verif">verificado</span>' : '<span class="pend">esperando</span>'}
         </div>
-        ${z.codigo ? `<div class="muted" style="margin-top:5px">Código <b class="cod">${esc(z.codigo)}</b></div>` : ''}
+        ${z.verificado ? '' : `
+        <div class="muted" style="margin-top:7px">Su código es <b class="cod">${esc(z.codigo || '—')}</b>.
+          Mándelo por WhatsApp y le ponemos el sello verde. Puede hacerlo las veces que quiera.</div>
+        <div class="fbtns">
+          <a class="mini go" target="_blank" rel="noopener"
+             style="text-decoration:none;display:inline-flex;align-items:center;gap:7px;color:#c9f5d8"
+             href="${waLink(CONFIG.WHATSAPP_SOPORTE,
+               `${z.codigo || ''}\nSoy ${YO.nombre} y coordino ${z.micro || ''} en Aquí Estamos.`)}"
+             >${icoWA()} Enviar mi código</a>
+        </div>`}
         <div class="fbtns">
           <button class="mini" data-mz-edit="${z.id}">Corregir</button>
           <button class="mini" data-mz-off="${z.id}">Retirarme</button>
