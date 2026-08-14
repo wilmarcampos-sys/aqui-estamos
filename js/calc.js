@@ -69,13 +69,13 @@ const norm = s=>String(s||'').trim().toLowerCase().replace(/\s+/g,' ');
    Se normaliza a formato internacional para que el enlace wa.me siempre abra. */
 const SOPORTE_WA = '572322314100';
 
-/* Deja solo dígitos y quita indicativos repetidos. Esto último importa:
-   si el campo ya traía "+57" y la persona vuelve a escribir el 57, antes
-   quedaba un número corrido tipo +57 573 105 5501. */
 function telSoloDigitos(v){
   let d = String(v||'').replace(/\D/g,'');
   if(d.startsWith('00')) d = d.slice(2);
-  while(d.length > 10 && d.startsWith('57')) d = d.slice(2);
+  // 57 + celular colombiano son 12 dígitos. Si hay más, sobra un indicativo
+  // repetido. Con 12 o menos NO se toca: 572322314100 es un número válido
+  // y quitarle el 57 lo dejaba en 2322314100, que ya no parece celular.
+  while(d.length > 12 && d.startsWith('57')) d = d.slice(2);
   return d;
 }
 function telDigitos(v){
