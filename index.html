@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+<meta name="theme-color" content="#0f172a">
+<link rel="icon" type="image/svg+xml" href="logo/marca.svg">
+<title>Aquí Estamos · Pereira</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+<div id="app">
+  <header>
+    <svg class="mark" viewBox="0 0 24 24" aria-hidden="true"><defs>
+    <clipPath id="ae-pin">
+      <path d="M12 1.6c-4.6 0-8.3 3.7-8.3 8.3 0 5.9 8.3 12.5 8.3 12.5s8.3-6.6 8.3-12.5c0-4.6-3.7-8.3-8.3-8.3z"/>
+    </clipPath>
+  </defs>
+  <g clip-path="url(#ae-pin)">
+    <rect x="0"  y="0" width="12" height="24" fill="#F2B705"/>
+    <rect x="12" y="0" width="12" height="24" fill="#D62828"/>
+  </g>
+  <!-- dos manos que se encuentran -->
+  <path d="M5.9 9.1h6.4a1.35 1.35 0 0 1 0 2.7H5.9z" fill="#fff"/>
+  <path d="M18.1 12.2h-6.4a1.35 1.35 0 0 0 0 2.7h6.4z" fill="#fff"/>
+</svg>
+    <div class="grow">
+      <h1>Aquí<span>&nbsp;Estamos</span></h1>
+      <p id="estado" class="estado">Pereira · Colombia</p>
+    </div>
+    <div class="online" id="online" hidden>
+      <span class="odot"></span><b id="online-n">0</b><span class="olbl">en línea</span>
+    </div>
+  </header>
+
+  <nav>
+    <button data-v="map" class="on">Mapa</button>
+    <button data-v="zonas">Zonas olvidadas</button>
+    <button data-v="coord">Coordinación</button>
+  </nav>
+
+  <main>
+    <!-- MAPA -->
+    <section class="view on" id="v-map">
+      <div id="map"></div>
+      <div class="legend">
+        <b>Nivel de desatención</b>
+        <div><i style="background:#3f8f5f"></i>Atendida</div>
+        <div><i style="background:#c9a227"></i>Parcial</div>
+        <div><i style="background:#d97706"></i>Rezagada</div>
+        <div><i style="background:#dc2626"></i>Crítica</div>
+        <div><i style="background:#8b1a1a"></i>Sin ayuda</div>
+        <div style="margin-top:5px">Acérquese para ver los puntos exactos y las micro-zonas de cada coordinador</div>
+      </div>
+      <div class="pinbar" id="pinbar">Toque el mapa donde está, o arrastre el pin</div>
+      <div class="fabs">
+        <button class="fab" id="fab-need">Necesito ayuda aquí</button>
+        <button class="fab ghost" id="fab-loc" title="Localízame"></button>
+      </div>
+    </section>
+
+    <!-- ZONAS -->
+    <section class="view" id="v-zonas"><div class="pad">
+      <div class="kpis" id="kpis"></div>
+      <div class="note">Arriba están las zonas donde se pidió ayuda y <b>no ha llegado</b>.
+        Si tiene algo para entregar, empiece por ahí.</div>
+      <div class="tabsub" id="filtros">
+        <button data-f="todas" class="on">Todas</button>
+        <button data-f="comuna">Comunas</button>
+        <button data-f="corregimiento">Rural</button>
+        <button data-f="critica">Solo críticas</button>
+      </div>
+      <div id="lista-zonas"></div>
+    </div></section>
+
+    <!-- COORDINACIÓN -->
+    <section class="view" id="v-coord"><div class="pad">
+      <button class="btn" id="btn-add-coord">Inscribirme como coordinador</button>
+      <details class="fold">
+        <summary>Cómo funciona la coordinación</summary>
+        <div class="foldbody muted" style="font-size:13px;line-height:1.5">
+          Cada coordinador cubre una <b>micro-zona</b>: un punto en el mapa y un radio de máximo 1 km,
+          porque una comuna entera no la atiende una sola persona.<br><br>
+          Una misma persona puede tener varias, y los sectores se pueden traslapar: entre más ojos
+          sobre un punto, mejor. Nadie manda sobre otro y nadie puede sacar a nadie.<br><br>
+          Para aparecer públicamente hay que verificar el WhatsApp: usted nos envía un código
+          desde su propio número. No hay que esperar ningún SMS.
+        </div>
+      </details>
+      <div class="sec" id="sec-orf"></div>
+      <div id="lista-orf"></div>
+      <div class="sec" id="sec-solo"></div>
+      <p class="muted" style="margin:-2px 0 9px">Si esa persona falla, el sector queda ciego.</p>
+      <div id="lista-solo"></div>
+      <div class="sec">Reparto de la coordinación</div>
+      <p class="muted" style="margin:-2px 0 9px">Muchos sectores en una sola persona = falta gente.</p>
+      <div id="lista-personas"></div>
+      <div class="sec">Coordinadores por zona</div>
+      <div id="lista-coord"></div>
+      <div class="sec">Últimas entregas registradas</div>
+      <div id="lista-entregas"></div>
+      <div class="sec">Datos</div>
+      <div class="btn2">
+        <button class="btn flat" id="btn-export">Exportar datos (JSON)</button>
+        <button class="btn flat" id="btn-demo">Recargar demo</button>
+      </div>
+      <p class="muted" style="margin-top:14px;font-size:11.5px">
+        Prototipo. Los datos viven solo en este teléfono.
+      </p>
+    </div></section>
+  </main>
+
+  <footer>
+    <button id="btn-soporte">
+      <span class="fic"></span>
+      <span>¿Algo no funciona? Reportar un problema de la app</span>
+    </button>
+  </footer>
+</div>
+
+<!-- HOJA INFERIOR -->
+<div class="sheet" id="sheet">
+  <div class="scrim" data-close></div>
+  <div class="panel"><div class="grab"></div><div id="sheet-body"></div></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="js/config.js"></script>
+<script src="js/data.js"></script>
+<script src="js/estado.js"></script>
+<script src="js/calc.js"></script>
+<script src="js/mapa.js"></script>
+<script src="js/hojas.js"></script>
+<script src="js/ui.js"></script>
+</body>
+</html>
