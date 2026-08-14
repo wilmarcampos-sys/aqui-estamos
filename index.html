@@ -12,6 +12,7 @@
 <body>
 <div id="app">
   <header>
+    <button id="ir-mapa" class="marcabtn" type="button" aria-label="Ir al mapa">
     <svg class="mark" viewBox="0 0 24 24" aria-hidden="true"><defs>
     <clipPath id="ae-pin">
       <path d="M12 1.6c-4.6 0-8.3 3.7-8.3 8.3 0 5.9 8.3 12.5 8.3 12.5s8.3-6.6 8.3-12.5c0-4.6-3.7-8.3-8.3-8.3z"/>
@@ -25,10 +26,11 @@
   <path d="M5.9 9.1h6.4a1.35 1.35 0 0 1 0 2.7H5.9z" fill="#fff"/>
   <path d="M18.1 12.2h-6.4a1.35 1.35 0 0 0 0 2.7h6.4z" fill="#fff"/>
 </svg>
-    <div class="grow">
+    <div class="grow" style="text-align:left">
       <h1>Aquí<span>&nbsp;Estamos</span></h1>
       <p id="estado" class="estado">Pereira · Colombia</p>
     </div>
+    </button>
     <div class="online" id="online" hidden>
       <span class="odot"></span><b id="online-n">0</b><span class="olbl">en línea</span>
     </div>
@@ -84,8 +86,10 @@
           porque una comuna entera no la atiende una sola persona.<br><br>
           Una misma persona puede tener varias, y los sectores se pueden traslapar: entre más ojos
           sobre un punto, mejor. Nadie manda sobre otro y nadie puede sacar a nadie.<br><br>
-          Para aparecer públicamente hay que verificar el WhatsApp: usted nos envía un código
-          desde su propio número. No hay que esperar ningún SMS.
+          Su registro queda en una cuenta suya: celular y un PIN que usted escoge. Con eso
+          vuelve a entrar desde cualquier teléfono y corrige lo suyo, sin pedirle permiso a nadie.<br><br>
+          Para aparecer con el sello verde, usted nos envía un código desde su propio WhatsApp.
+          No hay que esperar ningún SMS.
         </div>
       </details>
       <div class="sec" id="sec-mias"></div>
@@ -105,7 +109,7 @@
       <details class="fold" style="margin-top:18px">
         <summary>Herramientas</summary>
         <div class="foldbody">
-          <p class="muted" style="margin:0 0 10px;font-size:12.5px">
+          <p class="muted" style="margin:0 0 10px;font-size:13px">
             <b>Ver un ejemplo</b> llena la app con datos inventados para poder mostrarla
             en una reunión. No se envía nada.<br><br>
             <b>Exportar</b> baja todo lo reportado en un archivo, para respaldo o para
@@ -141,6 +145,7 @@
 <script src="js/calc.js"></script>
 <script src="js/mapa.js"></script>
 <script src="js/hojas.js"></script>
+<script src="js/cuenta.js"></script>
 <script src="js/ui.js"></script>
 </body>
 </html>
