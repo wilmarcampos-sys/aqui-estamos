@@ -68,12 +68,21 @@ const norm = s=>String(s||'').trim().toLowerCase().replace(/\s+/g,' ');
 /* ---- TELÉFONO: casi toda la coordinación pasa por WhatsApp ----
    Se normaliza a formato internacional para que el enlace wa.me siempre abra. */
 const SOPORTE_WA = '572322314100';
-function telDigitos(v){
+
+/* Deja solo dígitos y quita indicativos repetidos. Esto último importa:
+   si el campo ya traía "+57" y la persona vuelve a escribir el 57, antes
+   quedaba un número corrido tipo +57 573 105 5501. */
+function telSoloDigitos(v){
   let d = String(v||'').replace(/\D/g,'');
   if(d.startsWith('00')) d = d.slice(2);
-  if(d.length === 10 && d[0] === '3') d = '57' + d;            // celular colombiano sin indicativo
+  while(d.length > 10 && d.startsWith('57')) d = d.slice(2);
+  return d;
+}
+function telDigitos(v){
+  const d = telSoloDigitos(v);
+  if(d.length === 10 && d[0] === '3') return '57' + d;          // celular colombiano
   if(d.length === 12 && d.startsWith('57') && d[2] === '3') return d;
-  if(d.length >= 11 && d.length <= 15) return d;               // otro país, ya con indicativo
+  if(d.length >= 11 && d.length <= 15) return d;                // otro país, con indicativo
   return null;
 }
 function telBonito(v){
@@ -86,14 +95,12 @@ const waLink = (v, msg)=>{
   const d = telDigitos(v); if(!d) return '#';
   return 'https://wa.me/' + d + (msg ? '?text=' + encodeURIComponent(msg) : '');
 };
-/* formateo en vivo mientras escribe: +57 300 123 4567 */
+/* Formateo en vivo. El campo NO lleva el +57 adentro: va como prefijo fijo
+   al lado, para que sea imposible escribirlo dos veces. */
 function telFormatoVivo(v){
-  let d = String(v||'').replace(/\D/g,'');
-  if(d.startsWith('00')) d = d.slice(2);
-  if(d.startsWith('57')) d = d.slice(2);
-  d = d.slice(0,10);
-  let out = '+57';
-  if(d.length) out += ' ' + d.slice(0,3);
+  const d = telSoloDigitos(v).slice(-10);
+  if(!d.length) return '';
+  let out = d.slice(0,3);
   if(d.length > 3) out += ' ' + d.slice(3,6);
   if(d.length > 6) out += ' ' + d.slice(6,10);
   return out;
