@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0f172a">
+<meta name="robots" content="noindex">
+<link rel="icon" type="image/svg+xml" href="logo/marca.svg">
+<title>Aquí Estamos · Administración</title>
+<link rel="stylesheet" href="css/app.css">
+<style>
+  body{overflow:auto}
+  #app{min-height:100%}
+  .wrap{max-width:720px;margin:0 auto;padding:16px 14px calc(28px + var(--safe))}
+  .fila{background:var(--card);border:1px solid var(--line);border-radius:14px;
+    padding:13px;margin-bottom:10px}
+  .fila.pend{border-color:#7c4a10}
+  .campo{display:flex;gap:8px;font-size:13px;padding:3px 0}
+  .campo span:first-child{color:var(--dim);min-width:88px;flex:0 0 auto}
+  .cod{font-family:ui-monospace,Menlo,monospace;font-size:17px;font-weight:800;
+    color:#8ec1ff;letter-spacing:1.5px}
+  .acc{display:flex;flex-wrap:wrap;gap:8px;margin-top:11px}
+  .acc .btn{margin:0;width:auto;flex:1 1 auto;padding:12px 14px;font-size:14px}
+  .login{max-width:400px;margin:8vh auto;text-align:center}
+  .login .mark{width:56px;height:56px;margin-bottom:14px}
+  .tot{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px}
+</style>
+</head>
+<body>
+<div id="app"><div class="wrap">
+
+  <div id="login" class="login" hidden>
+    <svg class="mark" viewBox="0 0 24 24" aria-hidden="true">
+      <defs><clipPath id="p"><path d="M12 1.6c-4.6 0-8.3 3.7-8.3 8.3 0 5.9 8.3 12.5 8.3 12.5s8.3-6.6 8.3-12.5c0-4.6-3.7-8.3-8.3-8.3z"/></clipPath></defs>
+      <g clip-path="url(#p)"><rect width="12" height="24" fill="#F2B705"/><rect x="12" width="12" height="24" fill="#D62828"/></g>
+      <path d="M5.9 9.1h6.4a1.35 1.35 0 0 1 0 2.7H5.9z" fill="#fff"/>
+      <path d="M18.1 12.2h-6.4a1.35 1.35 0 0 0 0 2.7h6.4z" fill="#fff"/>
+    </svg>
+    <h2 style="margin:0 0 6px">Administración</h2>
+    <p class="muted" style="margin:0 0 18px">Le llega un enlace al correo. No hay contraseña que recordar ni que compartir.</p>
+    <input id="mail" type="email" inputmode="email" placeholder="su-correo@ejemplo.com" autocomplete="email">
+    <button class="btn" id="enviar">Enviarme el enlace</button>
+    <p class="muted" id="msg" style="margin-top:14px"></p>
+  </div>
+
+  <div id="panel" hidden>
+    <div class="row" style="margin-bottom:14px">
+      <div class="grow">
+        <h2 style="margin:0">Administración</h2>
+        <div class="muted" id="quien"></div>
+      </div>
+      <button class="mini" id="salir">Salir</button>
+    </div>
+
+    <div class="tot" id="tot"></div>
+
+    <div class="sec">Esperando autorización</div>
+    <p class="muted" style="margin:-2px 0 10px">Cuando le llegue el código por WhatsApp, búsquelo aquí y autorice.
+      Si el número coincide con el que le escribió, es esa persona.</p>
+    <div id="pendientes"></div>
+
+    <div class="sec">Ya autorizados</div>
+    <div id="listos"></div>
+
+    <div class="sec">Anulados</div>
+    <div id="anulados"></div>
+  </div>
+
+</div></div>
+<div class="toast" id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="js/config.js"></script>
+<script>
+const $ = s => document.querySelector(s);
+const esc = s => String(s??'').replace(/[<>&"]/g, m=>({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[m]));
+let t; function toast(m){ const e=$('#toast'); e.textContent=m; e.classList.add('on');
+  clearTimeout(t); t=setTimeout(()=>e.classList.remove('on'), 3200); }
+
+const db = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
+
+const waDigitos = v => { let d=String(v||'').replace(/\D/g,'');
+  if(d.startsWith('00')) d=d.slice(2);
+  while(d.length>10 && d.startsWith('57')) d=d.slice(2);
+  return d.length===10 && d[0]==='3' ? '57'+d : d; };
+const hace = ts => { const h=(Date.now()-new Date(ts))/3600e3;
+  return h<1 ? 'hace '+Math.max(1,Math.round(h*60))+' min'
+     : h<48 ? 'hace '+Math.round(h)+' h' : 'hace '+Math.round(h/24)+' días'; };
+
+/* ---------- entrar ---------- */
+$('#enviar').onclick = async ()=>{
+  const email = $('#mail').value.trim();
+  if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return toast('Revise el correo');
+  $('#enviar').disabled = true; $('#enviar').textContent = 'Enviando…';
+  const {error} = await db.auth.signInWithOtp({email, options:{emailRedirectTo: location.href}});
+  $('#enviar').disabled = false; $('#enviar').textContent = 'Enviarme el enlace';
+  $('#msg').textContent = error ? 'No se pudo enviar: '+error.message
+    : 'Listo. Revise su correo y toque el enlace. Puede cerrar esta pestaña.';
+};
+$('#salir').onclick = async ()=>{ await db.auth.signOut(); location.reload(); };
+
+/* ---------- pintar ---------- */
+function tarjeta(c, tipo){
+  const wa = waDigitos(c.tel);
+  const msg = encodeURIComponent(`Hola ${c.nombre||''}, le escribo de Aquí Estamos para confirmar su inscripción como coordinador de ${c.micro||c.zona}.`);
+  return `<div class="fila ${tipo==='pend'?'pend':''}">
+    <div class="row">
+      ${c.foto ? `<div class="avatar" style="background-image:url('${c.foto}')"></div>`
+               : `<div class="avatar">${esc((c.nombre||'?').split(/\s+/).slice(0,2).map(x=>x[0]||'').join('').toUpperCase())}</div>`}
+      <div class="grow">
+        <div style="font-weight:700;font-size:15px">${esc(c.nombre)}</div>
+        <div class="muted">${esc(c.micro||'sin micro-zona')} · ${esc(c.zona)} · ${c.radio||500} m</div>
+      </div>
+      ${c.verificado ? '<span class="verif">verificado</span>'
+        : c.anulado ? '<span class="pend">anulado</span>' : '<span class="pend">pendiente</span>'}
+    </div>
+    <div style="margin-top:9px">
+      <div class="campo"><span>Código</span><span class="cod">${esc(c.codigo||'—')}</span></div>
+      <div class="campo"><span>Celular</span><span>${esc(c.tel)}</span></div>
+      <div class="campo"><span>Rol</span><span>${esc(c.rol||'—')}</span></div>
+      ${c.nota ? `<div class="campo"><span>Nota</span><span>${esc(c.nota)}</span></div>` : ''}
+      ${c.email ? `<div class="campo"><span>Correo</span><span>${esc(c.email)}</span></div>` : ''}
+      <div class="campo"><span>Inscrito</span><span>${hace(c.creado)}</span></div>
+    </div>
+    <div class="acc">
+      <a class="btn wa" href="https://wa.me/${wa}?text=${msg}" target="_blank" rel="noopener">WhatsApp</a>
+      ${!c.verificado && !c.anulado ? `<button class="btn green" data-ok="${c.id}">Autorizar</button>` : ''}
+      ${!c.anulado ? `<button class="btn flat" data-no="${c.id}">Anular</button>` : ''}
+    </div>
+  </div>`;
+}
+
+async function cargar(){
+  const {data, error} = await db.from('coordinadores').select('*').order('creado',{ascending:false});
+  if(error) return toast('No se pudo leer: '+error.message);
+  const pend = data.filter(c=>!c.verificado && !c.anulado);
+  const ok   = data.filter(c=> c.verificado && !c.anulado);
+  const nul  = data.filter(c=> c.anulado);
+  $('#tot').innerHTML = `
+    <div class="kpi"><b style="color:#d97706">${pend.length}</b><span>esperando</span></div>
+    <div class="kpi"><b style="color:#3f8f5f">${ok.length}</b><span>autorizados</span></div>
+    <div class="kpi"><b>${nul.length}</b><span>anulados</span></div>`;
+  $('#pendientes').innerHTML = pend.map(c=>tarjeta(c,'pend')).join('')
+    || '<p class="muted">Nadie esperando. Todo al día.</p>';
+  $('#listos').innerHTML = ok.map(c=>tarjeta(c,'ok')).join('')
+    || '<p class="muted">Todavía no hay coordinadores autorizados.</p>';
+  $('#anulados').innerHTML = nul.map(c=>tarjeta(c,'nul')).join('')
+    || '<p class="muted">Ninguno.</p>';
+}
+
+document.addEventListener('click', async e=>{
+  const ok = e.target.closest('[data-ok]'), no = e.target.closest('[data-no]');
+  if(ok){
+    ok.disabled = true; ok.textContent = 'Autorizando…';
+    const {error} = await db.from('coordinadores').update({verificado:true}).eq('id', ok.dataset.ok);
+    toast(error ? 'No se pudo: '+error.message : 'Autorizado. Ya aparece con el sello verde.');
+    cargar();
+  }
+  if(no){
+    const {error} = await db.from('coordinadores').update({anulado:true}).eq('id', no.dataset.no);
+    toast(error ? 'No se pudo: '+error.message : 'Anulado.');
+    cargar();
+  }
+});
+
+/* ---------- arranque ---------- */
+async function arrancar(){
+  const {data:{session}} = await db.auth.getSession();
+  if(!session){ $('#login').hidden = false; return; }
+  $('#panel').hidden = false;
+  $('#quien').textContent = session.user.email;
+  await cargar();
+  // se actualiza solo cuando alguien nuevo se inscribe
+  db.channel('admin').on('postgres_changes',
+    {event:'*', schema:'public', table:'coordinadores'}, cargar).subscribe();
+}
+db.auth.onAuthStateChange(()=>{ if(!$('#panel').hidden) return; location.hash=''; arrancar(); });
+arrancar();
+</script>
+</body>
+</html>
