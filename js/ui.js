@@ -1,0 +1,241 @@
+/* ============================================================
+/* ---------- delegación de eventos en la hoja ---------- */
+$('#sheet-body').addEventListener('click', e=>{
+  const g=e.target.closest('[data-gps]');
+  if(g) return pickerGPS(g.dataset.gps);
+  const t=e.target.closest('[data-new],[data-deliv],[data-coord],[data-ent],[data-close-btn]');
+  if(!t) return;
+  if(t.hasAttribute('data-close-btn')) return cerrarSheet();
+  if(t.dataset.new) return abrirReporte(t.dataset.new);
+  if(t.dataset.deliv) return abrirEntrega(t.dataset.deliv);
+  if(t.dataset.coord) return abrirCoord(t.dataset.coord);
+  if(t.dataset.ent) return abrirEntrega(t.dataset.z, t.dataset.ent);
+});
+
+/* focos y "hacerme cargo" funcionan igual dentro de la hoja o en la lista general */
+const xy = s => s.split(',').map(Number);
+document.addEventListener('click', e=>{
+  const cp = e.target.closest('[data-coordpt]');
+  if(cp){ const [la,lo]=xy(cp.dataset.coordpt); return abrirCoord(zonaDe(la,lo).id,{lat:la,lng:lo}); }
+
+  const np = e.target.closest('[data-newpt]');
+  if(np){ const [la,lo]=xy(np.dataset.newpt);
+    return abrirReporte(zonaDe(la,lo).id, {z:zonaDe(la,lo).id, lat:la, lng:lo}, np.dataset.ref||''); }
+
+  const dp = e.target.closest('[data-delivpt]');
+  if(dp){ const [la,lo]=xy(dp.dataset.delivpt);
+    return abrirEntrega(zonaDe(la,lo).id, dp.dataset.k||null, {z:zonaDe(la,lo).id, lat:la, lng:lo}); }
+
+  const zb = e.target.closest('[data-zona]');
+  if(zb) return abrirZona(zb.dataset.zona);
+
+  const fp = e.target.closest('[data-focopt]');
+  if(fp){ const [la,lo]=xy(fp.dataset.focopt); return abrirFoco(zonaDe(la,lo).id, la, lo); }
+
+  const vp = e.target.closest('[data-verpt],[data-foco]');
+  if(vp && map && !modoSVG){
+    const [la,lo] = xy(vp.dataset.verpt || vp.dataset.foco);
+    cerrarSheet();
+    document.querySelector('nav button[data-v="map"]').click();
+    map.flyTo([la,lo], 16.5, {duration:.8});
+    toast('Enfocado en el punto');
+  }
+});
+
+/* ---------- vistas ---------- */
+let filtro='todas';
+document.querySelectorAll('#filtros button').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('#filtros button').forEach(x=>x.classList.toggle('on',x===b));
+  filtro=b.dataset.f; render();
+});
+
+function render(){
+  pintarMapa();
+  const todos = ZONAS.map(estadoZona);
+
+  // KPIs
+  const conRep = todos.filter(s=>s.lista.length);
+  const criticas = todos.filter(s=>s.idx>=60).length;
+  const sinNada = todos.filter(s=>s.lista.length && !s.ultEnt).length;
+  const personas = todos.reduce((a,s)=>a+s.pend.reduce((x,p)=>x+p.personas,0),0);
+  const orf = huerfanos();
+  $('#kpis').innerHTML = `
+    <div class="kpi"><b style="color:#dc2626">${criticas}</b><span>zonas críticas</span></div>
+    <div class="kpi"><b style="color:#8b1a1a">${orf.length}</b><span>puntos sin coordinador</span></div>
+    <div class="kpi"><b>${personas.toLocaleString('es-CO')}</b><span>personas sin cubrir</span></div>`;
+  const secO=$('#sec-orf'), secS=$('#sec-solo');
+  if(secO) secO.innerHTML = ico('alert')+' Puntos sin nadie a cargo';
+  if(secS) secS.innerHTML = ico('user')+' Sectores con una sola persona';
+  $('#lista-orf').innerHTML = orf.length ? orf.slice(0,12).map(f=>`
+    <div class="foco orf" data-focopt="${f.lat},${f.lng}">
+      <div class="row">
+        <div class="fbadge" style="background:${UCOL[f.u]}">${f.n}</div>
+        <div class="grow">
+          <div style="font-size:14px;font-weight:600">${esc(f.ref||'Punto sin nombre')}</div>
+          <div class="cnt">${esc(f.zona.n)}${f.zona.t==='corregimiento'?' (rural)':''} ·
+            ${f.n} reporte${f.n>1?'s':''}${f.personas?` · ~${f.personas} personas`:''}</div>
+        </div>
+        <span class="lnk" data-coordpt="${f.lat},${f.lng}">Hacerme cargo</span>
+      </div>
+      <div>${f.needs.slice(0,4).map(x=>`<span class="chip ${x.u===3?'u3':x.u===2?'u2':''}">${esc(NEED[x.k]?.n||x.k)}${x.n>1?` ×${x.n}`:''}</span>`).join('')}</div>
+    </div>`).join('') : '<p class="muted">Todos los puntos reportados tienen alguien a cargo.</p>';
+
+  // lista de zonas
+  let lz = todos.filter(s=>s.lista.length).sort((a,b)=>b.idx-a.idx);
+  if(filtro==='comuna') lz=lz.filter(s=>s.z.t==='comuna');
+  if(filtro==='corregimiento') lz=lz.filter(s=>s.z.t==='corregimiento');
+  if(filtro==='critica') lz=lz.filter(s=>s.idx>=60);
+  $('#lista-zonas').innerHTML = lz.map((s,i)=>`
+    <div class="card" data-zona="${s.z.id}" style="cursor:pointer">
+      <div class="row">
+        <div class="rank" style="background:${color(s.idx)};color:#fff">${s.idx}</div>
+        <div class="grow">
+          <div class="row"><h3 class="grow trunc">${esc(s.z.n)}</h3>
+            <span class="muted">${etiqueta(s.idx)}</span></div>
+          <div class="muted">${s.z.t==='corregimiento'?'Rural · ':''}última ayuda ${hace(s.ultEnt)} ·
+            ${s.nCoord} coordinador${s.nCoord===1?'':'es'}</div>
+        </div>
+      </div>
+      <div class="bar"><span style="width:${s.idx}%;background:${color(s.idx)}"></span></div>
+      <div>${s.pend.slice(0,5).map(p=>`<span class="chip ${p.u===3?'u3':p.u===2?'u2':''}">${esc(NEED[p.k]?.n||p.k)}${p.corrob>1?` ×${p.corrob}`:''}${p.subio?' ↑':''}</span>`).join('')}
+      ${s.pend.length>5?`<span class="chip">+${s.pend.length-5} más</span>`:''}</div>
+    </div>`).join('') || '<p class="muted">Sin zonas en este filtro.</p>';
+  document.querySelectorAll('#lista-zonas .card').forEach(c=>c.onclick=()=>abrirZona(c.dataset.zona));
+
+  // sectores con una sola persona
+  const sol = solitarios();
+  $('#lista-solo').innerHTML = sol.length ? sol.slice(0,10).map(f=>`
+    <div class="foco" data-focopt="${f.lat},${f.lng}" style="border-color:#7c4a10;background:rgba(217,119,6,.07)">
+      <div class="row">
+        <div class="fbadge" style="background:${UCOL[f.u]}">${f.n}</div>
+        <div class="grow">
+          <div style="font-size:14px;font-weight:600">${esc(f.ref||'Punto sin nombre')}</div>
+          <div class="cnt">${esc(f.zona.n)} · solo <b>${esc(f.solo.nom)}</b> a cargo</div>
+        </div>
+        <span class="lnk" data-coordpt="${f.lat},${f.lng}">Sumarme</span>
+      </div>
+    </div>`).join('') : '<p class="muted">Ningún sector depende de una sola persona.</p>';
+
+  // reparto de la carga entre personas
+  const pers = porPersona();
+  $('#lista-personas').innerHTML = pers.map(p=>`
+    <div class="need-line">
+      ${avatar(p)}
+      <div class="grow">
+        <div style="font-size:14px">${esc(p.nom)}
+          ${p.ver?'<span class="verif">verificado</span>':'<span class="pend">sin verificar</span>'}
+          ${p.exceso?'<span class="pend">carga alta</span>':''}</div>
+        <div class="cnt">${p.n} micro-zona${p.n>1?'s':''} · ${p.entregas} entrega${p.entregas===1?'':'s'} registrada${p.entregas===1?'':'s'}
+          · ${p.zonas.map(c=>esc(c.micro||ZONAS.find(z=>z.id===c.z)?.n||'')).join(', ')}</div>
+      </div>
+      <div class="bar" style="width:52px;margin:0;flex:0 0 auto"><span
+        style="width:${Math.min(100, p.n/Math.max(1,pers[0].n)*100)}%;background:${p.exceso?'#d97706':'#4f9cf9'}"></span></div>
+    </div>`).join('') || '<p class="muted">Sin coordinadores todavía.</p>';
+
+  // coordinadores
+  const byZone = {};
+  S.coords.forEach(c=>(byZone[c.z]=byZone[c.z]||[]).push(c));
+  $('#lista-coord').innerHTML = Object.keys(byZone).map(z=>{
+    const zn = ZONAS.find(x=>x.id===z)?.n||z;
+    return `<div class="card"><h3>${esc(zn)}</h3>${byZone[z].map(c=>`
+      <div class="need-line">
+        ${avatar(c)}
+        <div class="grow">
+          <div style="font-size:14px">${esc(c.nom)} ${c.ver?'<span class="verif">verificado</span>':'<span class="pend">sin verificar</span>'}</div>
+          <div class="cnt">${esc(c.micro||'sin micro-zona')} · ${c.radio||500} m · ${esc(c.rol)}${c.nota?' · '+esc(c.nota):''}</div>
+        </div>
+        <a class="mini" href="${waLink(c.tel)}" target="_blank" rel="noopener">WhatsApp</a>
+      </div>`).join('')}</div>`;
+  }).join('') || '<p class="muted">Todavía no hay coordinadores.</p>';
+
+  // entregas
+  $('#lista-entregas').innerHTML = S.entregas.slice().sort((a,b)=>b.ts-a.ts).slice(0,15).map(e=>`
+    <div class="need-line">
+      <span class="dot" style="background:#3f8f5f"></span>
+      <div class="grow"><div style="font-size:13.5px">${esc(NEED[e.k]?.n||e.k)} → ${esc(ZONAS.find(z=>z.id===e.z)?.n||e.z)}</div>
+      <div class="cnt">${esc(e.quien)}${e.cant?' · '+esc(e.cant):''} · ${hace(e.ts)}</div></div>
+    </div>`).join('') || '<p class="muted">Sin entregas registradas.</p>';
+}
+
+/* ---------- soporte de la app por WhatsApp ---------- */
+const TIPOS_SOPORTE = [
+  'No me deja reportar una necesidad',
+  'El mapa no carga o no encuentro mi sitio',
+  'No me llegó el código de verificación',
+  'Un dato está mal o es falso',
+  'Sugerencia para mejorar la app',
+  'Otro problema',
+];
+function abrirSoporte(){
+  abrirSheet(`
+    <div class="zhead">
+      <div class="row">
+        <div class="rank" style="background:#233149;color:#8ec1ff">${ico('help')}</div>
+        <div class="grow">
+          <h3 style="margin:0">Soporte de Aquí&nbsp;Estamos</h3>
+          <div class="muted">Escríbanos por WhatsApp y lo revisamos.</div>
+        </div>
+      </div>
+    </div>
+    <div class="sec">¿Qué pasó?</div>
+    <div class="opts" id="s-tipos">
+      ${TIPOS_SOPORTE.map((t,i)=>`<button type="button" class="opt ${i===0?'sel':''}" data-t="${esc(t)}">${esc(t)}</button>`).join('')}
+    </div>
+    <label class="f">Cuéntenos con sus palabras (opcional)</label>
+    <textarea id="s-txt" placeholder="Ej: toco el botón de enviar y no pasa nada"></textarea>
+    <a class="btn wa" id="s-send" target="_blank" rel="noopener" href="#">
+      ${icoWA()} Abrir WhatsApp y enviar</a>
+    <p class="muted" style="margin-top:10px">Se abre WhatsApp con el mensaje ya escrito.
+      Solo tiene que darle enviar.</p>
+    <button class="btn flat" data-close-btn>Cerrar</button>
+  `);
+  let tipo = TIPOS_SOPORTE[0];
+  const armar = ()=>{
+    const extra = $('#s-txt').value.trim();
+    const ctx = `\n\n---\nZona del pin: ${mainPt ? (ZONAS.find(z=>z.id===mainPt.z)?.n || '-') : '-'}`;
+    $('#s-send').href = waLink(SOPORTE_WA,
+      `Aquí Estamos — reporte de la app\nTipo: ${tipo}` + (extra ? `\nDetalle: ${extra}` : '') + ctx);
+  };
+  $('#s-tipos').onclick = e=>{
+    const b = e.target.closest('.opt'); if(!b) return;
+    $('#sheet-body').querySelectorAll('#s-tipos .opt').forEach(x=>x.classList.toggle('sel', x===b));
+    tipo = b.dataset.t; armar();
+  };
+  $('#s-txt').oninput = armar;
+  armar();
+}
+$('#btn-soporte').onclick = abrirSoporte;
+$('#btn-soporte .fic').innerHTML = ico('help');
+
+/* ---------- acciones globales ---------- */
+$('#fab-need').onclick = ()=>{
+  const pt = mainPt || ptDe('centro');
+  abrirReporte(pt.z, pt);
+};
+$('#fab-loc').onclick = ()=>{
+  if(!navigator.geolocation) return toast('Este dispositivo no da ubicación');
+  toast('Buscando su ubicación...');
+  navigator.geolocation.getCurrentPosition(p=>{
+    const {latitude:la, longitude:lo} = p.coords;
+    if(map){ map.setView([la,lo], 16); setMainPt(la,lo); toast('Pin puesto donde está'); }
+    else abrirReporte(zonaDe(la,lo).id);
+  }, ()=>toast('No se pudo obtener la ubicación'), {enableHighAccuracy:true, timeout:9000});
+};
+$('#btn-add-coord').onclick = ()=>{ const pt = mainPt || ptDe('centro'); abrirCoord(pt.z, pt); };
+$('#btn-demo').onclick = ()=>{ demo(); render(); toast('Datos de demostración recargados'); };
+$('#btn-export').onclick = ()=>{
+  const blob = new Blob([JSON.stringify({zonas:ZONAS, ...S}, null, 2)], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = 'aqui-estamos.json'; a.click();
+  toast('Datos exportados');
+};
+
+initMainPin();
+render();
+iniciarDatos().then(ok=>{
+  const b = document.getElementById('btn-demo');
+  if(ok && b) b.style.display = 'none';       // sin datos de mentira cuando ya hay datos reales
+  if(!ok){ const e=document.getElementById('estado');
+    if(e){ e.className='estado demo'; e.textContent='Modo demostración · los datos no se comparten'; } }
+});
+setTimeout(()=>{ if(map) map.invalidateSize(); }, 300);
