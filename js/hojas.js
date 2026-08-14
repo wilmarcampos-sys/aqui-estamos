@@ -432,58 +432,163 @@ function abrirEntrega(zid, kfijo, pt){
   };
 }
 
-/* ---------- inscripción de coordinador ----------
-   Ya no se piden nombre, celular ni foto aquí: eso vive en la cuenta.
-   Esta pantalla solo pregunta lo que cambia de un sector a otro.
-   Menos campos, menos errores, y el registro no se pierde nunca.     */
+
+/* ---------- INSCRIBIRSE COMO COORDINADOR ----------
+   Una sola pantalla. Primero lo útil: dónde va a estar y cómo se llama
+   ese sector. Debajo, lo mínimo para que el registro sea suyo y lo pueda
+   recuperar: celular y un PIN.
+
+   Rol, radio y nota salían aquí y ya no: son cosas que se ajustan después,
+   con calma, desde Mi cuenta. Pedirlas de entrada era la razón por la que
+   inscribirse se sentía un trámite.
+
+   La verificación tampoco es un paso: la persona queda inscrita y en el
+   mapa de una. El sello verde llega después.                            */
 function abrirCoord(zid, pt, zExist){
-  if(!YO) return abrirCuenta(()=>abrirCoord(zid, pt, zExist));
+  if(zExist) return editarMicroZona(zExist);
+  zid = zid || (typeof mainPt !== 'undefined' && mainPt ? mainPt.z : 'centro');
 
-  const ed = zExist || null;
   abrirSheet(`
-    <h3>${ed ? 'Corregir mi micro-zona' : 'Cubrir una micro-zona'}</h3>
+    <h3>Hacerme cargo de un sector</h3>
     <p class="muted">No se coordina una comuna entera: se coordina un sector.
-      Ponga el pin donde va a estar y elija hasta dónde alcanza a cubrir.
-      Todo queda visible públicamente.</p>
-
-    <div class="ptline">
-      <div class="row">
-        ${avatar({foto:YO.foto, nombre:YO.nombre})}
-        <div class="grow">
-          <div style="font-weight:700">${esc(YO.nombre)}</div>
-          <div class="muted">${esc(telBonito(YO.tel))}</div>
-        </div>
-        <button class="mini" id="c-cuenta">Cambiar</button>
-      </div>
-    </div>
+      Ponga el pin donde va a estar. Todo queda visible públicamente.</p>
 
     ${pickerHTML('c-map', zid)}
-    <label class="f" for="c-micro">Nombre del sector que va a cubrir</label>
-    <input id="c-micro" placeholder="Ej: Ciudad Jardín, Manzana 12, La Playita"
-           value="${ed ? esc(ed.micro||'') : ''}">
+    <label class="f" for="c-micro">¿Cómo le dicen a ese sector?</label>
+    <input id="c-micro" placeholder="Ej: Ciudad Jardín, Manzana 12, La Playita">
+    <div class="telhint">Con el nombre que usa la gente del barrio, no el oficial.</div>
 
-    <div class="sec">Radio de cobertura</div>
+    ${YO ? `
+      <div class="ptline" style="margin-top:14px">
+        <div class="row">
+          ${avatar({foto:YO.foto, nombre:YO.nombre})}
+          <div class="grow">
+            <div style="font-weight:700">${esc(YO.nombre)}</div>
+            <div class="muted">${esc(telBonito(YO.tel))}</div>
+          </div>
+          <button class="mini" id="c-cuenta">Mi cuenta</button>
+        </div>
+      </div>`
+    : `
+      <div class="sec">Para que el registro sea suyo</div>
+      <p class="muted" style="margin:0 0 4px">Con su celular y un PIN vuelve a entrar
+        desde cualquier teléfono y corrige lo suyo. Si ya se inscribió antes, escriba
+        los mismos y entra derecho.</p>
+      <label class="f" for="c-nom">Su nombre completo</label>
+      <input id="c-nom" placeholder="Como lo conoce la comunidad" autocomplete="name">
+      ${campoTel('c-tel1', 'Su celular de WhatsApp', 'Diez dígitos, empieza por 3.')}
+      ${campoTel('c-tel2', 'Escríbalo otra vez', 'Es por donde lo va a buscar la gente.')}
+      ${campoPin('c-pin1', 'Un PIN que solo usted sepa', 'Cuatro números.')}
+      ${campoPin('c-pin2', 'Repita el PIN', 'Los dos tienen que ser iguales.')}`}
+
+    <button class="btn" id="c-next">Inscribirme en este sector</button>
+    <button class="btn flat" data-close-btn>Cancelar</button>
+  `);
+
+  pickerInit('c-map', zid, pt || ptDe(zid));
+
+  if(YO){
+    $('#c-cuenta').onclick = ()=>abrirMiCuenta();
+  } else {
+    const revisar = ()=>{
+      const d1 = telCrudo('c-tel1'), d2 = telCrudo('c-tel2');
+      if(!d1.length) pista('c-tel1','','Diez dígitos, empieza por 3.');
+      else if(telOK(d1)) pista('c-tel1','ok','Le va a llegar el WhatsApp a <b>'+telBonito('57'+d1)+'</b>');
+      else pista('c-tel1','bad','Faltan dígitos. En Colombia son 10 y empieza por 3.');
+      if(!d2.length) pista('c-tel2','','Es por donde lo va a buscar la gente.');
+      else if(d2 === d1 && telOK(d1)) pista('c-tel2','ok','Los dos números coinciden.');
+      else pista('c-tel2','bad','No coincide con el de arriba.');
+    };
+    telVivo('c-tel1', revisar); telVivo('c-tel2', revisar);
+    const revisarPin = ()=>{
+      const p1 = $('#c-pin1').value, p2 = $('#c-pin2').value;
+      if(!p1.length) pista('c-pin1','','Cuatro números.');
+      else if(/^\d{4,6}$/.test(p1)) pista('c-pin1','ok','PIN válido.');
+      else pista('c-pin1','bad','Solo números, entre 4 y 6.');
+      if(!p2.length) pista('c-pin2','','Los dos tienen que ser iguales.');
+      else if(p1 === p2) pista('c-pin2','ok','Los dos PIN coinciden.');
+      else pista('c-pin2','bad','No coincide con el de arriba.');
+    };
+    $('#c-pin1').oninput = revisarPin; $('#c-pin2').oninput = revisarPin;
+  }
+
+  $('#c-next').onclick = async (e)=>{
+    const micro = $('#c-micro').value.trim();
+    if(!micro){ $('#c-micro').focus(); return toast('Póngale nombre al sector: así lo reconoce la gente.'); }
+
+    if(!YO){
+      const nom = $('#c-nom').value.trim();
+      const d1 = telCrudo('c-tel1'), d2 = telCrudo('c-tel2');
+      const p1 = $('#c-pin1').value, p2 = $('#c-pin2').value;
+      if(nom.length < 3){ $('#c-nom').focus(); return toast('Escriba su nombre completo.'); }
+      if(!telOK(d1)){ $('#c-tel1').focus(); return toast('Revise el celular.'); }
+      if(d1 !== d2){ $('#c-tel2').focus(); return toast('Los dos celulares no coinciden.'); }
+      if(!/^\d{4,6}$/.test(p1)){ $('#c-pin1').focus(); return toast('El PIN son 4 números.'); }
+      if(p1 !== p2){ $('#c-pin2').focus(); return toast('Los dos PIN no coinciden.'); }
+
+      const ok = await conEspera(e.target, 'Inscribiendo…', async ()=>{
+        let r = await rpc('ae_registrar', {p_tel:'57'+d1, p_pin:p1, p_nombre:nom, p_foto:''});
+        // Si ya tenía cuenta, el mismo PIN la abre: no hay que devolverlo a otra pantalla.
+        if(!r.ok && r.ya_existe) r = await rpc('ae_entrar', {p_tel:'57'+d1, p_pin:p1});
+        if(!r.ok){ toast(r.error); return false; }
+        await sesionAbrir(r);
+        return true;
+      });
+      if(!ok) return;
+    }
+
+    const p = pickerVal('c-map');
+    const r = await conEspera(e.target, 'Guardando…', ()=>rpc('ae_guardar_zona', {
+      p_token: YO.token, p_id: null,
+      p_zona: p.z, p_micro: micro, p_radio: 500,
+      p_lat: p.lat, p_lng: p.lng,
+      p_rol: 'Vecino de la zona', p_nota: '',
+    }));
+    if(!r.ok) return toast(r.error);
+
+    await yoCargar(); await dbCargar(); render();
+    cerrarSheet();
+    toast('Listo. Ya aparece a cargo de ' + micro + '.');
+    abrirMiCuenta();
+  };
+}
+
+/* ---------- AJUSTAR UNA MICRO-ZONA PROPIA ----------
+   Aquí sí van el radio, el rol y la nota: son decisiones que se toman con
+   calma, después, y no tienen por qué frenar a alguien que se está
+   inscribiendo con el barrio encima.                                    */
+function editarMicroZona(z){
+  if(!YO) return abrirCuenta();
+  abrirSheet(`
+    <h3>Ajustar mi sector</h3>
+    <p class="muted">Todo esto lo puede cambiar cuantas veces quiera.</p>
+
+    ${pickerHTML('c-map', z.zona)}
+    <label class="f" for="c-micro">¿Cómo le dicen a ese sector?</label>
+    <input id="c-micro" value="${esc(z.micro||'')}" placeholder="Ej: Ciudad Jardín, Manzana 12">
+
+    <div class="sec">Hasta dónde alcanza a cubrir</div>
     <p class="muted" style="margin:0 0 7px">Entre más pequeño, mejor. Una comuna entera no la
       atiende una sola persona; varios coordinadores con radios pequeños funcionan mucho mejor.</p>
     <div class="urg" id="c-radio">
-      ${RADIOS.map(r=>`<button data-r="${r}" class="${r===(ed?ed.radio:500)?'sel':''}">${r} m</button>`).join('')}
+      ${RADIOS.map(r=>`<button data-r="${r}" class="${r===(z.radio||500)?'sel':''}">${r} m</button>`).join('')}
     </div>
 
     <label class="f" for="c-rol">Rol</label>
     <select id="c-rol">
-      ${['Líder comunal / JAC','Vecino de la zona','Organización / fundación',
+      ${['Vecino de la zona','Líder comunal / JAC','Organización / fundación',
          'Entidad pública','Voluntariado','Empresa donante']
-        .map(o=>`<option${ed && ed.rol===o?' selected':''}>${o}</option>`).join('')}
+        .map(o=>`<option${z.rol===o?' selected':''}>${o}</option>`).join('')}
     </select>
 
     <label class="f" for="c-nota">Nota pública (dónde lo encuentran, horario)</label>
-    <textarea id="c-nota" placeholder="Ej: punto fijo en la cancha, 7am a 7pm">${ed ? esc(ed.nota||'') : ''}</textarea>
+    <textarea id="c-nota" placeholder="Ej: punto fijo en la cancha, 7am a 7pm">${esc(z.nota||'')}</textarea>
 
-    <button class="btn" id="c-next">${ed ? 'Guardar cambios' : 'Inscribirme en este sector'}</button>
-    <button class="btn flat" data-close-btn>Cancelar</button>
+    <button class="btn" id="c-next">Guardar cambios</button>
+    <button class="btn flat" id="c-volver">Volver</button>
   `);
 
-  let radio = ed ? (ed.radio || 500) : 500, circ = null;
+  let radio = z.radio || 500, circ = null;
   const dibujarRadio = (la, lo)=>{
     if(modoSVG || !pickMap) return;
     const c = (la != null) ? [la, lo] : pickMk.getLatLng();
@@ -491,10 +596,8 @@ function abrirCoord(zid, pt, zExist){
     else circ = L.circle(c, {radius:radio, color:'#4f9cf9', weight:2,
       fillColor:'#4f9cf9', fillOpacity:.16, interactive:false}).addTo(pickMap);
   };
-  pickerInit('c-map', zid, pt || (ed ? {lat:ed.lat, lng:ed.lng} : null) || ptDe(zid), dibujarRadio);
+  pickerInit('c-map', z.zona, {lat:z.lat, lng:z.lng}, dibujarRadio);
   if(pickMap) setTimeout(()=>{ if(circ) pickMap.fitBounds(circ.getBounds().pad(0.3)); }, 260);
-
-  $('#c-cuenta').onclick = ()=>abrirMiCuenta();
 
   const btns = $('#sheet-body').querySelectorAll('#c-radio button');
   btns.forEach(b=>b.onclick = ()=>{
@@ -503,50 +606,20 @@ function abrirCoord(zid, pt, zExist){
     radio = +b.dataset.r; dibujarRadio();
   });
 
+  $('#c-volver').onclick = ()=>abrirMiCuenta();
   $('#c-next').onclick = async (e)=>{
-    const p = pickerVal('c-map');
     const micro = $('#c-micro').value.trim();
-    if(!micro){ $('#c-micro').focus(); return toast('Póngale nombre al sector: así lo reconoce la gente.'); }
-
+    if(!micro){ $('#c-micro').focus(); return toast('Póngale nombre al sector.'); }
+    const p = pickerVal('c-map');
     const r = await conEspera(e.target, 'Guardando…', ()=>rpc('ae_guardar_zona', {
-      p_token: YO.token, p_id: ed ? ed.id : null,
+      p_token: YO.token, p_id: z.id,
       p_zona: p.z, p_micro: micro, p_radio: radio,
       p_lat: p.lat, p_lng: p.lng,
       p_rol: $('#c-rol').value, p_nota: $('#c-nota').value.trim(),
     }));
     if(!r.ok) return toast(r.error);
-
     await yoCargar(); await dbCargar(); render();
-    if(ed){ toast('Corregido.'); return abrirMiCuenta(); }
-
-    const n = (YO.zonas || []).length;
-    confirmar(r.codigo, micro, n);
+    toast('Guardado.');
+    abrirMiCuenta();
   };
-}
-
-/* ---- CONFIRMACIÓN ----
-   La inscripción ya quedó guardada y la persona ya tiene cuenta: si cierra
-   esta pantalla no pierde nada. El código sirve para que la coordinación
-   confirme por WhatsApp que ese número es de verdad suyo.               */
-function confirmar(codigo, micro, cuantas){
-  const texto = `${codigo}\nSoy ${YO.nombre} y coordino ${micro} en Aquí Estamos.`;
-  abrirSheet(`
-    <h3>Ya quedó inscrito</h3>
-    <p class="muted">Su sector ya aparece en el mapa. Falta un paso para que salga
-      con el sello verde: que confirmemos que ese WhatsApp es suyo.</p>
-
-    <div class="codebox">${esc(codigo || '—')}</div>
-
-    <a class="btn wa" target="_blank" rel="noopener"
-       href="${waLink(CONFIG.WHATSAPP_SOPORTE, texto)}">${icoWA()} Enviar el código por WhatsApp</a>
-    <p class="muted" style="margin:9px 0 0">Se abre el chat con el mensaje ya escrito.
-      Solo dele <b>enviar</b>. Recibirlo desde su número es la prueba de que es suyo.</p>
-
-    <button class="btn flat" id="f-mias">Ver mis micro-zonas</button>
-    <button class="btn flat" data-close-btn>Listo, cerrar</button>
-
-    ${cuantas >= MAX_MICRO ? `<div class="avisoej" style="margin-top:12px">Ya cubre ${cuantas} sectores.
-      Busque quién le ayude: es mejor tres personas con un sector cada una que una con tres.</div>` : ''}
-  `);
-  $('#f-mias').onclick = ()=>abrirMiCuenta();
 }
