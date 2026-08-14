@@ -1,5 +1,5 @@
 -- ============================================================
---  FLASH HELP · esquema de base de datos (Supabase / Postgres)
+--  AQUÍ ESTAMOS · esquema de base de datos (Supabase / Postgres)
 --  Pegue TODO este archivo en Supabase → SQL Editor → Run.
 --  Es idempotente: se puede volver a correr sin romper nada.
 -- ============================================================
@@ -149,6 +149,14 @@ alter table reportes      enable row level security;
 alter table entregas      enable row level security;
 alter table coordinadores enable row level security;
 
+-- Permisos explícitos sobre las tablas. Así el esquema funciona aunque en
+-- Supabase se deje DESACTIVADO "Automatically expose new tables", que es lo
+-- que ellos mismos recomiendan. Note que NO se concede update ni delete.
+grant usage on schema public to anon, authenticated;
+grant select, insert on reportes      to anon, authenticated;
+grant select, insert on entregas      to anon, authenticated;
+grant select, insert on coordinadores to anon, authenticated;
+
 drop policy if exists p_rep_leer  on reportes;
 drop policy if exists p_rep_crear on reportes;
 create policy p_rep_leer  on reportes for select to anon, authenticated using (true);
@@ -182,6 +190,15 @@ revoke all on function verificar_coordinador(text, text) from anon, authenticate
 -- ------------------------------------------------------------
 -- 4. TIEMPO REAL
 -- ------------------------------------------------------------
-alter publication supabase_realtime add table reportes;
-alter publication supabase_realtime add table entregas;
-alter publication supabase_realtime add table coordinadores;
+-- Idempotente: no falla si el esquema se vuelve a correr.
+do $$
+declare t text;
+begin
+  foreach t in array array['reportes','entregas','coordinadores'] loop
+    if not exists (select 1 from pg_publication_tables
+                    where pubname = 'supabase_realtime'
+                      and schemaname = 'public' and tablename = t) then
+      execute format('alter publication supabase_realtime add table public.%I', t);
+    end if;
+  end loop;
+end $$;
