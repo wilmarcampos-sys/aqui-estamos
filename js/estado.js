@@ -20,8 +20,10 @@ const DEVICE = (()=>{ try{
   return v;
 }catch(e){ return uid()+uid()+uid(); } })();
 
-/* --- freno del lado del celular (el otro freno está en la base) --- */
-const LIMITES = {reportes:{n:15, ms:600e3}, entregas:{n:30, ms:600e3}, coordinadores:{n:4, ms:3600e3}};
+/* --- freno del lado del celular (el otro freno está en la base) ---
+   Coordinadores no está aquí: eso ya no se inserta desde el navegador,
+   pasa por ae_guardar_zona, que lleva su propio freno por cuenta. */
+const LIMITES = {reportes:{n:15, ms:600e3}, entregas:{n:30, ms:600e3}};
 function permitido(tabla){
   const L = LIMITES[tabla]; if(!L) return true;
   try{
@@ -162,7 +164,6 @@ async function iniciarDatos(){
   try{
     db = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY, {
       realtime:{params:{eventsPerSecond:3}},
-      global:{headers:{'x-aparato': DEVICE}},   // para poder corregir lo propio
     });
     EN_LINEA = true;
     S = {reportes:[], entregas:[], coords:[]};   // fuera los datos de demostración

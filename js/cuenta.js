@@ -6,8 +6,15 @@
    vuelve a entrar desde cualquier teléfono y arregla lo suyo sin
    tener que pedirle permiso a nadie.
 
-   El PIN nunca viaja ni se guarda como texto: el servidor lo cifra.
-   Ni el administrador puede verlo.
+   El PIN nunca viaja ni se guarda como texto: el servidor lo cifra
+   con bcrypt. Ni el administrador puede verlo. Y entrar tiene freno:
+   a los 5 intentos malos la cuenta se cierra por un rato que va
+   creciendo, porque un PIN de 4 números son solo 10.000 combinaciones.
+
+   Con señal mala: lo último que se supo de la cuenta queda guardado
+   aquí, así que la app sigue sabiendo quién es usted aunque no haya
+   red. Lo que sí exige conexión es inscribirse, corregir y retirarse
+   — eso vive en el servidor y no se puede adivinar desde el teléfono.
    ============================================================ */
 
 const SESION_K = 'ae_sesion_v1';
@@ -25,6 +32,14 @@ function sesionBorrar(){
   YO = null;
 }
 
+/* Lo guardado se usa de una, antes de preguntarle a nadie. Si la red está
+   mala la app no puede quedarse en blanco fingiendo que usted no existe. */
+YO = (()=>{
+  const s = sesionLeer();
+  if(!s || !s.token) return null;
+  return {token:s.token, tel:s.tel||'', nombre:s.nombre||'', foto:s.foto||'', zonas:s.zonas||[]};
+})();
+
 /* ---------- hablar con el servidor ---------- */
 async function rpc(fn, args){
   if(!EN_LINEA) return {ok:false, error:'Sin señal. Inténtelo cuando vuelva la conexión.'};
@@ -37,23 +52,29 @@ async function rpc(fn, args){
   }
 }
 
-/* Trae lo mío desde el servidor. Si la sesión venció, la borra en silencio. */
+/* Trae lo mío desde el servidor y lo deja guardado para la próxima vez que
+   no haya red. Si la sesión venció de verdad, la borra en silencio; si solo
+   falló la conexión, se queda con lo que ya tenía. */
 async function yoCargar(){
   const s = sesionLeer();
   if(!s || !s.token){ YO = null; return null; }
+  if(!EN_LINEA) return YO;
+
   const r = await rpc('ae_mis_datos', {p_token: s.token});
   if(!r.ok){
-    if(/vencid/i.test(r.error||'')) sesionBorrar();
-    return null;
+    if(/vencid/i.test(r.error||'')){ sesionBorrar(); return null; }
+    return YO;                       // sin respuesta: se sigue con lo guardado
   }
   YO = {token:s.token, tel:r.cuenta.tel, nombre:r.cuenta.nombre,
         foto:r.cuenta.foto || '', zonas:r.zonas || []};
+  sesionGuardar(YO);
   return YO;
 }
 
 /* Después de crear cuenta o entrar: guardar sesión y refrescar */
 async function sesionAbrir(r){
-  sesionGuardar({token:r.token, tel:r.tel});
+  sesionGuardar({token:r.token, tel:r.tel, nombre:r.nombre||'', foto:r.foto||'', zonas:[]});
+  YO = {token:r.token, tel:r.tel, nombre:r.nombre||'', foto:r.foto||'', zonas:[]};
   await yoCargar();
   if(typeof render === 'function') render();
 }
@@ -69,12 +90,12 @@ function campoTel(id, label, ayuda){
     <div class="telbox">
       <span class="telpre">+57</span>
       <input id="${id}" class="telnum" type="tel" inputmode="numeric"
-             maxlength="14" placeholder="300 000 0000" autocomplete="off">
+             maxlength="14" placeholder="300 123 4567" autocomplete="off">
     </div>
     <div class="telhint" id="${id}-h">${ayuda || 'Diez dígitos, empieza por 3.'}</div>`;
 }
 
-/* Formatea 300 000 0000 mientras escribe.
+/* Formatea el número en grupos mientras escribe.
    Si de todos modos vuelve a teclear el 57 (pasa, y mucho), aquí se descarta:
    el prefijo ya está afuera del campo, así que adentro solo caben 10 dígitos. */
 function telCampo10(v){
@@ -126,6 +147,14 @@ async function conEspera(btn, texto, fn){
   finally{ btn.disabled = false; btn.innerHTML = antes; }
 }
 
+/* Aviso de que esto no se puede hacer a ciegas. Inscribirse, corregir y
+   retirarse tocan el servidor: sin red no hay forma de hacerlo bien. */
+function exigeSenal(){
+  if(MODO_EJEMPLO){ toast('Está en modo ejemplo: esto no cambia nada real.'); return false; }
+  if(!EN_LINEA){ toast('Esto necesita señal. La app le avisa cuando vuelva la conexión.'); return false; }
+  return true;
+}
+
 /* ============================================================
    PUERTA DE ENTRADA
    ============================================================ */
@@ -160,6 +189,10 @@ function abrirRegistro(despues){
     ${campoPin('k-pin1', 'Cree un PIN', 'Cuatro números que solo usted sepa.')}
     ${campoPin('k-pin2', 'Repita el PIN', 'Los dos tienen que ser iguales.')}
 
+    <div class="avisoej" style="margin:12px 0 0">Apúntelo o acuérdese bien: el PIN se guarda
+      cifrado y <b>nadie lo puede ver</b>, ni nosotros. Si se le olvida, hay que devolverle la
+      cuenta a mano por WhatsApp.</div>
+
     <details class="fold">
       <summary>Agregar mi foto (opcional)</summary>
       <div class="foldbody">
@@ -185,7 +218,7 @@ function abrirRegistro(despues){
   const revisar = ()=>{
     const d1 = telCrudo('k-tel1'), d2 = telCrudo('k-tel2');
     if(!d1.length) pista('k-tel1','','Diez dígitos, empieza por 3.');
-    else if(telOK(d1)) pista('k-tel1','ok','Le va a llegar el WhatsApp a <b>'+telBonito('57'+d1)+'</b>');
+    else if(telOK(d1)) pista('k-tel1','ok','Su cuenta va a quedar a nombre de <b>'+telBonito('57'+d1)+'</b>');
     else pista('k-tel1','bad','Faltan dígitos. En Colombia son 10 y empieza por 3.');
 
     if(!d2.length) pista('k-tel2','','Para estar seguros de que quedó bien.');
@@ -216,9 +249,10 @@ function abrirRegistro(despues){
     if(d1 !== d2){ revisar(); $('#k-tel2').focus(); return toast('Los dos celulares no coinciden.'); }
     if(!/^\d{4,6}$/.test(p1)){ revisarPin(); $('#k-pin1').focus(); return toast('El PIN son 4 números.'); }
     if(p1 !== p2){ revisarPin(); $('#k-pin2').focus(); return toast('Los dos PIN no coinciden.'); }
+    if(!exigeSenal()) return;
 
     const r = await conEspera(e.target, 'Creando…', ()=>
-      rpc('ae_registrar', {p_tel:'57'+d1, p_pin:p1, p_nombre:nom, p_foto:foto}));
+      rpc('ae_registrar', {p_tel:'57'+d1, p_pin:p1, p_nombre:nom, p_foto:foto, p_device:DEVICE}));
 
     if(!r.ok){
       if(r.ya_existe) return abrirEntrar(despues, '57'+d1, r.error);
@@ -237,7 +271,7 @@ function abrirEntrar(despues, telPrevio, aviso){
   abrirSheet(`
     <h3>Entrar a mi cuenta</h3>
     ${aviso ? `<div class="avisoej">${esc(aviso)}</div>` : ''}
-    <p class="muted">Con el celular que registró y su PIN.</p>
+    <p class="muted">Con el celular que registró y su PIN. Sirve desde cualquier teléfono.</p>
     ${campoTel('e-tel', 'Celular', 'El mismo con el que se inscribió.')}
     ${campoPin('e-pin', 'Su PIN', 'Los cuatro números que escogió.')}
     <button class="btn" id="e-entrar">Entrar</button>
@@ -262,6 +296,7 @@ function abrirEntrar(despues, telPrevio, aviso){
     const d = telCrudo('e-tel'), p = $('#e-pin').value;
     if(!telOK(d)){ pista('e-tel','bad','Diez dígitos, empieza por 3.'); return; }
     if(!p){ $('#e-pin').focus(); return toast('Escriba su PIN.'); }
+    if(!exigeSenal()) return;
     const r = await conEspera(e.target, 'Entrando…', ()=>rpc('ae_entrar', {p_tel:'57'+d, p_pin:p}));
     if(!r.ok){ $('#e-pin').value=''; pista('e-pin','bad', esc(r.error)); return; }
     await sesionAbrir(r);
@@ -276,6 +311,7 @@ function abrirEntrar(despues, telPrevio, aviso){
 async function abrirMiCuenta(){
   if(!YO) await yoCargar();
   if(!YO) return abrirCuenta();
+  if(EN_LINEA) await yoCargar();          // que la lista no quede vieja
 
   const zs = YO.zonas || [];
   abrirSheet(`
@@ -292,6 +328,9 @@ async function abrirMiCuenta(){
         <button class="btn flat" id="m-editar">Editar mis datos</button>
       </div>
     </div>
+
+    ${EN_LINEA ? '' : `<div class="avisoej">Sin señal. Esto es lo último que se supo de su
+      cuenta; inscribirse, corregir y retirarse quedan para cuando vuelva la conexión.</div>`}
 
     <div class="sec">Micro-zonas que cubro</div>
     ${zs.length ? zs.map(z=>`
@@ -324,7 +363,8 @@ async function abrirMiCuenta(){
     <button class="btn flat" id="m-salir">Cerrar sesión en este teléfono</button>
   `);
 
-  $('#m-nueva').onclick  = ()=>abrirCoord(null, null);
+  // arranca donde está el pin del mapa grande, no en la primera comuna de la lista
+  $('#m-nueva').onclick  = ()=>{ const pt = mainPt || ptDe('centro'); abrirCoord(pt && pt.z, pt); };
   $('#m-editar').onclick = ()=>abrirEditarCuenta();
   $('#m-salir').onclick  = ()=>{ sesionBorrar(); cerrarSheet(); render(); toast('Sesión cerrada. Su registro sigue guardado.'); };
 
@@ -333,6 +373,7 @@ async function abrirMiCuenta(){
   });
   $('#sheet-body').querySelectorAll('[data-mz-off]').forEach(b=>{
     b.onclick = async ()=>{
+      if(!exigeSenal()) return;
       const r = await conEspera(b, 'Retirando…', ()=>rpc('ae_anular_zona', {p_token:YO.token, p_id:b.dataset.mzOff}));
       if(!r.ok) return toast(r.error);
       await yoCargar(); await dbCargar(); render();
@@ -354,6 +395,12 @@ function abrirEditarCuenta(){
     <label class="f" for="d-nom">Nombre completo</label>
     <input id="d-nom" value="${esc(YO.nombre)}" autocomplete="name">
 
+    <label class="f">Celular registrado</label>
+    <div class="telactual">
+      <b>${esc(telBonito(YO.tel))}</b>
+      <span class="muted">Es al que la gente le escribe por WhatsApp</span>
+    </div>
+
     <div class="row" style="margin-top:12px">
       <div class="avatar big" id="d-prev" ${YO.foto?`style="background-image:url(${YO.foto})"`:''}>${YO.foto?'':'+'}</div>
       <div class="grow">
@@ -365,7 +412,10 @@ function abrirEditarCuenta(){
     <details class="fold">
       <summary>Cambiar mi celular</summary>
       <div class="foldbody">
-        <p class="muted" style="margin:0 0 8px">Al cambiarlo, sus micro-zonas vuelven a
+        <p class="muted" style="margin:0 0 8px">Hoy tiene registrado
+          <b>${esc(telBonito(YO.tel))}</b>. Escriba abajo el nuevo, o deje los campos
+          vacíos si no lo va a cambiar.</p>
+        <p class="muted" style="margin:0 0 10px">Al cambiarlo, sus micro-zonas vuelven a
           quedar en espera de autorización. Es la forma de comprobar que el número nuevo es suyo.</p>
         ${campoTel('d-tel1', 'Celular nuevo', 'Diez dígitos, empieza por 3.')}
         ${campoTel('d-tel2', 'Escríbalo otra vez', 'Para estar seguros.')}
@@ -386,7 +436,20 @@ function abrirEditarCuenta(){
 
   let foto = null;
   fotoCampo('d-foto', 'd-foto-btn', 'd-prev', v=>{ foto = v; });
-  telVivo('d-tel1'); telVivo('d-tel2');
+
+  const actual = String(YO.tel||'').replace(/\D/g,'').slice(-10);
+  const revisar = ()=>{
+    const d1 = telCrudo('d-tel1'), d2 = telCrudo('d-tel2');
+    if(!d1.length) pista('d-tel1','','Déjelo vacío si no va a cambiar de número.');
+    else if(d1 === actual) pista('d-tel1','','Ese es el que ya tiene. No hay nada que cambiar.');
+    else if(telOK(d1)) pista('d-tel1','ok','Va a quedar como <b>'+telBonito('57'+d1)+'</b>');
+    else pista('d-tel1','bad','Faltan dígitos. En Colombia son 10 y empieza por 3.');
+
+    if(!d2.length) pista('d-tel2','','Para estar seguros.');
+    else if(d2 === d1 && telOK(d1)) pista('d-tel2','ok','Los dos números coinciden.');
+    else pista('d-tel2','bad','No coincide con el de arriba.');
+  };
+  telVivo('d-tel1', revisar); telVivo('d-tel2', revisar);
 
   $('#d-volver').onclick = ()=>abrirMiCuenta();
   $('#d-guardar').onclick = async (e)=>{
@@ -403,6 +466,7 @@ function abrirEditarCuenta(){
       if(!/^\d{4,6}$/.test(p1)){ pista('d-pin1','bad','Solo números, entre 4 y 6.'); return toast('Revise el PIN.'); }
       if(p1 !== p2){ pista('d-pin2','bad','No coincide.'); return toast('Los dos PIN no coinciden.'); }
     }
+    if(!exigeSenal()) return;
 
     const r = await conEspera(e.target, 'Guardando…', ()=>rpc('ae_editar_cuenta', {
       p_token: YO.token, p_nombre: nom,
@@ -411,7 +475,6 @@ function abrirEditarCuenta(){
       p_pin_nuevo: p1 || null,
     }));
     if(!r.ok) return toast(r.error);
-    if(r.tel && r.tel !== YO.tel) sesionGuardar({token:YO.token, tel:r.tel});
     await yoCargar(); await dbCargar(); render();
     toast('Datos actualizados.');
     abrirMiCuenta();

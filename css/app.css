@@ -283,6 +283,13 @@ input.telnum{margin-top:0;border-radius:0 12px 12px 0;letter-spacing:1px;flex:1 
 input.pin{letter-spacing:9px;font-size:20px;text-align:center;font-weight:700}
 .telhint svg{width:14px;height:14px;flex:0 0 auto}
 
+/* El número que ya tiene registrado. No es un campo: es un dato para leer.
+   Se ve distinto a un input a propósito, para que nadie crea que ahí escribe. */
+.telactual{margin-top:6px;padding:11px 13px;background:#16223a;
+  border:1px solid var(--line);border-radius:12px}
+.telactual b{display:block;font-size:17px;letter-spacing:1px}
+.telactual .muted{font-size:12px}
+
 /* ---- estado vacío: una lista sin datos tiene que decirlo con palabras ---- */
 .vacio{background:#16223a;border:1px dashed #33405e;border-radius:13px;
   padding:20px 16px;text-align:center;color:var(--dim);font-size:13px;line-height:1.5}

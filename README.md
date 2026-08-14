@@ -31,7 +31,15 @@ pero nadie sabe **dónde no ha llegado nada**. Aquí Estamos hace visible ese hu
 
 1. Cree un proyecto gratis en [supabase.com](https://supabase.com) — región `South America (São Paulo)`.
 2. **SQL Editor → New query** → pegue todo `schema.sql` → **Run**.
-3. **Settings → API** → copie `Project URL` y la clave `anon public`.
+3. Otra query → pegue todo `mantenimiento.sql` → **Run**. Agrega el poder
+   retirarse de un sector y la tabla de administradores. **Cambie el correo**
+   de la sección 2 por el suyo antes de correrlo.
+4. Otra query → pegue todo `cuentas.sql` → **Run**. Las cuentas con celular
+   y PIN, y las funciones por las que pasa todo lo que escribe un coordinador.
+5. **Settings → API** → copie `Project URL` y la clave `anon public`.
+
+Los tres archivos SQL hay que correrlos **en ese orden**: cada uno corrige o
+amplía cosas del anterior. Ninguno borra datos, así que se pueden volver a correr.
 
 ### 2. Configurar la app
 
@@ -75,41 +83,81 @@ comprueba lo que de verdad importa: que ese WhatsApp existe y que la persona lo 
 1. La app genera un código (`AE-482913`) y lo guarda en `coordinadores.codigo`.
 2. La persona toca *Abrir WhatsApp y enviar* — el chat abre con el mensaje escrito.
 3. El número de Aquí Estamos recibe el mensaje.
-4. Se marca como verificada llamando, **con la `service_role` key y nunca desde el navegador**:
+4. Quien administra abre **`/admin.html`**, busca ese código en *Esperando autorización*
+   y toca **Autorizar**. Ahí mismo se ve el celular, para comprobar que coincide
+   con el que escribió.
+
+Al panel se entra con un enlace que llega al correo — sin contraseñas que compartir.
+Solo entran los correos de la tabla `admins`, que se llena en `mantenimiento.sql`.
+
+Sin abrir el panel, la misma operación desde el SQL Editor:
 
 ```sql
 select verificar_coordinador('AE-482913', '+57 310 555 0142');
 ```
 
 **Para arrancar hoy no hace falta ninguna API.** Basta la app WhatsApp Business en un
-celular y alguien que ejecute esa consulta cuando llegan los códigos. Cuando haya tiempo
+celular y alguien pendiente del panel cuando llegan los códigos. Cuando haya tiempo
 se automatiza con el webhook del Cloud API de Meta sin cambiar nada de la app.
 
 ---
+
+## La cuenta del coordinador
+
+Celular y un **PIN de 4 dígitos** que la persona escoge. Sin correo, sin contraseñas
+largas. Con eso vuelve a entrar desde cualquier teléfono y corrige lo suyo.
+
+Es lo único que hoy permite recuperar un registro. Mientras la verificación por
+WhatsApp sea manual, si la cuenta dependiera del teléfono, cambiar de aparato o
+borrar los datos del navegador significaría perder el registro para siempre.
+
+**El PIN no se guarda.** Se guarda su hash bcrypt, que no se puede devolver. Ni el
+administrador puede ver un PIN. Por eso "se me olvidó el PIN" se resuelve por
+WhatsApp: se confirma quién es y se le pone uno nuevo (`cuentas.sql`, sección 11).
+
+**Entrar tiene freno.** Un PIN de 4 números son 10.000 combinaciones: a pelo se
+adivina en minutos. A los 5 intentos malos la cuenta se cierra 5 minutos, y la
+espera crece con cada fallo hasta una hora. El mensaje es el mismo si el celular
+no existe o si el PIN está malo, para que nadie averigüe qué números tienen cuenta.
+
+**El dueño de una micro-zona es la cuenta, no el teléfono.** Todo lo que escribe un
+coordinador pasa por funciones del servidor (`ae_guardar_zona`, `ae_anular_zona`)
+que exigen el token de la sesión. Al navegador se le quitó el `insert` y el `update`
+sobre `coordinadores`: no puede tocar esa tabla por su cuenta.
 
 ## Freno anti-abuso
 
 En dos capas, porque la del navegador se puede saltar y la de la base no.
 
 **Navegador** (`localStorage`): 15 reportes / 10 min, 30 entregas / 10 min,
-4 inscripciones / hora, y bloqueo de envíos idénticos repetidos.
+y bloqueo de envíos idénticos repetidos.
 
-**Base de datos** (*triggers*): 25 reportes / 10 min por dispositivo, duplicados exactos
-en menos de 3 minutos, 40 entregas / 10 min, 6 inscripciones / hora, y una misma persona
-no repite micro-zona. Además `verificado` se fuerza a `false` en cada inserción:
-nadie se auto-verifica desde el navegador.
+**Base de datos** (*triggers* y funciones): 25 reportes / 10 min por dispositivo,
+duplicados exactos en menos de 3 minutos, 40 entregas / 10 min, 6 micro-zonas / hora
+por cuenta, una misma cuenta no repite sector, y 5 intentos de PIN antes del freno.
+Además `verificado` se fuerza a `false` en cada inserción: nadie se auto-verifica.
 
-**Permisos (RLS):** todo el mundo lee, todo el mundo inserta, **nadie edita ni borra**.
-Es deliberado: en una emergencia el riesgo real es que alguien limpie el mapa,
-no que sobre información.
+**Permisos (RLS):** todo el mundo lee reportes, entregas y coordinadores; todo el
+mundo inserta reportes y entregas; y **nadie borra nada**. Es deliberado: en una
+emergencia el riesgo real es que alguien limpie el mapa, no que sobre información.
 
----
+Sobre `coordinadores` el navegador no puede escribir nada: ni `insert` ni `update`.
+Todo pasa por funciones que exigen el token de la sesión. Las tablas `cuentas` y
+`sesiones` no se pueden ni leer — solo existen a través de esas funciones.
+
+Los administradores, con su correo autorizado, pueden verificar y anular desde
+`admin.html`, y borrar reportes o entregas falsos.
 
 ## Sin señal
 
-Si se cae la conexión, lo reportado se guarda en una cola local y se envía solo
-cuando vuelve la red. La cabecera avisa cuántos quedan pendientes.
+Lo que **sí** funciona: reportar una necesidad y registrar una entrega. Quedan en una
+cola local y se envían solos cuando vuelve la red; la cabecera avisa cuántos quedan.
 Si tampoco carga el mapa de calles, la app cae a un esquema propio que sigue siendo usable.
+La sesión dura 180 días y la app guarda lo último que supo de su cuenta, así que sigue
+sabiendo quién es usted aunque no haya red.
+
+Lo que **no**: crear cuenta, entrar, inscribirse en un sector, corregirlo o retirarse.
+Eso vive en el servidor. La app lo dice con esas palabras en vez de fallar en silencio.
 
 ---
 
@@ -118,6 +166,7 @@ Si tampoco carga el mapa de calles, la app cae a un esquema propio que sigue sie
 | Archivo | Qué contiene |
 |---|---|
 | `index.html` | Solo el armazón y los enlaces |
+| `admin.html` | Panel para autorizar coordinadores — se entra por correo |
 | `css/app.css` | Todo el estilo |
 | `js/config.js` | Claves y ciudad — lo único que se toca para desplegar |
 | `js/data.js` | Iconos SVG, las 31 zonas de Pereira, el catálogo de 121 artículos |
@@ -125,7 +174,11 @@ Si tampoco carga el mapa de calles, la app cae a un esquema propio que sigue sie
 | `js/calc.js` | Índice de desatención, focos, micro-zonas |
 | `js/mapa.js` | Mapa, pin arrastrable y selector de punto |
 | `js/hojas.js` | Fichas de zona y de punto, formularios |
+| `js/cuenta.js` | Cuenta con celular y PIN: crear, entrar, editar |
 | `js/ui.js` | Eventos, vistas y arranque |
+| `schema.sql` | Tablas, frenos y permisos |
+| `mantenimiento.sql` | Poder retirarse, administradores, verificación |
+| `cuentas.sql` | Cuentas con PIN y todo lo que escribe un coordinador |
 | `logo/` | Marca vectorial e iconos |
 
 Está partido a propósito: así un cambio toca un archivo pequeño y no uno de 116 KB.

@@ -307,6 +307,7 @@ function abrirReporte(zid, pt, refPrev){
   });
   $('#r-send').onclick=()=>{
     const pt = pickerVal('r-map');
+    if(!pt || !pt.z) return toast('Toque el mapa para marcar dónde es.');
     const p=parseInt($('#r-pers').value||'0',10)||0, nota=$('#r-nota').value.trim(), ref=$('#r-ref').value.trim();
     const firma = pt.z+'|'+ref+'|'+[...sel].sort().join(',');
     if(repetido(firma)){ cerrarSheet(); return toast('Ese mismo reporte se acaba de enviar.'); }
@@ -421,6 +422,7 @@ function abrirEntrega(zid, kfijo, pt){
   $('#e-send').onclick=()=>{
     if(!eSel.size) return toast('Marque qué se entregó');
     const p = pickerVal('e-map');
+    if(!p || !p.z) return toast('Toque el mapa para marcar dónde se entregó.');
     const quien = $('#e-quien').value.trim() || 'Anónimo';
     const cant  = $('#e-cant') ? $('#e-cant').value.trim() : '';
     cerrarSheet();
@@ -608,9 +610,17 @@ function editarMicroZona(z){
 
   $('#c-volver').onclick = ()=>abrirMiCuenta();
   $('#c-next').onclick = async (e)=>{
-    const micro = $('#c-micro').value.trim();
-    if(!micro){ $('#c-micro').focus(); return toast('Póngale nombre al sector.'); }
     const p = pickerVal('c-map');
+    if(!p || !p.z) return toast('Toque el mapa para marcar dónde va a estar.');
+    const micro = $('#c-micro').value.trim();
+    if(!micro){ $('#c-micro').focus(); return toast('Póngale nombre al sector: así lo reconoce la gente.'); }
+
+    /* Inscribirse y corregir pasan por el servidor, no por un insert directo.
+       Así el dueño del sector es la cuenta y no el teléfono: quien entre con
+       su celular y su PIN desde otro aparato sigue mandando sobre lo suyo.
+       El navegador no puede escribir nada de esto por su cuenta.            */
+    if(!exigeSenal()) return;
+
     const r = await conEspera(e.target, 'Guardando…', ()=>rpc('ae_guardar_zona', {
       p_token: YO.token, p_id: z.id,
       p_zona: p.z, p_micro: micro, p_radio: radio,
