@@ -1,4 +1,6 @@
 /* ============================================================
+   7. EVENTOS Y VISTAS
+   ============================================================ */
 /* ---------- delegación de eventos en la hoja ---------- */
 $('#sheet-body').addEventListener('click', e=>{
   const g=e.target.closest('[data-gps]');
@@ -42,6 +44,20 @@ document.addEventListener('click', e=>{
   }
 });
 
+/* Un encabezado sin nada debajo es basura visual: se esconde la sección entera. */
+function seccion(idSec, idLista, titulo, html, subtitulo){
+  const sec = document.getElementById(idSec), lista = document.getElementById(idLista);
+  if(!sec || !lista) return;
+  const hay = !!html;
+  sec.innerHTML   = hay ? titulo : '';
+  sec.style.display = hay ? '' : 'none';
+  lista.innerHTML = html || '';
+  if(subtitulo){
+    const p = sec.nextElementSibling;
+    if(p && p.tagName === 'P') p.style.display = hay ? '' : 'none';
+  }
+}
+
 /* Estados vacíos: una base sin datos no es un error, pero tiene que decirlo
    con palabras y no con un rectángulo negro. */
 function vacio(titulo, texto, boton){
@@ -52,6 +68,17 @@ function vacio(titulo, texto, boton){
     ${boton?`<button class="btn red" onclick="document.querySelector('nav button[data-v=\\'map\\']').click()">${esc(boton)}</button>`:''}
   </div>`;
 }
+
+/* La marca es el camino de vuelta: desde cualquier pantalla lleva al mapa. */
+const irAlMapa = ()=>{ cerrarSheet(); document.querySelector('nav button[data-v="map"]').click();
+  setTimeout(()=>{ if(map) map.invalidateSize(); }, 120); };
+const bMarca = document.getElementById('ir-mapa');
+if(bMarca) bMarca.onclick = irAlMapa;
+
+/* Entrar / ver mi cuenta desde cualquier parte */
+document.addEventListener('click', e=>{
+  if(e.target.closest('[data-cuenta]')) abrirCuenta();
+});
 
 /* ---------- vistas ---------- */
 let filtro='todas';
@@ -74,6 +101,32 @@ function render(){
     <div class="kpi"><b style="color:#dc2626">${criticas}</b><span>zonas críticas</span></div>
     <div class="kpi"><b style="color:#8b1a1a">${orf.length}</b><span>puntos sin coordinador</span></div>
     <div class="kpi"><b>${personas.toLocaleString('es-CO')}</b><span>personas sin cubrir</span></div>`;
+  // ---- MI CUENTA: que nadie pierda su registro ----
+  // El registro ya no depende del navegador: vive en la cuenta (celular + PIN).
+  // Por eso desde cualquier teléfono se recupera con solo entrar.
+  seccion('sec-mias','lista-mias', ico('user') + (YO ? ' Mi cuenta' : ' Su registro'),
+    YO
+      ? `<div class="fila-mia ok">
+           <div class="row">
+             ${avatar({foto:YO.foto, nombre:YO.nombre})}
+             <div class="grow">
+               <div style="font-weight:700">${esc(YO.nombre)}</div>
+               <div class="cnt">${esc(telBonito(YO.tel))} ·
+                 ${(YO.zonas||[]).length} sector(es) a su cargo</div>
+             </div>
+           </div>
+           <div class="fbtns">
+             <button type="button" class="mini go" data-cuenta>Ver y corregir lo mío</button>
+           </div>
+         </div>`
+      : `<div class="fila-mia">
+           <div class="cnt">Si ya se inscribió antes, entre con su celular y su PIN y
+             recupera todo, así sea desde otro teléfono.</div>
+           <div class="fbtns">
+             <button type="button" class="mini go" data-cuenta>Entrar a mi cuenta</button>
+           </div>
+         </div>`);
+
   const secO=$('#sec-orf'), secS=$('#sec-solo');
   if(secO) secO.innerHTML = ico('alert')+' Puntos sin nadie a cargo';
   if(secS) secS.innerHTML = ico('user')+' Sectores con una sola persona';
@@ -121,7 +174,7 @@ function render(){
 
   // sectores con una sola persona
   const sol = solitarios();
-  $('#lista-solo').innerHTML = sol.length ? sol.slice(0,10).map(f=>`
+  const htmlSolo = !sol.length ? '' : sol.slice(0,10).map(f=>`
     <div class="foco" data-focopt="${f.lat},${f.lng}" style="border-color:#7c4a10;background:rgba(217,119,6,.07)">
       <div class="row">
         <div class="fbadge" style="background:${UCOL[f.u]}">${f.n}</div>
@@ -131,12 +184,12 @@ function render(){
         </div>
         <span class="lnk" data-coordpt="${f.lat},${f.lng}">Sumarme</span>
       </div>
-    </div>`).join('') : (S.reportes.length
-      ? '<p class="muted">Ningún sector depende de una sola persona.</p>' : '');
+    </div>`).join('');
+  seccion('sec-solo','lista-solo', ico('user')+' Sectores con una sola persona', htmlSolo, true);
 
   // reparto de la carga entre personas
   const pers = porPersona();
-  $('#lista-personas').innerHTML = pers.map(p=>`
+  const htmlPers = !pers.length ? '' : pers.map(p=>`
     <div class="need-line">
       ${avatar(p)}
       <div class="grow">
@@ -148,8 +201,17 @@ function render(){
       </div>
       <div class="bar" style="width:52px;margin:0;flex:0 0 auto"><span
         style="width:${Math.min(100, p.n/Math.max(1,pers[0].n)*100)}%;background:${p.exceso?'#d97706':'#4f9cf9'}"></span></div>
-    </div>`).join('') || vacio('Sin coordinadores todavía',
-       'Cualquier persona puede inscribirse para responder por un sector de máximo 1 km.');
+    </div>`).join('');
+  $('#lista-personas').innerHTML = htmlPers;
+  document.querySelectorAll('.sec').forEach(el=>{
+    if(el.textContent.trim()==='Reparto de la coordinación'){
+      el.style.display = htmlPers ? '' : 'none';
+      const p = el.nextElementSibling; if(p && p.tagName==='P') p.style.display = htmlPers ? '' : 'none';
+    }
+    if(el.textContent.trim()==='Coordinadores por zona') el.style.display = htmlPers ? '' : 'none';
+    if(el.textContent.trim()==='Últimas entregas registradas')
+      el.style.display = S.entregas.length ? '' : 'none';
+  });
 
   // coordinadores
   const byZone = {};
@@ -171,17 +233,16 @@ function render(){
   $('#lista-entregas').innerHTML = S.entregas.slice().sort((a,b)=>b.ts-a.ts).slice(0,15).map(e=>`
     <div class="need-line">
       <span class="dot" style="background:#3f8f5f"></span>
-      <div class="grow"><div style="font-size:13.5px">${esc(NEED[e.k]?.n||e.k)} → ${esc(ZONAS.find(z=>z.id===e.z)?.n||e.z)}</div>
+      <div class="grow"><div style="font-size:13px">${esc(NEED[e.k]?.n||e.k)} → ${esc(ZONAS.find(z=>z.id===e.z)?.n||e.z)}</div>
       <div class="cnt">${esc(e.quien)}${e.cant?' · '+esc(e.cant):''} · ${hace(e.ts)}</div></div>
-    </div>`).join('') || vacio('Sin entregas registradas',
-       'Cuando llegue ayuda a algún punto, márquela. Eso es lo que apaga las alertas del mapa.');
+    </div>`).join('');
 }
 
 /* ---------- soporte de la app por WhatsApp ---------- */
 const TIPOS_SOPORTE = [
   'No me deja reportar una necesidad',
   'El mapa no carga o no encuentro mi sitio',
-  'No me llegó el código de verificación',
+  'No puedo entrar a mi cuenta o se me olvidó el PIN',
   'Un dato está mal o es falso',
   'Sugerencia para mejorar la app',
   'Otro problema',
@@ -271,9 +332,10 @@ $('#btn-export').onclick = ()=>{
 
 initMainPin();
 render();
-iniciarDatos().then(ok=>{
+iniciarDatos().then(async ok=>{
   pintarBotonEjemplo();
+  if(ok){ await yoCargar(); render(); }   // si ya entró antes, vuelve a entrar solo
   if(!ok){ const e=document.getElementById('estado');
-    if(e){ e.className='estado demo'; e.textContent='Modo demostración · los datos no se comparten'; } }
+    if(e){ e.className='estado demo'; e.textContent='Sin conexión · modo demostración'; } }
 });
 setTimeout(()=>{ if(map) map.invalidateSize(); }, 300);

@@ -6,7 +6,7 @@ const esc = s=>String(s??'').replace(/[<>&"]/g,m=>({'<':'&lt;','>':'&gt;','&':'&
 const iniciales = n=>String(n||'?').trim().split(/\s+/).slice(0,2).map(x=>x[0]||'').join('').toUpperCase();
 const avatar = c => c.foto
   ? `<div class="avatar" style="background-image:url('${c.foto}')"></div>`
-  : `<div class="avatar">${esc(iniciales(c.nom))}</div>`;
+  : `<div class="avatar">${esc(iniciales(c.nom || c.nombre))}</div>`;
 let toastT;
 function toast(m){ const t=$('#toast'); t.textContent=m; t.classList.add('on');
   clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove('on'),2600); }
@@ -258,7 +258,7 @@ function abrirReporte(zid, pt, refPrev){
       ? rs.map(r=>`<button type="button" class="sugb" data-ref="${esc(r.ref)}"
            data-rlat="${r.lat}" data-rlng="${r.lng}">${esc(r.ref)}
            <span class="muted">${Math.round(r.d)} m</span></button>`).join('')
-      : '<span class="muted" style="font-size:12.5px">No hay sitios ya nombrados cerca. Escriba uno abajo.</span>';
+      : '<span class="muted" style="font-size:13px">No hay sitios ya nombrados cerca. Escriba uno abajo.</span>';
   };
   pickerInit('r-map', zid, pt || ptDe(zid), pintarSug);
   if(modoSVG) pintarSug((ZONAS.find(z=>z.id===zid)||ZONAS[0]).lat, (ZONAS.find(z=>z.id===zid)||ZONAS[0]).lng);
@@ -432,218 +432,121 @@ function abrirEntrega(zid, kfijo, pt){
   };
 }
 
-/* ---------- inscripción de coordinador con verificación ---------- */
-function abrirCoord(zid, pt){
+/* ---------- inscripción de coordinador ----------
+   Ya no se piden nombre, celular ni foto aquí: eso vive en la cuenta.
+   Esta pantalla solo pregunta lo que cambia de un sector a otro.
+   Menos campos, menos errores, y el registro no se pierde nunca.     */
+function abrirCoord(zid, pt, zExist){
+  if(!YO) return abrirCuenta(()=>abrirCoord(zid, pt, zExist));
+
+  const ed = zExist || null;
   abrirSheet(`
-    <h3>Coordinador de micro-zona</h3>
+    <h3>${ed ? 'Corregir mi micro-zona' : 'Cubrir una micro-zona'}</h3>
     <p class="muted">No se coordina una comuna entera: se coordina un sector.
       Ponga el pin donde va a estar y elija hasta dónde alcanza a cubrir.
       Todo queda visible públicamente.</p>
+
+    <div class="ptline">
+      <div class="row">
+        ${avatar({foto:YO.foto, nombre:YO.nombre})}
+        <div class="grow">
+          <div style="font-weight:700">${esc(YO.nombre)}</div>
+          <div class="muted">${esc(telBonito(YO.tel))}</div>
+        </div>
+        <button class="mini" id="c-cuenta">Cambiar</button>
+      </div>
+    </div>
+
     ${pickerHTML('c-map', zid)}
-    <label class="f">Nombre de la micro-zona que va a cubrir</label>
-    <input id="c-micro" placeholder="Ej: Ciudad Jardín, Manzana 12, La Playita">
+    <label class="f" for="c-micro">Nombre del sector que va a cubrir</label>
+    <input id="c-micro" placeholder="Ej: Ciudad Jardín, Manzana 12, La Playita"
+           value="${ed ? esc(ed.micro||'') : ''}">
+
     <div class="sec">Radio de cobertura</div>
     <p class="muted" style="margin:0 0 7px">Entre más pequeño, mejor. Una comuna entera no la
       atiende una sola persona; varios coordinadores con radios pequeños funcionan mucho mejor.</p>
     <div class="urg" id="c-radio">
-      ${RADIOS.map(r=>`<button data-r="${r}" class="${r===500?'sel':''}" style="font-size:11.5px">${r} m</button>`).join('')}
+      ${RADIOS.map(r=>`<button data-r="${r}" class="${r===(ed?ed.radio:500)?'sel':''}">${r} m</button>`).join('')}
     </div>
-    <div class="sec">Foto</div>
-    <div class="row">
-      <div class="avatar big" id="c-prev">+</div>
-      <div class="grow">
-        <p class="muted" style="margin:0 0 6px">Para que la gente de la zona lo reconozca en la calle
-          y en los puntos de entrega.</p>
-        <input id="c-foto" type="file" accept="image/*" capture="environment" style="padding:9px;font-size:13px">
-      </div>
-    </div>
-    <label class="f">Nombre completo</label><input id="c-nom" placeholder="Como lo conoce la comunidad">
-    <label class="f">Rol</label>
+
+    <label class="f" for="c-rol">Rol</label>
     <select id="c-rol">
-      <option>Líder comunal / JAC</option><option>Vecino de la zona</option>
-      <option>Organización / fundación</option><option>Entidad pública</option>
-      <option>Voluntariado</option><option>Empresa donante</option>
+      ${['Líder comunal / JAC','Vecino de la zona','Organización / fundación',
+         'Entidad pública','Voluntariado','Empresa donante']
+        .map(o=>`<option${ed && ed.rol===o?' selected':''}>${o}</option>`).join('')}
     </select>
-    <label class="f">Celular de WhatsApp</label>
-    <input id="c-tel" type="tel" inputmode="tel" placeholder="+57 300 000 0000" autocomplete="tel">
-    <div class="telhint" id="c-telhint">Así lo va a contactar la gente. Escriba los 10 dígitos.</div>
-    <details class="fold">
-      <summary>Agregar un correo (opcional)</summary>
-      <div class="foldbody">
-        <input id="c-mail" type="email" inputmode="email" placeholder="nombre@correo.com">
-        <p class="muted" style="margin:8px 0 0;font-size:12px">Solo por si algún día pierde el
-          WhatsApp. La coordinación del día a día no lo usa.</p>
-      </div>
-    </details>
-    <label class="f">Nota pública (dónde lo encuentran, horario)</label>
-    <textarea id="c-nota" placeholder="Ej: punto fijo en la cancha, 7am a 7pm"></textarea>
-    <button class="btn" id="c-next">Continuar y verificar</button>
+
+    <label class="f" for="c-nota">Nota pública (dónde lo encuentran, horario)</label>
+    <textarea id="c-nota" placeholder="Ej: punto fijo en la cancha, 7am a 7pm">${ed ? esc(ed.nota||'') : ''}</textarea>
+
+    <button class="btn" id="c-next">${ed ? 'Guardar cambios' : 'Inscribirme en este sector'}</button>
     <button class="btn flat" data-close-btn>Cancelar</button>
   `);
-  let radio = 500, foto = null, circ = null;
+
+  let radio = ed ? (ed.radio || 500) : 500, circ = null;
   const dibujarRadio = (la, lo)=>{
     if(modoSVG || !pickMap) return;
-    const c = (la!=null) ? [la,lo] : pickMk.getLatLng();
+    const c = (la != null) ? [la, lo] : pickMk.getLatLng();
     if(circ) circ.setLatLng(c).setRadius(radio);
-    else circ = L.circle(c,{radius:radio, color:'#4f9cf9', weight:2,
+    else circ = L.circle(c, {radius:radio, color:'#4f9cf9', weight:2,
       fillColor:'#4f9cf9', fillOpacity:.16, interactive:false}).addTo(pickMap);
   };
-  pickerInit('c-map', zid, pt || ptDe(zid), dibujarRadio);
+  pickerInit('c-map', zid, pt || (ed ? {lat:ed.lat, lng:ed.lng} : null) || ptDe(zid), dibujarRadio);
   if(pickMap) setTimeout(()=>{ if(circ) pickMap.fitBounds(circ.getBounds().pad(0.3)); }, 260);
-  $('#sheet-body').querySelectorAll('#c-radio button').forEach(b=>b.onclick=()=>{
-    $('#sheet-body').querySelectorAll('#c-radio button').forEach(x=>x.classList.remove('sel'));
-    b.classList.add('sel'); b.style.background='#4f9cf9'; b.style.borderColor='#4f9cf9'; b.style.color='#04122b';
-    $('#sheet-body').querySelectorAll('#c-radio button').forEach(x=>{ if(x!==b){x.style.background='';x.style.borderColor='';x.style.color='';} });
+
+  $('#c-cuenta').onclick = ()=>abrirMiCuenta();
+
+  const btns = $('#sheet-body').querySelectorAll('#c-radio button');
+  btns.forEach(b=>b.onclick = ()=>{
+    btns.forEach(x=>x.classList.remove('sel'));
+    b.classList.add('sel');
     radio = +b.dataset.r; dibujarRadio();
   });
-  $('#c-foto').onchange = e=>{
-    const f = e.target.files && e.target.files[0];
-    if(!f) return;
-    if(!/^image\//.test(f.type)) return toast('Debe ser una imagen');
-    const fr = new FileReader();
-    fr.onload = ()=>{
-      const im = new Image();
-      im.onload = ()=>{
-        // recorte cuadrado + compresión: la app tiene que servir con datos malos
-        const S0=320, cv=document.createElement('canvas'); cv.width=cv.height=S0;
-        const g=cv.getContext('2d'), m=Math.min(im.width,im.height);
-        g.drawImage(im,(im.width-m)/2,(im.height-m)/2,m,m,0,0,S0,S0);
-        foto = cv.toDataURL('image/jpeg', 0.72);
-        const pv=$('#c-prev'); pv.textContent=''; pv.style.backgroundImage=`url(${foto})`;
-        toast('Foto lista');
-      };
-      im.onerror = ()=>toast('No se pudo leer la imagen');
-      im.src = fr.result;
-    };
-    fr.readAsDataURL(f);
-  };
-  // formato de WhatsApp en vivo
-  const tel = $('#c-tel'), telh = $('#c-telhint');
-  const revisarTel = ()=>{
-    const d = telDigitos(tel.value);
-    telh.className = 'telhint ' + (d ? 'ok' : (tel.value.replace(/\D/g,'').length ? 'bad' : ''));
-    telh.innerHTML = d
-      ? ico('check') + ` Le llegará el SMS y el WhatsApp a <b>${telBonito(tel.value)}</b>`
-      : (tel.value.replace(/\D/g,'').length
-          ? ico('alert') + ' Número incompleto. En Colombia son 10 dígitos y empieza por 3.'
-          : 'Así lo va a contactar la gente. Escriba los 10 dígitos.');
-    return !!d;
-  };
-  tel.oninput = ()=>{
-    const v = tel.value;
-    // si escribe un número de otro país (empieza por + y no es 57) se respeta tal cual
-    if(!/^\+(?!57)/.test(v.trim())) {
-      const pos = tel.selectionStart === v.length;
-      tel.value = telFormatoVivo(v);
-      if(pos) tel.setSelectionRange(tel.value.length, tel.value.length);
-    }
-    revisarTel();
-  };
-  tel.onfocus = ()=>{ if(!tel.value.trim()) { tel.value = '+57 '; revisarTel(); } };
 
-  $('#c-next').onclick=()=>{
-    const pt = pickerVal('c-map');
-    const d={z:pt.z, lat:pt.lat, lng:pt.lng, foto, radio, micro:$('#c-micro').value.trim(),
-             nom:$('#c-nom').value.trim(), rol:$('#c-rol').value,
-             email:($('#c-mail')?$('#c-mail').value.trim():''), tel:$('#c-tel').value.trim(),
-             nota:$('#c-nota').value.trim()};
-    if(!d.nom || !d.tel) return toast('El nombre y el celular son obligatorios');
-    if(d.email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(d.email)) return toast('Revise el correo electrónico');
-    if(!telDigitos(d.tel)){ revisarTel(); tel.focus();
-      return toast('El celular no sirve para WhatsApp. Deben ser 10 dígitos.'); }
-    d.tel = telBonito(d.tel);           // se guarda siempre en formato internacional
-    // ¿ya está verificado? Entonces solo suma otra micro-zona, sin repetir el proceso
-    const ya = S.coords.find(c=>c.ver && personaKey(c)===personaKey(d));
-    if(ya){
-      const p = porPersona().find(x=>x.k===personaKey(d));
-      cerrarSheet();
-      guardar('coordinadores',
-        {zona:d.z, micro:d.micro||'', radio:d.radio||500, lat:d.lat, lng:d.lng,
-         nombre:d.nom, rol:d.rol||'', tel:d.tel, tel_e164:telDigitos(d.tel)||'',
-         email:d.email||'', nota:d.nota||'', foto:d.foto||ya.foto||'', device:DEVICE},
-        {id:uid(), ...d, ver:true, foto:d.foto||ya.foto});
-      return toast(p && p.n>=MAX_MICRO
-        ? `Micro-zona añadida. Ya cubre ${p.n+1} sectores: busque quién le ayude.`
-        : 'Micro-zona añadida a su nombre. Ya estaba verificado.');
-    }
-    verificar(d);
+  $('#c-next').onclick = async (e)=>{
+    const p = pickerVal('c-map');
+    const micro = $('#c-micro').value.trim();
+    if(!micro){ $('#c-micro').focus(); return toast('Póngale nombre al sector: así lo reconoce la gente.'); }
+
+    const r = await conEspera(e.target, 'Guardando…', ()=>rpc('ae_guardar_zona', {
+      p_token: YO.token, p_id: ed ? ed.id : null,
+      p_zona: p.z, p_micro: micro, p_radio: radio,
+      p_lat: p.lat, p_lng: p.lng,
+      p_rol: $('#c-rol').value, p_nota: $('#c-nota').value.trim(),
+    }));
+    if(!r.ok) return toast(r.error);
+
+    await yoCargar(); await dbCargar(); render();
+    if(ed){ toast('Corregido.'); return abrirMiCuenta(); }
+
+    const n = (YO.zonas || []).length;
+    confirmar(r.codigo, micro, n);
   };
 }
-/* ---- VERIFICACIÓN AL REVÉS ----
-   En vez de mandarle un código (que exige plantillas aprobadas por Meta y puede
-   demorar semanas), la persona NOS envía el código desde su propio WhatsApp.
-   Recibir mensajes es gratis y no necesita ninguna aprobación previa.
-   Y de paso comprueba lo que de verdad importa: que ese WhatsApp funciona.   */
-const VERIFICA_WA = '572322314100';
-function verificar(d){
-  const code = 'AE-' + String(Math.floor(100000+Math.random()*900000));
-  const texto = `${code}\nSoy ${d.nom} y coordino ${d.micro || ZONAS.find(z=>z.id===d.z)?.n || ''} en Aquí Estamos.`;
+
+/* ---- CONFIRMACIÓN ----
+   La inscripción ya quedó guardada y la persona ya tiene cuenta: si cierra
+   esta pantalla no pierde nada. El código sirve para que la coordinación
+   confirme por WhatsApp que ese número es de verdad suyo.               */
+function confirmar(codigo, micro, cuantas){
+  const texto = `${codigo}\nSoy ${YO.nombre} y coordino ${micro} en Aquí Estamos.`;
   abrirSheet(`
-    <div class="zhead">
-      <div class="row">
-        ${avatar(d)}
-        <div class="grow">
-          <h3 style="margin:0">Verificar su WhatsApp</h3>
-          <div class="muted">${esc(d.nom)} · ${esc(d.rol)}</div>
-        </div>
-      </div>
-    </div>
+    <h3>Ya quedó inscrito</h3>
+    <p class="muted">Su sector ya aparece en el mapa. Falta un paso para que salga
+      con el sello verde: que confirmemos que ese WhatsApp es suyo.</p>
 
-    <p class="muted" style="margin:12px 0 0">No hay que esperar ningún SMS.
-      Usted nos envía este código desde su WhatsApp y con eso queda verificado.</p>
+    <div class="codebox">${esc(codigo || '—')}</div>
 
-    <div class="codebox">${code}</div>
+    <a class="btn wa" target="_blank" rel="noopener"
+       href="${waLink(CONFIG.WHATSAPP_SOPORTE, texto)}">${icoWA()} Enviar el código por WhatsApp</a>
+    <p class="muted" style="margin:9px 0 0">Se abre el chat con el mensaje ya escrito.
+      Solo dele <b>enviar</b>. Recibirlo desde su número es la prueba de que es suyo.</p>
 
-    <a class="btn wa" id="v-wa" target="_blank" rel="noopener"
-       href="${waLink(VERIFICA_WA, texto)}">${icoWA()} Abrir WhatsApp y enviar</a>
-    <p class="muted" style="margin:9px 0 0">Se abre el chat de Aquí Estamos con el mensaje
-      ya escrito. Solo dele <b>enviar</b> y vuelva a esta pantalla.</p>
+    <button class="btn flat" id="f-mias">Ver mis micro-zonas</button>
+    <button class="btn flat" data-close-btn>Listo, cerrar</button>
 
-    <div class="waitrow" id="v-wait" hidden>
-      <span class="spin"></span> Esperando su mensaje…
-    </div>
-
-    <button class="btn" id="v-listo">Ya lo envié</button>
-
-    <details class="fold">
-      <summary>No tengo WhatsApp en este teléfono</summary>
-      <div class="foldbody">
-        <p class="muted" style="margin:0 0 9px">Le mandamos un enlace al correo.
-          Es más lento pero funciona igual.</p>
-        <input id="v-mail" type="email" inputmode="email" placeholder="nombre@correo.com"
-          value="${esc(d.email||'')}">
-        <button class="btn flat" id="v-mailok" style="margin-top:9px">Enviarme el enlace</button>
-      </div>
-    </details>
-
-    <button class="btn flat" id="c-skip">Inscribirme sin verificar por ahora</button>
-    <p class="muted" style="margin-top:10px;font-size:11.5px">Sin verificar igual aparece en la lista,
-      pero marcado en amarillo. La gente confía menos.</p>
+    ${cuantas >= MAX_MICRO ? `<div class="avisoej" style="margin-top:12px">Ya cubre ${cuantas} sectores.
+      Busque quién le ayude: es mejor tres personas con un sector cada una que una con tres.</div>` : ''}
   `);
-
-  const publicar = (ver, msg)=>{
-    const email = $('#v-mail') ? $('#v-mail').value.trim() : (d.email||'');
-    cerrarSheet();
-    guardar('coordinadores',
-      {zona:d.z, micro:d.micro||'', radio:d.radio||500, lat:d.lat, lng:d.lng,
-       nombre:d.nom, rol:d.rol||'', tel:d.tel, tel_e164:telDigitos(d.tel)||'',
-       email, nota:d.nota||'', foto:d.foto||'', codigo:code, device:DEVICE},
-      {id:uid(), ...d, email, ver});
-    toast(EN_LINEA && ver
-      ? 'Inscrito. Queda verificado apenas llegue su mensaje de WhatsApp.'
-      : msg);
-  };
-  $('#v-wa').addEventListener('click', ()=>{ $('#v-wait').hidden = false; });
-  $('#v-listo').onclick = ()=>{
-    // DEMO: aquí el servidor confirmaría al recibir el mensaje (webhook de WhatsApp).
-    $('#v-wait').hidden = false;
-    $('#v-listo').disabled = true;
-    setTimeout(()=>publicar(true, 'WhatsApp verificado. Ya aparece públicamente.'), 1100);
-  };
-  $('#v-mailok').onclick = ()=>{
-    const m = $('#v-mail').value.trim();
-    if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(m)) return toast('Revise el correo');
-    publicar(true, 'Enlace enviado al correo. Quedó verificado.');
-  };
-  $('#c-skip').onclick = ()=>publicar(false, 'Inscrito como "sin verificar".');
+  $('#f-mias').onclick = ()=>abrirMiCuenta();
 }
