@@ -529,7 +529,7 @@ function abrirCoord(zid, pt, zExist){
       if(p1 !== p2){ $('#c-pin2').focus(); return toast('Los dos PIN no coinciden.'); }
 
       const ok = await conEspera(e.target, 'Inscribiendo…', async ()=>{
-        let r = await rpc('ae_registrar', {p_tel:'57'+d1, p_pin:p1, p_nombre:nom, p_foto:''});
+        let r = await rpc('ae_registrar', {p_tel:'57'+d1, p_pin:p1, p_nombre:nom, p_foto:'', p_device:DEVICE});
         // Si ya tenía cuenta, el mismo PIN la abre: no hay que devolverlo a otra pantalla.
         if(!r.ok && r.ya_existe) r = await rpc('ae_entrar', {p_tel:'57'+d1, p_pin:p1});
         if(!r.ok){ toast(r.error); return false; }
