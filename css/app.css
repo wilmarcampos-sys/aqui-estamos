@@ -228,7 +228,7 @@
   .selbar .grow{color:var(--txt);font-weight:700;font-size:14px}
   .selbar .grow.falta{color:#f5a524}
   .selbar .grow.falta::before{content:"";display:inline-block;width:8px;height:8px;border-radius:50%;
-    background:#f5a524;margin-right:7px;vertical-align:1px;animation:pulso 2s ease-out infinite}
+    background:#f5a524;margin-right:7px;vertical-align:1px}
 
   /* ---- reporte en 3 pasos ---- */
   .pasohead{display:flex;align-items:center;gap:10px;margin:2px 0 8px}
@@ -358,8 +358,7 @@
   .nec-card.ok{background:rgba(63,143,95,.08);border-color:#2f5c41}
   .nec-card h4{margin:0;font-size:16px;font-weight:800;line-height:1.25}
   .nec-card .nec-sub{font-size:12px;color:var(--dim);margin-top:3px}
-  .nec-card .nec-nota{font-size:12px;color:var(--txt);margin-top:6px;line-height:1.4;
-    border-left:2px solid var(--line2);padding-left:8px}
+  .nec-card .nec-nota{font-size:12px;color:var(--dim);margin-top:6px;line-height:1.4}
   .upill{display:inline-block;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.3px;
     padding:2px 7px;border-radius:7px;margin-left:6px;vertical-align:2px}
   .upill.u3{background:rgba(220,38,38,.18);color:#fca5a5;border:1px solid #7f1d1d}
