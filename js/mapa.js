@@ -52,6 +52,16 @@ function pintarMapa(){
   capa.clearLayers();
   const z = map.getZoom();
 
+  // Albergues: puntos fijos, visibles a cualquier zoom, con carpa dorada
+  // para distinguirlos de las burbujas de necesidad.
+  S.coords.filter(c=>c.lat && (c.rol||'')==='Albergue').forEach(a=>{
+    L.marker([a.lat,a.lng],{zIndexOffset:900,icon:L.divIcon({className:'',iconSize:[28,28],iconAnchor:[14,14],
+      html:`<div style="width:28px;height:28px;border-radius:9px;background:#F2B705;border:2px solid #7a1616;
+        display:grid;place-items:center;color:#3a1500;box-shadow:0 2px 8px rgba(0,0,0,.55)">${ico('tent')}</div>`})}).addTo(capa)
+      .bindTooltip(`<b>${esc(a.micro||a.nom)}</b><br>Albergue${a.ver?' · verificado':''}<br><i>Toque para ver</i>`,{direction:'top'})
+      .on('click',()=>abrirAlbergue(a));
+  });
+
   if(z >= 14){
     /* ---- ACERCADO: focos exactos dentro de la comuna, con número de reportes ---- */
     ZONAS.forEach(zz=>focos(zz.id).forEach(f=>{
@@ -71,8 +81,8 @@ function pintarMapa(){
           display:grid;place-items:center;color:#fff">${ico('check')}</div>`})}).addTo(capa)
         .bindTooltip(`Entregado: ${NEED[e.k]?.n||e.k} · ${e.quien}`,{direction:'top'});
     });
-    /* micro-zonas de los coordinadores */
-    S.coords.filter(c=>c.lat).forEach(c=>{
+    /* micro-zonas de los coordinadores (los albergues ya van con su carpa) */
+    S.coords.filter(c=>c.lat && (c.rol||'')!=='Albergue').forEach(c=>{
       L.circle([c.lat,c.lng],{radius:c.radio||500, color:c.ver?'#4f9cf9':'#7c4a10', weight:1.5,
         dashArray:'5 5', fillColor:'#4f9cf9', fillOpacity:.07, interactive:false}).addTo(capa);
       L.marker([c.lat,c.lng],{icon:L.divIcon({className:'',iconSize:[150,14],iconAnchor:[75,-6],

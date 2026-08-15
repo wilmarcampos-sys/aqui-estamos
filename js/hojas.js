@@ -181,6 +181,44 @@ function abrirFoco(zid, la, lo){
   `);
 }
 
+/* ---------- ficha de un albergue (punto fijo, coordinador verificado) ---------- */
+function abrirAlbergue(a){
+  const z = ZONAS.find(x=>x.id===a.z);
+  abrirSheet(`
+    <div class="zhead">
+      <div class="row">
+        <div class="rank" style="background:#F2B705;color:#3a1500">${ico('tent')}</div>
+        <div class="grow">
+          <h3 style="margin:0">${esc(a.micro||a.nom)}</h3>
+          <div class="muted">Albergue · ${esc(z?z.n:'')}${a.ver?' · <span class="verif">verificado</span>':''}</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sec">Coordinador del albergue</div>
+    <div class="need-line">
+      ${avatar({nombre:a.nom})}
+      <div class="grow">
+        <div style="font-size:14px;font-weight:700">${esc(a.nom)}</div>
+        <div class="cnt">Contacto para coordinar la instalación</div>
+      </div>
+      <a class="mini wa" href="${waLink(a.tel)}" target="_blank" rel="noopener">${icoWA()} WhatsApp</a>
+    </div>
+
+    ${a.nota?`<div class="sec">Requerimiento técnico</div>
+      <p class="muted" style="line-height:1.5;margin:0">${esc(a.nota)}</p>`:''}
+
+    <div class="btn2" style="margin-top:14px">
+      <button class="btn red" data-newpt="${a.lat},${a.lng}" data-ref="${esc(a.micro||'')}">${ico('plus')} Reportar necesidad</button>
+      <button class="btn green" data-delivpt="${a.lat},${a.lng}">${ico('check')} Registrar entrega</button>
+    </div>
+    <div class="fbtns" style="margin-top:12px">
+      <button type="button" class="mini" data-verpt="${a.lat},${a.lng}">${ico('zoom')} Ver en el mapa</button>
+      <button type="button" class="mini" data-zona="${a.z}">Ver la zona ${esc(z?z.n:'')}</button>
+    </div>
+  `);
+}
+
 /* ---------- reportar necesidad ---------- */
 let sel = new Set(), urg = null;
 /* top de necesidades más pedidas — atajo para no buscar nada.
