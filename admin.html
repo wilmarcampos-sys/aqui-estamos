@@ -2,67 +2,157 @@
 <html lang="es">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
 <meta name="theme-color" content="#0f172a">
 <meta name="robots" content="noindex">
 <link rel="icon" type="image/svg+xml" href="logo/marca.svg">
 <title>Aquí Estamos · Administración</title>
 <link rel="stylesheet" href="css/app.css">
 <style>
-  body{overflow:auto}
-  #app{min-height:100%}
-  .wrap{max-width:720px;margin:0 auto;padding:16px 14px calc(28px + var(--safe))}
-  .fila{background:var(--card);border:1px solid var(--line);border-radius:14px;
-    padding:13px;margin-bottom:10px}
-  .fila.pendiente{border-color:#7c4a10}
-  .fila.anulada{opacity:.62}
-  .campo{display:flex;gap:8px;font-size:13px;padding:3px 0}
-  .campo span:first-child{color:var(--dim);min-width:88px;flex:0 0 auto}
-  .cod{font-family:ui-monospace,Menlo,monospace;font-size:17px;font-weight:800;
-    color:#8ec1ff;letter-spacing:1.5px}
-  .acc{display:flex;flex-wrap:wrap;gap:8px;margin-top:11px}
-  .acc .btn{margin:0;width:auto;flex:1 1 auto;padding:12px 14px;font-size:14px}
-  .login{max-width:400px;margin:8vh auto;text-align:center}
+  /* El panel es mobile-first: una columna, pestañas fijas abajo. En pantalla
+     grande se centra en una franja de ancho de celular para no deformarse. */
+  html,body{overflow:hidden}
+  #app{display:flex;flex-direction:column;height:100%;max-width:460px;margin:0 auto;
+    border-left:1px solid var(--line);border-right:1px solid var(--line)}
+
+  /* ---- cabecera de la vista ---- */
+  .top{flex:0 0 auto;padding:12px 16px 10px;border-bottom:1px solid var(--line);background:var(--bg)}
+  .top .row{align-items:flex-end}
+  .top h2{margin:0;font-size:22px;font-weight:800;letter-spacing:-.4px}
+  .top .sub{font-size:12.5px;color:var(--dim);margin-top:2px}
+
+  main{flex:1;position:relative;overflow:hidden}
+  .view{position:absolute;inset:0;display:none;overflow-y:auto;-webkit-overflow-scrolling:touch;
+    padding:14px 16px calc(18px + var(--safe))}
+  .view.on{display:block}
+
+  /* ---- barra de pestañas fija abajo ---- */
+  .tabbar{flex:0 0 auto;display:flex;background:var(--bg);border-top:1px solid var(--line);
+    padding-bottom:var(--safe)}
+  .tabbar button{flex:1;background:none;border:0;color:var(--dim);font-family:inherit;cursor:pointer;
+    padding:8px 4px 7px;display:flex;flex-direction:column;align-items:center;gap:3px;position:relative}
+  .tabbar button .ic{width:22px;height:22px}
+  .tabbar button .lab{font-size:11px;font-weight:600}
+  .tabbar button.on{color:var(--acc)}
+  .tabbar button .badge{position:absolute;top:4px;left:calc(50% + 6px);min-width:16px;height:16px;
+    padding:0 4px;border-radius:8px;background:#d97706;color:#160c02;font-size:10px;font-weight:800;
+    display:none;align-items:center;justify-content:center;line-height:1}
+  .tabbar button .badge.on{display:flex}
+
+  /* ---- login ---- */
+  .login{max-width:400px;margin:8vh auto;text-align:center;padding:0 20px}
   .login .mark{width:56px;height:56px;margin-bottom:14px}
-  .tot{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}
 
-  /* ---- el menú ----
-     Antes eran tres listas largas una debajo de otra: para llegar a los
-     anulados había que pasar por todos los autorizados. Ahora cada cosa
-     vive en su sitio y el número dice si hay que entrar o no. */
-  nav{border-radius:13px;border:1px solid var(--line);overflow:hidden;margin-bottom:12px}
-  nav button{padding:12px 3px;font-size:12.5px;white-space:nowrap}
-  nav button .n{display:inline-block;min-width:19px;padding:1px 5px;margin-left:5px;
-    border-radius:7px;background:#233149;color:var(--dim);font-size:11px;font-weight:800}
-  nav button.on .n{background:#2b3d5e;color:var(--txt)}
-  nav button.on .n.hay{background:#7c4a10;color:#fcd34d}
+  /* ---- alerta accionable (Inicio) ---- */
+  .alert{border-radius:16px;padding:13px 14px;margin-bottom:10px;
+    border:1px solid var(--line);border-left-width:4px;background:#16223a}
+  .alert.amber{border-left-color:#f5a524;background:#1d1a10}
+  .alert.red{border-left-color:#f87171;background:#1e1414}
+  .alert.green{border-left-color:#22c55e;background:#111f18;display:flex;align-items:center;gap:9px}
+  .alert .ti{font-size:14.5px;font-weight:700;line-height:1.25}
+  .alert .cx{font-size:13px;color:var(--dim);margin-top:3px}
+  .alert .btn{margin-top:11px;padding:12px}
+  .alert.green .ic{color:#22c55e;flex:0 0 auto}
 
-  /* ---- buscar ---- */
+  /* ---- fila grande "pendiente de mí" ---- */
+  .bigrow{display:flex;align-items:center;gap:12px;background:var(--card);border:1px solid var(--line);
+    border-radius:16px;padding:14px;margin-bottom:10px;cursor:pointer;width:100%;text-align:left;
+    font-family:inherit;color:var(--txt)}
+  .bigrow .grow b{font-size:15px;display:block}
+  .bigrow .grow span{font-size:12.5px;color:var(--dim)}
+  .bigrow .n{font-size:26px;font-weight:800;flex:0 0 auto}
+
+  .lbl{font-size:11px;text-transform:uppercase;letter-spacing:.7px;color:var(--dim);
+    font-weight:700;margin:18px 0 8px}
+  .lbl:first-child{margin-top:4px}
+
+  /* ---- segmented control (Personas) ---- */
+  .seg{display:flex;background:#111b2e;border:1px solid var(--line);border-radius:12px;
+    padding:3px;margin-bottom:12px;gap:3px}
+  .seg button{flex:1;background:none;border:0;color:var(--dim);font-family:inherit;cursor:pointer;
+    padding:9px 4px;border-radius:9px;font-size:13px;font-weight:700}
+  .seg button.on{background:#26344f;color:var(--txt)}
+  .seg button .c{opacity:.75;font-weight:800}
+
+  /* ---- buscador ---- */
   .buscabox{position:relative;margin-bottom:12px}
   .buscabox input{margin:0;padding-right:40px}
   .buscabox .limpiar{position:absolute;right:6px;top:50%;transform:translateY(-50%);
     background:none;border:0;color:var(--dim);font-size:20px;cursor:pointer;padding:6px 10px;
     font-family:inherit;line-height:1}
 
-  /* ---- la persona, no la fila ----
-     Una persona puede cubrir varios sectores, y antes salía repetida una vez
-     por cada uno. Aquí sale una sola vez y adentro están sus micro-zonas. */
-  .pers{display:flex;align-items:center;gap:11px;width:100%;text-align:left;
-    background:var(--card);border:1px solid var(--line);border-radius:14px;
-    padding:11px 13px;margin-bottom:9px;cursor:pointer;font-family:inherit;color:var(--txt)}
-  .pers:hover{border-color:#3f5478}
-  .pers .chev{color:var(--dim);font-size:20px;flex:0 0 auto}
-  .pers b{font-size:15px;display:block}
-  .pers .muted{display:block}
-  .volver{margin-bottom:12px}
-  .cabeza{background:var(--card);border:1px solid var(--line);border-radius:14px;
-    padding:14px;margin-bottom:14px}
-  .badges{display:flex;gap:6px;flex-wrap:wrap;margin-top:5px}
+  /* ---- fila compacta de persona ---- */
+  .prow{display:flex;align-items:center;gap:11px;background:var(--card);border:1px solid var(--line);
+    border-radius:14px;padding:10px 11px;margin-bottom:8px}
+  .prow.pendiente{border-color:#7c4a10}
+  .prow.anulada{opacity:.6}
+  .prow .info{flex:1;min-width:0;cursor:pointer}
+  .prow .nm{font-size:15px;font-weight:700;display:flex;align-items:center;gap:5px}
+  .prow .nm .tick{color:#22c55e;flex:0 0 auto}
+  .prow .mt{font-size:12.5px;color:var(--dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .prow .cd{font-family:ui-monospace,Menlo,monospace;font-size:12.5px;color:#7aa7ff;letter-spacing:.5px;margin-top:1px}
+  .waq{flex:0 0 auto;width:40px;height:40px;border-radius:11px;background:#25d366;border:0;cursor:pointer;
+    display:grid;place-items:center;color:#04220f;text-decoration:none}
+  .waq svg{width:20px;height:20px}
+  .kebab{flex:0 0 auto;width:34px;height:40px;border-radius:11px;background:none;border:0;cursor:pointer;
+    color:var(--dim);font-size:20px;font-family:inherit}
+
+  /* ---- ficha (bottom sheet) ---- */
+  .fichacab{display:flex;align-items:center;gap:12px;margin:2px 0 4px}
+  .fichacab .nm{font-size:18px;font-weight:800}
+  .fichacab .rl{font-size:12.5px;color:var(--dim)}
+  .codewrap{margin:12px 0}
+  .codewrap .k{font-size:11px;text-transform:uppercase;letter-spacing:.6px;color:var(--dim);font-weight:700}
+  .codebg{display:flex;align-items:center;gap:10px;margin-top:7px;background:#111b2e;
+    border:1.5px dashed #3f5478;border-radius:14px;padding:12px 14px}
+  .codebg .cod{font-family:ui-monospace,Menlo,monospace;font-size:22px;font-weight:800;
+    letter-spacing:2px;color:#8ec1ff;flex:1}
+  .copiar{background:#233149;border:1px solid var(--line);color:var(--txt);border-radius:10px;
+    padding:9px 13px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer;flex:0 0 auto}
+  .kv{display:flex;justify-content:space-between;gap:10px;padding:11px 0;border-bottom:1px solid #223050;font-size:14px}
+  .kv:last-of-type{border-bottom:0}
+  .kv .k{color:var(--dim)}
+  .kv .v{font-weight:600;text-align:right}
+  .kv .v.tel{color:#7aa7ff}
+  .destroy{width:100%;background:none;border:0;color:#f87171;font-family:inherit;font-size:14px;
+    font-weight:700;cursor:pointer;padding:14px;margin-top:6px}
+
+  /* ---- Zonas ---- */
+  .mapprev{background:#0e1729;border:1px solid var(--line);border-radius:16px;overflow:hidden;
+    margin-bottom:14px;cursor:pointer;position:relative}
+  .mapprev svg{display:block;width:100%;height:168px}
+  .mapprev .abrir{position:absolute;right:10px;bottom:9px;background:rgba(15,23,42,.9);
+    border:1px solid var(--line);border-radius:9px;padding:6px 10px;font-size:12px;font-weight:700;color:#bcd4f5}
+  .zrow{display:flex;align-items:center;gap:11px;background:var(--card);border:1px solid var(--line);
+    border-radius:14px;padding:12px;margin-bottom:8px}
+  .zrow.warn{border-color:#7c4a10;background:#1d1a10}
+  .zrow .grow b{font-size:15px;display:block}
+  .zrow .grow span{font-size:12.5px;color:var(--dim)}
+  .zrow .pin{width:34px;height:34px;border-radius:11px;display:grid;place-items:center;flex:0 0 auto}
+  .zrow .mini{margin:0}
+
+  /* ---- Más ---- */
+  .cuenta{display:flex;align-items:center;gap:12px;background:var(--card);border:1px solid var(--line);
+    border-radius:16px;padding:14px;margin-bottom:8px}
+  .cuenta .grow b{font-size:16px;display:block}
+  .cuenta .grow span{font-size:12.5px;color:var(--dim)}
+  .mitem{display:flex;align-items:center;gap:12px;background:var(--card);border:1px solid var(--line);
+    border-radius:14px;padding:13px 14px;margin-bottom:8px;cursor:pointer;width:100%;text-align:left;
+    font-family:inherit;color:var(--txt)}
+  .mitem .ic{width:20px;height:20px;color:#7aa7ff;flex:0 0 auto}
+  .mitem.danger .ic{color:#f87171}
+  .mitem .grow b{font-size:14.5px;display:block;font-weight:600}
+  .mitem .grow span{font-size:12px;color:var(--dim)}
+  .mitem .chev{color:var(--dim);font-size:18px}
+
+  .avatar.big{width:52px;height:52px;font-size:20px}
+  .estado.ejemplo{color:#fcd34d}
 </style>
 </head>
 <body>
-<div id="app"><div class="wrap">
+<div id="app">
 
+  <!-- LOGIN -->
   <div id="login" class="login" hidden>
     <svg class="mark" viewBox="0 0 24 24" aria-hidden="true">
       <defs><clipPath id="p"><path d="M12 1.6c-4.6 0-8.3 3.7-8.3 8.3 0 5.9 8.3 12.5 8.3 12.5s8.3-6.6 8.3-12.5c0-4.6-3.7-8.3-8.3-8.3z"/></clipPath></defs>
@@ -77,35 +167,52 @@
     <p class="muted" id="msg" style="margin-top:14px"></p>
   </div>
 
-  <div id="panel" hidden>
-    <div class="row" style="margin-bottom:14px">
-      <div class="grow">
-        <h2 style="margin:0">Administración</h2>
-        <div class="muted" id="quien"></div>
+  <!-- PANEL -->
+  <div id="panel" hidden style="display:flex;flex-direction:column;height:100%">
+    <div class="top">
+      <div class="row">
+        <div class="grow">
+          <h2 id="titulo">Hoy</h2>
+          <div class="sub" id="subtitulo"></div>
+        </div>
       </div>
-      <button class="mini" id="salir">Salir</button>
     </div>
 
-    <div class="tot" id="tot"></div>
+    <main>
+      <section class="view on" id="v-inicio"></section>
+      <section class="view" id="v-personas"></section>
+      <section class="view" id="v-zonas"></section>
+      <section class="view" id="v-mas"></section>
+    </main>
 
-    <nav id="menu">
-      <button data-v="esperando" class="on">Esperando <span class="n" id="n-esperando">0</span></button>
-      <button data-v="personas">Personas <span class="n" id="n-personas">0</span></button>
-      <button data-v="anulados">Anulados <span class="n" id="n-anulados">0</span></button>
-      <button data-v="herramientas">Datos</button>
+    <nav class="tabbar" id="tabbar">
+      <button data-v="inicio" class="on">
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/></svg>
+        <span class="lab">Inicio</span><span class="badge" id="bg-inicio"></span>
+      </button>
+      <button data-v="personas">
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9.5" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.9"/></svg>
+        <span class="lab">Personas</span><span class="badge" id="bg-personas"></span>
+      </button>
+      <button data-v="zonas">
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3 3 6v15l6-3 6 3 6-3V3l-6 3-6-3Z"/><path d="M9 3v15M15 6v15"/></svg>
+        <span class="lab">Zonas</span><span class="badge" id="bg-zonas"></span>
+      </button>
+      <button data-v="mas">
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg>
+        <span class="lab">Más</span><span class="badge" id="bg-mas"></span>
+      </button>
     </nav>
-
-    <div class="buscabox" id="buscabox">
-      <input id="q" type="search" autocomplete="off" placeholder="Buscar por nombre, celular, sector o código">
-      <button class="limpiar" id="limpiar" hidden aria-label="Limpiar la búsqueda">×</button>
-    </div>
-
-    <div id="pane"></div>
   </div>
 
-  <div class="version" id="version" style="margin-top:24px"></div>
+</div>
 
-</div></div>
+<!-- HOJA INFERIOR (ficha, ayuda, cifras) -->
+<div class="sheet" id="sheet">
+  <div class="scrim" data-close></div>
+  <div class="panel"><div class="grab"></div><div id="sheet-body"></div></div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
@@ -113,404 +220,669 @@
 <script src="js/version.js"></script>
 <script src="js/data.js"></script>
 <script>
-const $ = s => document.querySelector(s);
+/* ============================================================
+   PANEL DE ADMINISTRACIÓN — Aquí Estamos
+   Rediseño mobile-first: 4 pestañas fijas abajo (Inicio · Personas ·
+   Zonas · Más), ficha en hoja inferior, y un modo demo (?ejemplo=1)
+   para revisar la interfaz sin base de datos ni login.
+   ============================================================ */
+const $  = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
 const esc = s => String(s??'').replace(/[<>&"]/g, m=>({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[m]));
-let t; function toast(m){ const e=$('#toast'); e.textContent=m; e.classList.add('on');
-  clearTimeout(t); t=setTimeout(()=>e.classList.remove('on'), 3200); }
+let _t; function toast(m){ const e=$('#toast'); e.textContent=m; e.classList.add('on');
+  clearTimeout(_t); _t=setTimeout(()=>e.classList.remove('on'), 3200); }
 
-const db = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
+const H = 3600e3;
+const now = () => Date.now();
+const DEMO = /[?&]ejemplo=1/.test(location.search);
 
-const waDigitos = v => { let d=String(v||'').replace(/\D/g,'');
+/* ---- teléfono / WhatsApp ---- */
+function telSoloDigitos(v){ let d=String(v||'').replace(/\D/g,'');
   if(d.startsWith('00')) d=d.slice(2);
-  while(d.length>10 && d.startsWith('57')) d=d.slice(2);
-  return d.length===10 && d[0]==='3' ? '57'+d : d; };
-const hace = ts => { const h=(Date.now()-new Date(ts))/3600e3;
+  while(d.length>12 && d.startsWith('57')) d=d.slice(2); return d; }
+function telDigitos(v){ const d=telSoloDigitos(v);
+  if(d.length===10 && d[0]==='3') return '57'+d;
+  if(d.length===12 && d.startsWith('57') && d[2]==='3') return d;
+  if(d.length>=11 && d.length<=15) return d; return null; }
+function telBonito(v){ const d=telDigitos(v); if(!d) return String(v||'');
+  if(d.startsWith('57') && d.length===12) return `+57 ${d.slice(2,5)} ${d.slice(5,8)} ${d.slice(8)}`;
+  return '+'+d; }
+const waLink = (v,msg)=>{ const d=telDigitos(v); if(!d) return '#';
+  return 'https://wa.me/'+d+(msg?'?text='+encodeURIComponent(msg):''); };
+
+const soloDigitos = s => String(s??'').replace(/\D/g,'');
+const norm = s => String(s??'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,"");
+const normRef = s => String(s||'').trim().toLowerCase().replace(/\s+/g,' ');
+const hace = ts => { if(!ts) return 'nunca'; const h=(now()-ts)/H;
   return h<1 ? 'hace '+Math.max(1,Math.round(h*60))+' min'
      : h<48 ? 'hace '+Math.round(h)+' h' : 'hace '+Math.round(h/24)+' días'; };
 
-/* Sin tildes y en minúscula: quien busca "Cañaveral" no debería tener que
-   acordarse de la eñe, ni quien busca "jose" del acento de José. */
-const norm = s => String(s??'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
-const soloDigitos = s => String(s??'').replace(/\D/g,'');
-
-/* En la base la zona se guarda con su identificador ("eloso"), que es lo que
-   nunca cambia. Para leerlo hace falta el nombre ("El Oso"), y esa tabla vive
-   en js/data.js, que es de donde la saca el mapa. Si el id no est\u00e1 en la
-   lista se muestra tal cual: mejor un nombre feo que un hueco. */
-const NOMBRE_ZONA = new Map((typeof ZONAS !== 'undefined' ? ZONAS : []).map(z=>[z.id, z.n]));
-const zonaNombre = id => NOMBRE_ZONA.get(id) || id || '\u2014';
-
-/* ---------- entrar ---------- */
-$('#enviar').onclick = async ()=>{
-  const email = $('#mail').value.trim();
-  if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return toast('Revise el correo');
-  $('#enviar').disabled = true; $('#enviar').textContent = 'Enviando…';
-  const {error} = await db.auth.signInWithOtp({email, options:{emailRedirectTo: location.href}});
-  $('#enviar').disabled = false; $('#enviar').textContent = 'Enviarme el enlace';
-  $('#msg').textContent = error ? 'No se pudo enviar: '+error.message
-    : 'Listo. Revise su correo y toque el enlace. Puede cerrar esta pestaña.';
-};
-$('#salir').onclick = async ()=>{ await db.auth.signOut(); location.reload(); };
+const UCOL = {3:'#dc2626', 2:'#d97706', 1:'#c9a227'};
+const NOMBRE_ZONA = new Map((typeof ZONAS!=='undefined'?ZONAS:[]).map(z=>[z.id,z.n]));
+const zonaNombre = id => NOMBRE_ZONA.get(id) || id || '—';
+const zonaObj    = id => (typeof ZONAS!=='undefined'?ZONAS:[]).find(z=>z.id===id) || null;
+function color(i){ return i>=80?'#8b1a1a' : i>=60?'#dc2626' : i>=40?'#d97706' : i>=20?'#c9a227' : '#3f8f5f'; }
+function etiqueta(i){ return i>=80?'Sin ayuda' : i>=60?'Crítica' : i>=40?'Rezagada' : i>=20?'Parcial' : 'Atendida'; }
 
 /* ============================================================
-   ESTADO
-   ============================================================
-   Una fila de "coordinadores" es una micro-zona, no una persona: quien cubre
-   tres sectores tiene tres filas. Autorizar y anular siguen siendo por
-   micro-zona — es lo que se verifica — pero mirar y buscar se hace por
-   persona, que es como uno piensa cuando le llega un WhatsApp.            */
-let DATOS   = [];
-let VISTA   = 'esperando';
-let PERSONA = null;      // clave de la persona abierta, null = la lista
-let BUSCA   = '';
+   ESTADO  (filas crudas de Supabase, o de demo)
+   ============================================================ */
+let COORDS   = [];   // objetos coordinador (micro-zona), incluye anulados
+let REPORTES = [];
+let ENTREGAS = [];
+let VISTA = 'inicio';
+let SEG   = 'esperando';
+let BUSCA = '';
+let YO    = { email: '' };
 
-/* La cuenta es el dueño de verdad; el celular es el respaldo para las filas
-   viejas, de antes de que existieran las cuentas. */
-const clave = c => c.cuenta || c.tel_e164 || c.tel || c.id;
+const deCoo = c=>({ id:c.id, z:c.zona, micro:c.micro||'', radio:c.radio||500,
+  lat:+c.lat, lng:+c.lng, nom:c.nombre, rol:c.rol||'', tel:c.tel, tel_e164:c.tel_e164||c.tel,
+  email:c.email||'', nota:c.nota||'', foto:c.foto||null, ver:!!c.verificado, anulado:!!c.anulado,
+  codigo:c.codigo||'', cuenta:c.cuenta||null, creado:+new Date(c.creado||Date.now()) });
+const deRep = r=>({ id:r.id, z:r.zona, k:r.necesidad, u:r.urgencia, lat:+r.lat, lng:+r.lng,
+  ref:r.referencia||'', personas:r.personas||0, ts:+new Date(r.creado||Date.now()) });
+const deEnt = e=>({ id:e.id, z:e.zona, k:e.necesidad, quien:e.quien||'Anónimo',
+  cant:e.cantidad||'', ts:+new Date(e.creado||Date.now()) });
 
-function agrupar(filas){
-  const m = new Map();
-  for(const c of filas){
-    const k = clave(c);
-    let p = m.get(k);
-    if(!p){ p = {clave:k, zonas:[], desde:c.creado, ultima:null}; m.set(k, p); }
-    p.zonas.push(c);
-    /* Sin fiarse del orden en que vengan: el nombre y la foto salen de la
-       inscripción más nueva — es la que la persona corrigió de última — y
-       "desde" es la más vieja, que es cuando llegó. */
-    if(new Date(c.creado) < new Date(p.desde)) p.desde = c.creado;
-    if(!p.ultima || new Date(c.creado) > new Date(p.ultima)){
-      p.ultima = c.creado;
-      p.nombre = c.nombre; p.tel = c.tel; p.tel_e164 = c.tel_e164; p.rol = c.rol;
-    }
-    if(!p.foto  && c.foto)  p.foto  = c.foto;
-    if(!p.email && c.email) p.email = c.email;
+const activos = () => COORDS.filter(c=>!c.anulado);
+
+/* ============================================================
+   CÁLCULO (portado de calc.js) — focos, cobertura, desatención
+   ============================================================ */
+const CELL = 0.0016;
+const celda = (lat,lng)=> Math.round(lat/CELL)+'_'+Math.round(lng/CELL);
+const escalar = (u,n)=> Math.min(3, u + (n>=5?2:n>=3?1:0));
+function dist(a1,o1,a2,o2){ const dy=(a2-a1)*110574, dx=(o2-o1)*111320*Math.cos((a1+a2)/2*Math.PI/180);
+  return Math.sqrt(dx*dx+dy*dy); }
+
+function focos(zid){
+  const g = {};
+  REPORTES.filter(r=>r.z===zid && r.lat).forEach(r=>{
+    const c = r.ref ? 'r:'+normRef(r.ref) : 'c:'+celda(r.lat,r.lng);
+    (g[c] = g[c] || {c, reps:[]}).reps.push(r);
+  });
+  return Object.values(g).map(f=>{
+    f.n   = f.reps.length;
+    f.lat = f.reps.reduce((s,r)=>s+r.lat,0)/f.n;
+    f.lng = f.reps.reduce((s,r)=>s+r.lng,0)/f.n;
+    f.ref = (f.reps.find(r=>r.ref)||{}).ref || '';
+    f.ts  = Math.max(...f.reps.map(r=>r.ts));
+    const byK = {};
+    f.reps.forEach(r=>{ const e=byK[r.k]=byK[r.k]||{k:r.k,n:0,uBase:0,personas:0};
+      e.n++; e.uBase=Math.max(e.uBase,r.u||1); e.personas+=r.personas||0; });
+    f.needs = Object.values(byK).map(e=>({...e,u:escalar(e.uBase,e.n)})).sort((a,b)=>b.u-a.u||b.n-a.n);
+    f.u = Math.max(...f.needs.map(x=>x.u));
+    f.personas = f.needs.reduce((s,x)=>s+x.personas,0);
+    return f;
+  }).sort((a,b)=>b.u-a.u||b.n-a.n);
+}
+function cubridores(lat,lng){
+  return activos().filter(c=>c.lat && dist(lat,lng,c.lat,c.lng) <= (c.radio||500));
+}
+function huerfanos(){
+  const out=[]; (ZONAS||[]).forEach(z=>focos(z.id).forEach(f=>{
+    if(!cubridores(f.lat,f.lng).length) out.push({...f, zona:z}); }));
+  return out.sort((a,b)=>b.u-a.u||b.n-a.n);
+}
+function solitarios(){
+  const out=[]; (ZONAS||[]).forEach(z=>focos(z.id).forEach(f=>{
+    const cb=cubridores(f.lat,f.lng); if(cb.length===1) out.push({...f, zona:z, solo:cb[0]}); }));
+  return out.sort((a,b)=>b.u-a.u||b.n-a.n);
+}
+function estadoZona(z){
+  const reps = REPORTES.filter(r=>r.z===z.id);
+  const ents = ENTREGAS.filter(e=>e.z===z.id);
+  const fs = focos(z.id);
+  const personas = reps.reduce((s,r)=>s+(r.personas||0),0);
+  const pendCrit = fs.filter(f=>f.u===3).length;
+  const ultEnt = ents.length ? Math.max(...ents.map(e=>e.ts)) : 0;
+  const horasSin = ultEnt ? (now()-ultEnt)/H : (reps.length?999:0);
+  let idx = 0;
+  if(reps.length){
+    const gravedad = Math.min(1,(pendCrit*2 + fs.length)/8);
+    const abandono = Math.min(1, horasSin/30);
+    const escala   = Math.min(1, personas/900);
+    idx = Math.round(100*(0.45*gravedad + 0.40*abandono + 0.15*escala));
+    if(!ents.length && pendCrit) idx = Math.max(idx,78);
   }
-  for(const p of m.values()){
-    p.esperando = p.zonas.filter(z=>!z.verificado && !z.anulado).length;
-    p.activas   = p.zonas.filter(z=>!z.anulado).length;
-    p.anuladas  = p.zonas.filter(z=> z.anulado).length;
-  }
-  return [...m.values()];
+  const nCoord = activos().filter(c=>c.z===z.id && c.ver).length;
+  const nMicro = activos().filter(c=>c.z===z.id).length;
+  return {z, idx, nCoord, nMicro, personas, ultEnt, reps:reps.length, ents:ents.length, focos:fs};
 }
 
-/* Busca en todo lo que un administrador tiene a mano cuando le escriben:
-   el nombre, el número que aparece en el WhatsApp, el sector o el código. */
-function coincideZona(c, q, qd){
-  if(qd && qd.length >= 3 && soloDigitos(c.tel_e164 + ' ' + c.tel).includes(qd)) return true;
-  return norm([c.nombre, c.micro, c.zona, zonaNombre(c.zona), c.rol, c.codigo, c.nota, c.email, c.tel]
-    .join(' ')).includes(q);
-}
-function filtrar(filas){
-  const q = norm(BUSCA).trim(); if(!q) return filas;
-  const qd = soloDigitos(BUSCA);
-  return filas.filter(c=>coincideZona(c, q, qd));
-}
+/* ============================================================
+   AGRUPAR POR PERSONA (para la ficha: otras micro-zonas)
+   ============================================================ */
+const claveP = c => c.cuenta || telDigitos(c.tel) || c.tel || c.id;
+function micrasDe(c){ return COORDS.filter(x=>claveP(x)===claveP(c)); }
 
 /* ============================================================
    PINTAR
    ============================================================ */
-function avatar(p){
-  if(p.foto) return `<div class="avatar" style="background-image:url('${esc(p.foto)}')"></div>`;
-  const ini = (p.nombre||'?').split(/\s+/).slice(0,2).map(x=>x[0]||'').join('').toUpperCase();
-  return `<div class="avatar">${esc(ini)}</div>`;
+function avatar(p, cls=''){
+  if(p.foto) return `<div class="avatar ${cls}" style="background-image:url('${esc(p.foto)}')"></div>`;
+  const ini=(p.nom||p.nombre||'?').split(/\s+/).slice(0,2).map(x=>x[0]||'').join('').toUpperCase();
+  return `<div class="avatar ${cls}">${esc(ini)}</div>`;
 }
-function sello(c){
-  return c.anulado ? '<span class="pend">anulado</span>'
-       : c.verificado ? '<span class="verif">verificado</span>'
-       : '<span class="pend">esperando</span>';
-}
-/* Un solo WhatsApp por persona, no uno por sector: es el mismo número todas
-   las veces. Lo que cambia es el mensaje, que nombra el sector cuando es uno
-   y los enumera cuando son varios, para que la persona sepa de qué le hablan. */
-const listar = ns => ns.length <= 2 ? ns.join(' y ')
-                   : ns.slice(0,2).join(', ') + ' y ' + (ns.length - 2) + ' más';
+function estadoDe(c){ return c.anulado?'anulados' : c.ver?'autorizados' : 'esperando'; }
 
-function botonWA(tel, nombre, sectores){
-  const wa = waDigitos(tel);
-  const de = sectores.length ? ' como coordinador de ' + listar(sectores) : '';
-  const msg = encodeURIComponent(`Hola ${nombre||''}, le escribo de Aquí Estamos para confirmar su inscripción${de}.`);
-  return `<a class="btn wa" href="https://wa.me/${wa}?text=${msg}" target="_blank" rel="noopener">WhatsApp</a>`;
+function coincide(c, q, qd){
+  if(qd && qd.length>=3 && soloDigitos((c.tel_e164||'')+' '+(c.tel||'')).includes(qd)) return true;
+  return norm([c.nom,c.micro,c.z,zonaNombre(c.z),c.rol,c.codigo,c.nota,c.email,c.tel].join(' ')).includes(q);
 }
 
-/* Una micro-zona. Con nombre arriba cuando va suelta en una lista; sin él
-   cuando ya está dentro de la ficha de su dueño, que sería repetirlo. */
-function tarjetaZona(c, conNombre){
-  const clases = 'fila' + (c.anulado ? ' anulada' : (!c.verificado ? ' pendiente' : ''));
-  return `<div class="${clases}">
-    ${conNombre ? `<div class="row">
-      ${avatar(c)}
-      <div class="grow">
-        <div style="font-weight:700;font-size:15px">${esc(c.nombre)}</div>
-        <div class="muted">${esc(c.micro||'sin nombre de sector')} · ${esc(zonaNombre(c.zona))} · ${c.radio||500} m</div>
-      </div>
-      ${sello(c)}
-    </div>`
-    : `<div class="row">
-      <div class="grow">
-        <div style="font-weight:700;font-size:15px">${esc(c.micro||'sin nombre de sector')}</div>
-        <div class="muted">${esc(zonaNombre(c.zona))} · ${c.radio||500} m</div>
-      </div>
-      ${sello(c)}
-    </div>`}
-    <div style="margin-top:9px">
-      <div class="campo"><span>Código</span><span class="cod">${esc(c.codigo||'—')}</span></div>
-      ${conNombre ? `<div class="campo"><span>Celular</span><span>${esc(c.tel)}</span></div>
-      <div class="campo"><span>Rol</span><span>${esc(c.rol||'—')}</span></div>` : ''}
-      ${c.nota ? `<div class="campo"><span>Nota</span><span>${esc(c.nota)}</span></div>` : ''}
-      <div class="campo"><span>Inscrito</span><span>${hace(c.creado)}</span></div>
+/* ---------- INICIO ---------- */
+function vInicio(){
+  const pend = activos().filter(c=>!c.ver);
+  const orf  = huerfanos();
+  const sol  = solitarios();
+  const auth = activos().filter(c=>c.ver).length;
+  const micro= activos().length;
+  const entHoy = ENTREGAS.filter(e=>(now()-e.ts) < 24*H).length;
+
+  let alertas = '';
+  if(orf.length) alertas += `<div class="alert red">
+      <div class="ti">${orf.length} punto${orf.length>1?'s':''} sin nadie a cargo</div>
+      <div class="cx">${esc(orf[0].zona.n)}${orf.length>1?' y otros':''} — se reportó ayuda y nadie la cubre.</div>
+      <button class="btn red" data-goto="zonas">Ver en Zonas</button></div>`;
+  if(sol.length) alertas += `<div class="alert amber">
+      <div class="ti">${sol.length} sector${sol.length>1?'es':''} con una sola persona</div>
+      <div class="cx">${esc(sol[0].zona.n)} — solo <b>${esc(sol[0].solo.nom)}</b> a cargo. Si falla, queda ciego.</div>
+      <button class="btn flat" data-goto="zonas">Ver en Zonas</button></div>`;
+  if(pend.length) alertas += `<div class="alert amber">
+      <div class="ti">${pend.length} ${pend.length>1?'inscripciones':'inscripción'} esperando autorización</div>
+      <div class="cx">Le llegó el código por WhatsApp: búsquela y confirme que es esa persona.</div>
+      <button class="btn" style="background:var(--acc)" data-goto="personas" data-seg="esperando">Revisar Personas</button></div>`;
+  if(!alertas) alertas = `<div class="alert green">
+      <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+      <div><div class="ti">Todo al día</div><div class="cx">Cada punto reportado tiene alguien a cargo y no hay nadie esperando.</div></div></div>`;
+
+  const movs = movimientos();
+  const movHtml = movs.length ? movs.map(m=>`
+    <div class="need-line">
+      <span class="dot" style="background:${m.color}"></span>
+      <div class="grow"><div style="font-size:13.5px">${m.txt}</div>
+        <div class="cnt">${hace(m.ts)}</div></div>
+    </div>`).join('') : `<div class="vacio"><b>Sin movimientos aún</b><p>Aquí van apareciendo inscripciones y entregas.</p></div>`;
+
+  $('#v-inicio').innerHTML = `
+    ${alertas}
+    <button class="bigrow" data-goto="personas" data-seg="esperando">
+      <div class="grow"><b>Esperando autorización</b><span>${pend.length?'Toque para revisarlas':'Nadie esperando. Todo al día.'}</span></div>
+      <div class="n" style="color:${pend.length?'#f5a524':'var(--dim)'}">${pend.length}</div>
+    </button>
+    <div class="lbl">Resumen</div>
+    <div class="kpis">
+      <div class="kpi"><b>${auth}</b><span>autorizadas</span></div>
+      <div class="kpi"><b>${entHoy}</b><span>entregas hoy</span></div>
+      <div class="kpi"><b>${micro}</b><span>micro-zonas</span></div>
     </div>
-    <div class="acc">
-      ${conNombre ? botonWA(c.tel_e164 || c.tel, c.nombre, [c.micro || zonaNombre(c.zona)]) : ''}
-      ${!c.verificado && !c.anulado ? `<button class="btn green" data-ok="${c.id}">Autorizar</button>` : ''}
-      ${!c.anulado ? `<button class="btn flat" data-no="${c.id}">Anular</button>`
-                   : `<button class="btn flat" data-si="${c.id}">Reactivar</button>`}
+    <div class="lbl">Últimos movimientos</div>
+    <div class="card" style="padding:4px 13px">${movHtml}</div>
+    <button class="mitem" style="margin-top:12px" data-ayuda="coordinacion">
+      <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.1 9.5a3 3 0 0 1 5.8 1c0 2-2.9 3-2.9 3"/><path d="M12 17h.01"/></svg>
+      <div class="grow"><b>¿Cómo funciona la coordinación?</b></div><span class="chev">›</span>
+    </button>`;
+}
+
+function movimientos(){
+  const evs = [];
+  activos().forEach(c=> evs.push({ts:c.creado, color:'#7aa7ff',
+    txt:`<b>${esc(c.nom)}</b> se inscribió en ${esc(zonaNombre(c.z))}${c.ver?' · autorizada':''}`}));
+  ENTREGAS.forEach(e=> evs.push({ts:e.ts, color:'#3f8f5f',
+    txt:`Entrega: ${esc(NEED[e.k]?.n||e.k)} → ${esc(zonaNombre(e.z))}${e.quien?` · ${esc(e.quien)}`:''}`}));
+  return evs.sort((a,b)=>b.ts-a.ts).slice(0,6);
+}
+
+/* ---------- PERSONAS ---------- */
+function vPersonas(){
+  const q = norm(BUSCA).trim(), qd = soloDigitos(BUSCA);
+  const cont = { esperando:0, autorizados:0, anulados:0 };
+  COORDS.forEach(c=> cont[estadoDe(c)]++);
+
+  let filas = COORDS.filter(c=>estadoDe(c)===SEG);
+  if(q) filas = filas.filter(c=>coincide(c,q,qd));
+  // el que lleva más esperando primero; el resto, más nuevo primero
+  filas.sort((a,b)=> SEG==='esperando' ? a.creado-b.creado : b.creado-a.creado);
+
+  const vacTxt = {
+    esperando: BUSCA?'Nadie esperando con esa búsqueda.':'Nadie esperando. Todo al día.',
+    autorizados: BUSCA?'Ningún autorizado con esa búsqueda.':'Todavía no hay autorizados.',
+    anulados: BUSCA?'Ningún anulado con esa búsqueda.':'Ninguno anulado.',
+  };
+
+  $('#v-personas').innerHTML = `
+    <div class="buscabox">
+      <input id="q" type="search" autocomplete="off" placeholder="Buscar por nombre, código o celular" value="${esc(BUSCA)}">
+      <button class="limpiar" id="limpiar" ${BUSCA?'':'hidden'} aria-label="Limpiar">×</button>
     </div>
+    <div class="seg" id="seg">
+      <button data-s="esperando"   class="${SEG==='esperando'?'on':''}">Esperando <span class="c">${cont.esperando}</span></button>
+      <button data-s="autorizados" class="${SEG==='autorizados'?'on':''}">Autorizados <span class="c">${cont.autorizados}</span></button>
+      <button data-s="anulados"    class="${SEG==='anulados'?'on':''}">Anulados <span class="c">${cont.anulados}</span></button>
+    </div>
+    ${filas.length ? filas.map(filaPersona).join('')
+      : `<div class="vacio"><div class="vic">${ico('search')}</div><b>${esc(vacTxt[SEG])}</b>
+           <p>${SEG==='esperando'?'Cuando alguien se inscriba y le envíe su código, aparece aquí.':''}</p></div>`}`;
+}
+
+function filaPersona(c){
+  const cls = c.anulado?'anulada' : (!c.ver?'pendiente':'');
+  const wa = waLink(c.tel_e164||c.tel, `Hola ${c.nom||''}, le escribo de Aquí Estamos para confirmar su inscripción como coordinador de ${c.micro||zonaNombre(c.z)}.`);
+  return `<div class="prow ${cls}">
+    ${avatar(c)}
+    <div class="info" data-ficha="${esc(c.id)}">
+      <div class="nm">${esc(c.nom)}${c.ver?'<svg class="tick ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>':''}</div>
+      <div class="mt">${esc(zonaNombre(c.z))}${c.micro?' · '+esc(c.micro):''} · ${hace(c.creado)}</div>
+      <div class="cd">${esc(c.codigo||'—')}</div>
+    </div>
+    <a class="waq" href="${wa}" target="_blank" rel="noopener" aria-label="WhatsApp">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.5 14.4c-.3-.2-1.7-.9-2-1-.3-.1-.5-.1-.6.1-.2.3-.7.9-.8 1.1-.2.2-.3.2-.6.1-.3-.2-1.2-.5-2.3-1.4-.9-.8-1.4-1.7-1.6-2-.2-.3 0-.5.1-.6l.5-.6c.1-.2.2-.3.3-.5.1-.2 0-.4 0-.5-.1-.2-.6-1.6-.9-2.2-.2-.5-.4-.5-.6-.5h-.5c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.5s1.1 2.9 1.2 3.1c.2.2 2.1 3.3 5.2 4.6.7.3 1.3.5 1.7.6.7.2 1.4.2 1.9.1.6-.1 1.7-.7 2-1.4.2-.7.2-1.3.2-1.4-.1-.2-.3-.3-.6-.4Z"/><path d="M12 2C6.5 2 2 6.5 2 12c0 1.8.5 3.4 1.3 4.9L2 22l5.3-1.4A10 10 0 1 0 12 2Zm0 18.2c-1.5 0-3-.4-4.3-1.2l-.3-.2-3.1.8.8-3-.2-.3A8.2 8.2 0 1 1 12 20.2Z"/></svg>
+    </a>
+    <button class="kebab" data-ficha="${esc(c.id)}" aria-label="Ver ficha">⋮</button>
   </div>`;
 }
 
-function vacio(txt){ return `<p class="muted">${esc(txt)}</p>`; }
+/* ---------- FICHA (hoja) ---------- */
+function abrirFicha(id){
+  const c = COORDS.find(x=>x.id===id); if(!c) return;
+  const otras = micrasDe(c).filter(x=>x.id!==c.id);
+  const wa = waLink(c.tel_e164||c.tel, `Hola ${c.nom||''}, le escribo de Aquí Estamos.`);
+  const st = estadoDe(c);
+  const sello = c.anulado?'<span class="pend">anulado</span>'
+    : c.ver?'<span class="verif">verificado ✓</span>':'<span class="pend">esperando</span>';
 
-function paneEsperando(){
-  // el que lleva más tiempo esperando va primero: es a quien le estamos fallando
-  const pend = filtrar(DATOS.filter(c=>!c.verificado && !c.anulado))
-    .slice().sort((a,b)=> new Date(a.creado) - new Date(b.creado));
-  return `<p class="muted" style="margin:0 0 12px">Cuando le llegue el código por WhatsApp,
-      búsquelo aquí y autorice. Si el número coincide con el que le escribió, es esa persona.
-      Arriba está quien lleva más tiempo esperando.</p>`
-    + (pend.map(c=>tarjetaZona(c, true)).join('')
-       || vacio(BUSCA ? 'Nadie esperando con esa búsqueda.' : 'Nadie esperando. Todo al día.'));
-}
+  let acciones = `<a class="btn wa" href="${wa}" target="_blank" rel="noopener">${icoWA()} Escribirle por WhatsApp</a>`;
+  if(st==='esperando')
+    acciones = `<button class="btn" data-ok="${esc(c.id)}">Autorizar esta inscripción</button>` + acciones;
+  if(st==='anulados')
+    acciones = `<button class="btn" data-si="${esc(c.id)}">Reactivar</button>` + acciones;
 
-function paneAnulados(){
-  const nul = filtrar(DATOS.filter(c=>c.anulado));
-  return (nul.map(c=>tarjetaZona(c, true)).join('')
-    || vacio(BUSCA ? 'Ningún anulado con esa búsqueda.' : 'Ninguno.'));
-}
+  const pie = c.anulado ? '' :
+    `<button class="destroy" data-no="${esc(c.id)}">Anular autorización</button>`;
 
-function panePersonas(){
-  if(PERSONA) return paneUnaPersona();
-
-  const q = norm(BUSCA).trim(), qd = soloDigitos(BUSCA);
-  let gente = agrupar(DATOS);
-  if(q) gente = gente.filter(p=>p.zonas.some(c=>coincideZona(c, q, qd)));
-  // primero quien está esperando algo, después el resto
-  gente.sort((a,b)=> (b.esperando - a.esperando) || (a.nombre||'').localeCompare(b.nombre||'', 'es'));
-
-  if(!gente.length) return vacio(BUSCA ? 'Nadie con esa búsqueda.' : 'Todavía no hay nadie inscrito.');
-
-  return `<p class="muted" style="margin:0 0 12px">Una línea por persona, no por sector.
-      Tóquela para ver todas sus micro-zonas y autorizarlas.</p>`
-    + gente.map(p=>{
-    const partes = [];
-    partes.push(p.activas === 1 ? '1 micro-zona' : p.activas + ' micro-zonas');
-    if(p.anuladas) partes.push(p.anuladas === 1 ? '1 anulada' : p.anuladas + ' anuladas');
-    return `<button class="pers" data-pers="${esc(p.clave)}">
-      ${avatar(p)}
-      <span class="grow">
-        <b>${esc(p.nombre)}</b>
-        <span class="muted">${esc(p.tel)} · ${partes.join(' · ')}</span>
-        <span class="badges">${p.esperando
-          ? `<span class="pend">${p.esperando} esperando</span>`
-          : (p.activas ? '<span class="verif">al día</span>' : '')}</span>
-      </span>
-      <span class="chev">›</span>
-    </button>`;
-  }).join('');
-}
-
-function paneUnaPersona(){
-  const p = agrupar(DATOS).find(x=>x.clave === PERSONA);
-  if(!p){ PERSONA = null; return panePersonas(); }
-
-  // de la más nueva a la más vieja, y las anuladas al final
-  const zs = p.zonas.slice().sort((a,b)=>
-    (a.anulado - b.anulado) || (new Date(b.creado) - new Date(a.creado)));
-
-  return `<button class="mini volver" data-volver>‹ Todas las personas</button>
-    <div class="cabeza">
-      <div class="row">
-        ${avatar(p)}
-        <div class="grow">
-          <div style="font-weight:700;font-size:17px">${esc(p.nombre)}</div>
-          <div class="muted">${esc(p.tel)}</div>
-        </div>
-      </div>
-      <div style="margin-top:11px">
-        ${p.email ? `<div class="campo"><span>Correo</span><span>${esc(p.email)}</span></div>` : ''}
-        <div class="campo"><span>Rol</span><span>${esc(p.rol||'—')}</span></div>
-        <div class="campo"><span>Cubre</span><span>${p.activas} de ${p.zonas.length} micro-zonas${p.anuladas ? ' (' + p.anuladas + ' anulada' + (p.anuladas>1?'s':'') + ')' : ''}</span></div>
-        <div class="campo"><span>Desde</span><span>${hace(p.desde)}</span></div>
-      </div>
-      <div class="acc">
-        ${botonWA(p.tel_e164 || p.tel, p.nombre,
-            (p.zonas.filter(z=>!z.anulado).length ? p.zonas.filter(z=>!z.anulado) : p.zonas)
-              .map(z=>z.micro || zonaNombre(z.zona)))}
-        ${p.esperando > 1
-          ? `<button class="btn green" data-ok-todas="${esc(p.clave)}">Autorizar las ${p.esperando}</button>`
-          : ''}
-      </div>
+  abrirSheet(`
+    <div class="fichacab">
+      ${avatar(c,'big')}
+      <div class="grow"><div class="nm">${esc(c.nom)}</div>
+        <div class="rl">${esc(c.rol||'Coordinador')} · ${sello}</div></div>
     </div>
-    <div class="sec">Sus micro-zonas</div>
-    ${zs.map(c=>tarjetaZona(c, false)).join('')}`;
+    <div class="codewrap">
+      <div class="k">Código que le llegó por WhatsApp</div>
+      <div class="codebg"><span class="cod">${esc(c.codigo||'—')}</span>
+        <button class="copiar" data-copiar="${esc(c.codigo||'')}">Copiar</button></div>
+      <div class="muted" style="margin-top:6px">Si coincide con el que le escribió, es esa persona.</div>
+    </div>
+    <div class="kv"><span class="k">Celular</span><a class="v tel" href="${wa}" target="_blank" rel="noopener">${esc(telBonito(c.tel))}</a></div>
+    <div class="kv"><span class="k">Zona</span><span class="v">${esc(zonaNombre(c.z))}${c.micro?' · '+esc(c.micro):''} · ${c.radio||500} m</span></div>
+    ${c.nota?`<div class="kv"><span class="k">Nota</span><span class="v">${esc(c.nota)}</span></div>`:''}
+    <div class="kv"><span class="k">Inscrito</span><span class="v">${hace(c.creado)}</span></div>
+    ${otras.length?`<div class="kv"><span class="k">Otras micro-zonas</span><span class="v">${otras.map(o=>esc(o.micro||zonaNombre(o.z))).join(', ')}</span></div>`:''}
+    <div style="margin-top:14px">${acciones}</div>
+    ${pie}
+  `);
 }
 
-function paneHerramientas(){
-  return `<button class="btn flat" id="exportar">Exportar todo (JSON)</button>
-    <p class="muted" style="margin:-4px 0 6px;font-size:13px">Baja reportes, entregas y
-      coordinadores completos, para respaldo o para pasarle cifras a la Alcaldía.
-      Hoy es el único respaldo que hay.</p>`;
+/* ---------- ZONAS ---------- */
+function vZonas(){
+  const est = (ZONAS||[]).map(estadoZona);
+  const orf = huerfanos();
+  const sinNombre = orf.filter(f=>!f.ref);
+
+  // necesita gente: zonas con reportes y 0 coordinadores verificados
+  const necesita = est.filter(s=>s.reps>0 && s.nCoord===0).sort((a,b)=>b.idx-a.idx);
+  const cubiertas = est.filter(s=>s.nCoord>0).sort((a,b)=>b.idx-a.idx);
+
+  const pinRows = est.filter(s=>s.reps>0);
+  $('#v-zonas').innerHTML = `
+    <div class="mapprev" data-abrir-mapa>
+      ${svgMapa(pinRows)}
+      <span class="abrir">Abrir mapa completo ↗</span>
+    </div>
+    ${necesita.length?`<div class="lbl">Necesita gente</div>
+      ${necesita.map(s=>`<div class="zrow warn">
+        <div class="pin" style="background:${color(s.idx)}22;color:${color(s.idx)}">${ico('alert')}</div>
+        <div class="grow"><b>${esc(s.z.n)}</b><span>${s.reps} reporte${s.reps>1?'s':''} · sin coordinador verificado · ${etiqueta(s.idx)}</span></div>
+        <button class="mini" data-abrir-mapa>Ver</button>
+      </div>`).join('')}`:''}
+    ${cubiertas.length?`<div class="lbl">Cubiertas</div>
+      ${cubiertas.map(s=>`<div class="zrow">
+        <div class="pin" style="background:${color(s.idx)}22;color:${color(s.idx)}">${ico('pin')}</div>
+        <div class="grow"><b>${esc(s.z.n)}</b><span>${s.nCoord} coordinador${s.nCoord>1?'es':''} · ${s.nMicro} micro-zona${s.nMicro>1?'s':''} · ${s.ents} entrega${s.ents===1?'':'s'}</span></div>
+      </div>`).join('')}`:''}
+    ${sinNombre.length?`<div class="lbl">Sin nombre todavía</div>
+      ${sinNombre.slice(0,8).map(f=>`<div class="zrow">
+        <div class="pin" style="background:#233149;color:var(--dim)">?</div>
+        <div class="grow"><b>Punto sin nombre</b><span>${esc(f.zona.n)} · reportado ${hace(f.ts)}</span></div>
+        <button class="mini" data-abrir-mapa>Ver</button>
+      </div>`).join('')}`:''}
+    ${(!necesita.length && !cubiertas.length)?`<div class="vacio"><b>Aún no hay reportes ni coordinadores</b><p>Cuando entren datos, las zonas aparecen aquí ordenadas por urgencia.</p></div>`:''}`;
 }
 
-function pintar(){
-  const pend = DATOS.filter(c=>!c.verificado && !c.anulado);
-  const ok   = DATOS.filter(c=> c.verificado && !c.anulado);
-  const nul  = DATOS.filter(c=> c.anulado);
-  const gente = agrupar(DATOS);
-
-  $('#tot').innerHTML = `
-    <div class="kpi"><b style="color:#d97706">${pend.length}</b><span>esperando</span></div>
-    <div class="kpi"><b style="color:#3f8f5f">${ok.length}</b><span>autorizadas</span></div>
-    <div class="kpi"><b>${gente.length}</b><span>personas</span></div>`;
-
-  $('#n-esperando').textContent = pend.length;
-  $('#n-esperando').classList.toggle('hay', pend.length > 0);
-  $('#n-personas').textContent  = gente.length;
-  $('#n-anulados').textContent  = nul.length;
-
-  $('#menu').querySelectorAll('button').forEach(b=>
-    b.classList.toggle('on', b.dataset.v === VISTA));
-
-  // en Herramientas no hay nada que buscar
-  $('#buscabox').hidden = (VISTA === 'herramientas');
-  $('#limpiar').hidden  = !BUSCA;
-
-  $('#pane').innerHTML =
-      VISTA === 'esperando'    ? paneEsperando()
-    : VISTA === 'personas'     ? panePersonas()
-    : VISTA === 'anulados'     ? paneAnulados()
-    :                            paneHerramientas();
-
-  if(VISTA === 'herramientas') $('#exportar').onclick = exportar;
+/* preview del mapa: pines por zona colocados por lat/lng, color por desatención */
+function svgMapa(rows){
+  const zs = rows.map(r=>r.z);
+  if(!zs.length) return `<svg viewBox="0 0 300 168"><rect width="300" height="168" fill="#0e1729"/><text x="150" y="88" fill="#4b5b78" font-size="12" text-anchor="middle">Sin puntos todavía</text></svg>`;
+  const lats = zs.map(z=>z.lat), lngs = zs.map(z=>z.lng);
+  const minLa=Math.min(...lats), maxLa=Math.max(...lats), minLo=Math.min(...lngs), maxLo=Math.max(...lngs);
+  const spanLa=(maxLa-minLa)||0.01, spanLo=(maxLo-minLo)||0.01;
+  const px = z => 22 + ((z.lng-minLo)/spanLo)*256;
+  const py = z => 22 + (1-(z.lat-minLa)/spanLa)*124;
+  const grid = [1,2,3].map(i=>`<line x1="0" y1="${42*i}" x2="300" y2="${42*i}" stroke="#1a2740" stroke-width="1"/>
+    <line x1="${75*i}" y1="0" x2="${75*i}" y2="168" stroke="#1a2740" stroke-width="1"/>`).join('');
+  const pins = rows.map(r=>{
+    const c=color(r.idx), x=px(r.z).toFixed(1), y=py(r.z).toFixed(1);
+    return `<circle cx="${x}" cy="${y}" r="7.5" fill="${c}" stroke="#0e1729" stroke-width="2"/>`;
+  }).join('');
+  return `<svg viewBox="0 0 300 168"><rect width="300" height="168" fill="#0e1729"/>${grid}${pins}</svg>`;
 }
 
-async function cargar(){
-  const {data, error} = await db.from('coordinadores').select('*').order('creado',{ascending:false});
-  if(error) return toast('No se pudo leer: '+error.message);
-  DATOS = data || [];
-  pintar();
+/* ---------- MÁS ---------- */
+function vMas(){
+  $('#v-mas').innerHTML = `
+    <div class="cuenta">
+      ${avatar({nom:YO.email||'A'},'big')}
+      <div class="grow"><b>${esc(YO.email?YO.email.split('@')[0]:'Administración')}</b>
+        <span>${esc(YO.email||(DEMO?'modo demostración':''))}</span></div>
+    </div>
+    <div class="lbl">Datos</div>
+    <button class="mitem" id="btn-export">
+      <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg>
+      <div class="grow"><b>Exportar todo (JSON)</b><span>Reportes, entregas y coordinadores — respaldo o cifras</span></div><span class="chev">›</span>
+    </button>
+    <button class="mitem" data-cifras>
+      <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>
+      <div class="grow"><b>Cifras para la Alcaldía</b><span>Resumen listo para copiar y pegar</span></div><span class="chev">›</span>
+    </button>
+    <div class="lbl">Ayuda</div>
+    <button class="mitem" data-ayuda="coordinacion">
+      <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.1 9.5a3 3 0 0 1 5.8 1c0 2-2.9 3-2.9 3"/><path d="M12 17h.01"/></svg>
+      <div class="grow"><b>Cómo funciona la coordinación</b></div><span class="chev">›</span>
+    </button>
+    <button class="mitem" data-ayuda="verificar">
+      <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6l7-3Z"/><path d="m9 12 2 2 4-4"/></svg>
+      <div class="grow"><b>Cómo verificar a una persona</b></div><span class="chev">›</span>
+    </button>
+    <div class="lbl">Sesión</div>
+    <button class="mitem danger" id="btn-salir">
+      <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/></svg>
+      <div class="grow"><b>Cerrar sesión</b><span>${esc(YO.email||'—')}</span></div>
+    </button>
+    <div class="version" id="version" style="margin-top:20px"></div>`;
+  if(typeof pintarVersion==='function') pintarVersion();
 }
 
-/* ---------- el menú y la búsqueda ---------- */
-$('#menu').addEventListener('click', e=>{
-  const b = e.target.closest('button[data-v]'); if(!b) return;
-  VISTA = b.dataset.v; PERSONA = null;
-  pintar();
-});
-$('#q').addEventListener('input', e=>{
-  BUSCA = e.target.value;
-  PERSONA = null;             // buscando se busca en la lista, no dentro de una ficha
-  pintar();
-});
-$('#limpiar').onclick = ()=>{ BUSCA = ''; $('#q').value = ''; $('#q').focus(); pintar(); };
+/* ============================================================
+   HOJA INFERIOR
+   ============================================================ */
+function abrirSheet(html){ $('#sheet-body').innerHTML = html + `<button class="btn flat" data-close-btn style="margin-top:12px">Cerrar</button>`;
+  $('#sheet').classList.add('on'); }
+function cerrarSheet(){ $('#sheet').classList.remove('on'); }
 
-/* ---------- acciones ---------- */
-async function marcar(id, campo, valor, aviso){
-  const {error} = await db.from('coordinadores').update({[campo]:valor}).eq('id', id);
-  toast(error ? 'No se pudo: '+error.message : aviso);
-  await cargar();
+const AYUDAS = {
+  coordinacion: {t:'Cómo funciona la coordinación', h:`
+    <p class="muted" style="line-height:1.6">Cada coordinador cubre una <b>micro-zona</b>: un punto en el mapa y un radio de máximo 1 km, porque una comuna entera no la atiende una sola persona.</p>
+    <p class="muted" style="line-height:1.6;margin-top:10px">Una misma persona puede tener varias, y los sectores se pueden traslapar: entre más ojos sobre un punto, mejor. Nadie manda sobre otro y nadie puede sacar a nadie.</p>
+    <p class="muted" style="line-height:1.6;margin-top:10px">Para aparecer con el sello verde, la persona nos envía un código desde su propio WhatsApp. Usted lo confirma aquí, en <b>Personas</b>.</p>`},
+  verificar: {t:'Cómo verificar a una persona', h:`
+    <p class="muted" style="line-height:1.6">No se le envía un código a la persona: <b>la persona nos lo envía</b>. Recibir por WhatsApp es gratis y comprueba que ese número existe y que lo usa.</p>
+    <ol class="muted" style="line-height:1.7;padding-left:18px;margin-top:10px">
+      <li>La persona se inscribe y la app le da un código (<b>AE-482913</b>).</li>
+      <li>Toca <i>Abrir WhatsApp y enviar</i> — el mensaje llega a nuestro número.</li>
+      <li>Usted abre la ficha en <b>Personas → Esperando</b>, compara el código, y toca <b>Autorizar</b>.</li>
+    </ol>`},
+};
+function abrirAyuda(k){ const a=AYUDAS[k]; if(!a) return;
+  abrirSheet(`<div class="sec" style="margin-top:4px">${esc(a.t)}</div>${a.h}`); }
+
+function abrirCifras(){
+  const est = (ZONAS||[]).map(estadoZona);
+  const conRep = est.filter(s=>s.reps>0);
+  const criticas = est.filter(s=>s.idx>=60).length;
+  const auth = activos().filter(c=>c.ver).length;
+  const personas = REPORTES.reduce((s,r)=>s+(r.personas||0),0);
+  const orf = huerfanos().length;
+  const txt = `AQUÍ ESTAMOS · ${(CONFIG&&CONFIG.CIUDAD)||'Pereira'} — ${new Date(now()).toLocaleDateString('es-CO')}
+Zonas con reportes: ${conRep.length}
+Zonas críticas (índice ≥60): ${criticas}
+Puntos sin coordinador: ${orf}
+Coordinadores autorizados: ${auth}
+Entregas registradas: ${ENTREGAS.length}
+Personas estimadas por cubrir: ${personas.toLocaleString('es-CO')}`;
+  abrirSheet(`<div class="sec" style="margin-top:4px">Cifras para la Alcaldía</div>
+    <textarea id="cifras-txt" style="min-height:150px;font-size:13px" readonly>${esc(txt)}</textarea>
+    <button class="btn" data-copiar-cifras>Copiar el resumen</button>`);
 }
 
-$('#pane').addEventListener('click', async e=>{
-  const pers = e.target.closest('[data-pers]');
-  if(pers){ PERSONA = pers.dataset.pers; return pintar(); }
-  if(e.target.closest('[data-volver]')){ PERSONA = null; return pintar(); }
-
-  const ok = e.target.closest('[data-ok]');
-  if(ok){
-    ok.disabled = true; ok.textContent = 'Autorizando…';
-    return marcar(ok.dataset.ok, 'verificado', true, 'Autorizado. Ya aparece con el sello verde.');
-  }
-
-  const si = e.target.closest('[data-si]');
-  if(si){
-    si.disabled = true;
-    return marcar(si.dataset.si, 'anulado', false, 'Reactivado. Vuelve a aparecer en el mapa.');
-  }
-
-  /* Anular en dos toques. No hay forma de deshacerlo desde el mapa — solo
-     desde aquí, con Reactivar — así que no debería salirse por un roce. */
-  const no = e.target.closest('[data-no]');
-  if(no){
-    if(no.dataset.seguro !== '1'){
-      no.dataset.seguro = '1';
-      no.textContent = '¿Seguro? Toque otra vez';
-      no.classList.add('red');
-      setTimeout(()=>{ if(no.isConnected && no.dataset.seguro === '1'){
-        no.dataset.seguro = ''; no.textContent = 'Anular'; no.classList.remove('red'); } }, 4000);
-      return;
-    }
-    no.disabled = true; no.textContent = 'Anulando…';
-    return marcar(no.dataset.no, 'anulado', true, 'Anulado. Sale del mapa.');
-  }
-
-  const todas = e.target.closest('[data-ok-todas]');
-  if(todas){
-    const p = agrupar(DATOS).find(x=>x.clave === todas.dataset.okTodas);
-    if(!p) return;
-    const ids = p.zonas.filter(z=>!z.verificado && !z.anulado).map(z=>z.id);
-    todas.disabled = true; todas.textContent = 'Autorizando…';
-    const {error} = await db.from('coordinadores').update({verificado:true}).in('id', ids);
-    toast(error ? 'No se pudo: '+error.message : `Autorizadas las ${ids.length} de ${p.nombre}.`);
-    await cargar();
-  }
-});
-
-/* ---------- exportar ----------
-   Se fue del lado del usuario: al vecino que necesita agua no le sirve un
-   JSON. Aquí sí, y de paso es el único respaldo que hay hoy. Trae las tablas
-   enteras, no lo que alcanzó a cargar el mapa.                            */
+/* ============================================================
+   EXPORTAR
+   ============================================================ */
 async function exportar(){
-  const b = $('#exportar');
-  b.disabled = true; b.textContent = 'Bajando…';
+  if(DEMO){ toast('En modo demo no hay base que exportar.'); return; }
+  toast('Bajando…');
   try{
     const [r,e,c] = await Promise.all([
       db.from('reportes').select('*').order('creado',{ascending:false}),
       db.from('entregas').select('*').order('creado',{ascending:false}),
       db.from('coordinadores').select('*').order('creado',{ascending:false}),
     ]);
-    const err = r.error || e.error || c.error;
-    if(err) return toast('No se pudo exportar: ' + err.message);
-
+    const err = r.error||e.error||c.error;
+    if(err) return toast('No se pudo exportar: '+err.message);
     const hoy = new Date().toISOString().slice(0,10);
-    const blob = new Blob([JSON.stringify({
-      exportado: new Date().toISOString(),
-      reportes: r.data || [], entregas: e.data || [], coordinadores: c.data || [],
-    }, null, 2)], {type:'application/json'});
+    const blob = new Blob([JSON.stringify({exportado:new Date().toISOString(),
+      reportes:r.data||[], entregas:e.data||[], coordinadores:c.data||[]}, null, 2)], {type:'application/json'});
     const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = `aqui-estamos-${hoy}.json`;
-    a.click();
+    a.href = URL.createObjectURL(blob); a.download = `aqui-estamos-${hoy}.json`; a.click();
     URL.revokeObjectURL(a.href);
     toast(`Exportado: ${(r.data||[]).length} reportes, ${(e.data||[]).length} entregas, ${(c.data||[]).length} coordinadores.`);
-  } finally {
-    b.disabled = false; b.textContent = 'Exportar todo (JSON)';
-  }
+  }catch(ex){ toast('No se pudo exportar.'); }
 }
 
-/* ---------- arranque ---------- */
-async function arrancar(){
-  const {data:{session}} = await db.auth.getSession();
-  if(!session){ $('#login').hidden = false; return; }
-  $('#panel').hidden = false;
-  $('#quien').textContent = session.user.email;
-  await cargar();
-  // se actualiza solo cuando alguien nuevo se inscribe
-  db.channel('admin').on('postgres_changes',
-    {event:'*', schema:'public', table:'coordinadores'}, cargar).subscribe();
+/* ============================================================
+   RENDER + NAVEGACIÓN
+   ============================================================ */
+const TITULOS = { inicio:['Hoy', ()=>new Date(now()).toLocaleDateString('es-CO',{weekday:'long',day:'numeric',month:'long'})],
+  personas:['Personas','autorizar y consultar'], zonas:['Zonas','mapa y quién cubre qué'], mas:['Más','cuenta, datos y ayuda'] };
+
+function render(){
+  $$('.view').forEach(v=>v.classList.toggle('on', v.id==='v-'+VISTA));
+  $$('.tabbar button').forEach(b=>b.classList.toggle('on', b.dataset.v===VISTA));
+  const [tit, sub] = TITULOS[VISTA];
+  $('#titulo').textContent = tit;
+  $('#subtitulo').textContent = typeof sub==='function'?sub():sub;
+
+  if(VISTA==='inicio') vInicio();
+  if(VISTA==='personas') vPersonas();
+  if(VISTA==='zonas') vZonas();
+  if(VISTA==='mas') vMas();
+
+  // insignias de las pestañas
+  const pend = activos().filter(c=>!c.ver).length;
+  const necesita = (ZONAS||[]).map(estadoZona).filter(s=>s.reps>0 && s.nCoord===0).length;
+  setBadge('personas', pend);
+  setBadge('zonas', necesita);
+  setBadge('inicio', 0);
+  setBadge('mas', 0);
 }
-db.auth.onAuthStateChange(()=>{ if(!$('#panel').hidden) return; location.hash=''; arrancar(); });
+function setBadge(v,n){ const b=$('#bg-'+v); if(!b) return;
+  b.textContent = n>9?'9+':n; b.classList.toggle('on', n>0); }
+
+function ir(v, seg){ VISTA=v; if(seg) SEG=seg; cerrarSheet(); render();
+  const main=$('main'); if(main) main.scrollTop=0; }
+
+/* ---------- eventos ---------- */
+$('#tabbar').addEventListener('click', e=>{ const b=e.target.closest('button[data-v]'); if(b) ir(b.dataset.v); });
+
+document.addEventListener('click', e=>{
+  const g = e.target.closest('[data-goto]');
+  if(g){ return ir(g.dataset.goto, g.dataset.seg); }
+
+  const f = e.target.closest('[data-ficha]');
+  if(f){ return abrirFicha(f.dataset.ficha); }
+
+  const sg = e.target.closest('#seg button');
+  if(sg){ SEG=sg.dataset.s; return render(); }
+
+  if(e.target.closest('#limpiar')){ BUSCA=''; render(); const q=$('#q'); if(q) q.focus(); return; }
+
+  if(e.target.closest('[data-abrir-mapa]')){ location.href='index.html'; return; }
+  const ay = e.target.closest('[data-ayuda]'); if(ay) return abrirAyuda(ay.dataset.ayuda);
+  if(e.target.closest('[data-cifras]')) return abrirCifras();
+  if(e.target.closest('#btn-export')) return exportar();
+  if(e.target.closest('[data-close-btn]') || e.target.closest('.scrim')) return cerrarSheet();
+
+  const cp = e.target.closest('[data-copiar]');
+  if(cp){ copiar(cp.dataset.copiar); return; }
+  if(e.target.closest('[data-copiar-cifras]')){ copiar($('#cifras-txt').value); return; }
+
+  if(e.target.closest('#btn-salir')) return salir();
+
+  // acciones de la ficha
+  const ok = e.target.closest('[data-ok]');
+  if(ok){ ok.disabled=true; ok.textContent='Autorizando…'; return marcar(ok.dataset.ok,'verificado',true,'Autorizado. Ya aparece con el sello verde.'); }
+  const si = e.target.closest('[data-si]');
+  if(si){ si.disabled=true; return marcar(si.dataset.si,'anulado',false,'Reactivado. Vuelve a aparecer en el mapa.'); }
+  const no = e.target.closest('[data-no]');
+  if(no){
+    if(no.dataset.seguro!=='1'){ no.dataset.seguro='1'; no.textContent='¿Seguro? Toque otra vez';
+      setTimeout(()=>{ if(no.isConnected && no.dataset.seguro==='1'){ no.dataset.seguro=''; no.textContent='Anular autorización'; } }, 4000); return; }
+    no.disabled=true; no.textContent='Anulando…'; return marcar(no.dataset.no,'anulado',true,'Anulado. Sale del mapa.');
+  }
+});
+
+// búsqueda (delegada porque el input se re-pinta)
+document.addEventListener('input', e=>{ if(e.target.id==='q'){ BUSCA=e.target.value;
+  // re-pinta sin perder foco: solo la lista, no todo
+  const cur=e.target.selectionStart; render(); const q=$('#q'); if(q){ q.focus(); try{q.setSelectionRange(cur,cur);}catch(_){}} } });
+
+function copiar(txt){ if(!txt) return;
+  if(navigator.clipboard) navigator.clipboard.writeText(txt).then(()=>toast('Copiado: '+txt)).catch(()=>toast(txt));
+  else toast(txt); }
+
+/* ============================================================
+   DATOS: real (Supabase) o demo
+   ============================================================ */
+let db = null;
+
+async function marcar(id, campo, valor, aviso){
+  if(DEMO){ const c=COORDS.find(x=>x.id===id); if(c){ if(campo==='verificado')c.ver=valor; if(campo==='anulado')c.anulado=valor; }
+    toast(aviso); cerrarSheet(); render(); return; }
+  const {error} = await db.from('coordinadores').update({[campo]:valor}).eq('id', id);
+  toast(error?'No se pudo: '+error.message:aviso);
+  cerrarSheet(); await cargar();
+}
+
+async function cargar(){
+  const desde = new Date(now() - 30*24*H).toISOString();
+  const [r,e,c] = await Promise.all([
+    db.from('reportes').select('*').gte('creado',desde).order('creado',{ascending:false}).limit(5000),
+    db.from('entregas').select('*').gte('creado',desde).order('creado',{ascending:false}).limit(5000),
+    db.from('coordinadores').select('*').order('creado',{ascending:false}).limit(2000),
+  ]);
+  if(r.error||e.error||c.error){ toast('No se pudo leer los datos.'); return; }
+  REPORTES = (r.data||[]).map(deRep);
+  ENTREGAS = (e.data||[]).map(deEnt);
+  COORDS   = (c.data||[]).map(deCoo);
+  render();
+}
+
+async function salir(){ if(DEMO){ toast('En demo no hay sesión que cerrar.'); return; }
+  await db.auth.signOut(); location.reload(); }
+
+/* ---------- login ---------- */
+$('#enviar').onclick = async ()=>{
+  const email = $('#mail').value.trim();
+  if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return toast('Revise el correo');
+  $('#enviar').disabled=true; $('#enviar').textContent='Enviando…';
+  const {error} = await db.auth.signInWithOtp({email, options:{emailRedirectTo:location.href}});
+  $('#enviar').disabled=false; $('#enviar').textContent='Enviarme el enlace';
+  $('#msg').textContent = error?'No se pudo enviar: '+error.message
+    :'Listo. Revise su correo y toque el enlace. Puede cerrar esta pestaña.';
+};
+
+/* ============================================================
+   ARRANQUE
+   ============================================================ */
+// un solo cliente de Supabase para toda la vida de la página
+if(!DEMO) db = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
+
+async function arrancar(){
+  if(DEMO){ cargarDemo(); YO={email:''}; $('#panel').hidden=false; $('#login').hidden=true; render(); return; }
+  const {data:{session}} = await db.auth.getSession();
+  if(!session){ $('#login').hidden=false; return; }
+  YO = {email: session.user.email};
+  $('#panel').hidden=false;
+  await cargar();
+  db.channel('admin').on('postgres_changes', {event:'*', schema:'public'}, cargar).subscribe();
+}
+if(!DEMO) db.auth.onAuthStateChange(()=>{ if($('#panel').hidden){ location.hash=''; arrancar(); } });
 arrancar();
+
+/* ============================================================
+   DATOS DE DEMOSTRACIÓN (solo con ?ejemplo=1)
+   Filas con la MISMA forma que las de Supabase, para probar todo
+   el panel sin base de datos ni login.
+   ============================================================ */
+function cargarDemo(){
+  const t = now();
+  const Z = id => zonaObj(id) || {lat:4.81,lng:-75.69};
+  const near = (id,dla=0,dlo=0)=>{ const z=Z(id); return {lat:z.lat+dla, lng:z.lng+dlo}; };
+  let n=0; const uid=()=>'demo'+(++n);
+
+  // --- coordinadores (micro-zonas) ---
+  const C=(nombre,zona,rol,tel,ver,anulado,micro,radio,pt,codigo,horas)=>({
+    id:uid(), nombre, zona, rol, tel, tel_e164:'+57'+tel.replace(/\D/g,'').slice(-10),
+    verificado:ver, anulado, micro, radio, lat:pt.lat, lng:pt.lng, codigo,
+    email:null, foto:null, nota:'', cuenta:'cta-'+uid(), creado:new Date(t-horas*H).toISOString() });
+  const coordRows = [
+    C('Ana María Ocampo','centro','Líder comunal','3105550142', true, false, 'Plaza de Bolívar', 600, near('centro',0.001,-0.001), 'AE-289807', 30),
+    C('Cruz Roja · turno A','centro','Organización','6063355555', true, false, 'Centro histórico', 1000, near('centro',-0.002,0.002), 'AE-771204', 46),
+    C('Jhon Restrepo','cuba','JAC Cuba','3205550198', true, false, 'Ciudad Jardín', 600, near('cuba',0.001,0), 'AE-330561', 40),
+    C('Marleny Ospina','cuba','Vecina','3185550133', false, false, 'Manzana 12 y La Playita', 450, near('cuba',-0.001,0.001), 'AE-481430', 5),
+    C('Luz Dary Gómez','villasanta','Líder comunal','3155550177', false, false, 'Villa Santana centro', 700, near('villasanta',0,0.001), 'AE-905612', 9),
+    C('Brigada UTP','univ','Voluntariado','3115550120', true, false, 'Coliseo y albergue', 800, near('univ',0.001,0.001), 'AE-118090', 22),
+    C('Paola Ríos','eloso','Vecina','3125550166', true, false, 'Sector El Danubio', 500, near('eloso',0.0008,0.0008), 'AE-640233', 27),
+    C('Wilson Arboleda','caimalito','Vecino','3145550109', false, false, 'Caimalito casco urbano', 1000, near('caimalito',0.002,0.001), 'AE-552018', 3),
+    C('Julio Ramírez','rocio','Vecino','3175550144', false, true, 'Sector La Y', 400, near('rocio',0,0), 'AE-115062', 50),
+  ];
+
+  // --- reportes ---
+  const R=(zona,nec,urg,horas,personas,ref,pt)=>({id:uid(), zona, necesidad:nec, urgencia:urg,
+    personas, referencia:ref, lat:pt.lat, lng:pt.lng, creado:new Date(t-horas*H).toISOString()});
+  const repRows = [
+    // centro/cuba/univ (cubiertas)
+    R('centro','agua',3,26,400,'Plaza de Bolívar', near('centro',0.001,-0.001)),
+    R('centro','estructur',2,10,0,'Calle 21 con 8ª', near('centro',-0.002,0.002)),
+    R('cuba','agua',3,28,900,'Ciudad Jardín', near('cuba',0.001,0)),
+    R('cuba','mercado',3,24,700,'Colegio Aquilino Bedoya', near('cuba',0.0012,0.0002)),
+    R('univ','albergue',3,20,220,'Coliseo · albergue', near('univ',0.001,0.001)),
+    // eloso: Paola sola cubre un foco (solitario) + un foco lejos sin cubrir (huérfano)
+    R('eloso','agua',3,27,600,'Sector El Danubio', near('eloso',0.0008,0.0008)),
+    R('eloso','cobijas',2,26,120,'Vía a El Oso km 2', near('eloso',0.02,0.02)),
+    // zonas sin coordinador → necesita gente + huérfanos
+    R('villasanta','agua',3,30,1200,'', near('villasanta',0.02,-0.02)),
+    R('villasanta','sintecho',3,29,340,'Las Brisas', near('villasanta',0.021,-0.021)),
+    R('laflorida','via',3,29,0,'Vía a La Florida km 8', near('laflorida',0,0)),
+    R('laflorida','mercado',3,28,300,'', near('laflorida',0.003,0.003)),
+    R('ptocaldas','agua',3,31,520,'Puerto Caldas · plaza', near('ptocaldas',0,0)),
+    R('morelia','estructur',2,24,0,'', near('morelia',0,0)),
+    R('caimalito','medico',3,30,25,'Caimalito · parque', near('caimalito',0.03,0.02)), // lejos del radio de Wilson
+  ];
+
+  // --- entregas ---
+  const E=(zona,nec,horas,quien)=>({id:uid(), zona, necesidad:nec, quien,
+    creado:new Date(t-horas*H).toISOString()});
+  const entRows = [
+    E('centro','agua',4,'Cruz Roja'),
+    E('cuba','mercado',13,'Punto acopio Kennedy'),
+    E('univ','colchoneta',9,'Alcaldía · UTP'),
+    E('centro','caliente',3,'World Central Kitchen'),
+  ];
+
+  COORDS   = coordRows.map(deCoo);
+  REPORTES = repRows.map(deRep);
+  ENTREGAS = entRows.map(deEnt);
+}
 </script>
 </body>
 </html>
