@@ -77,7 +77,7 @@ function abrirZona(zid){
           <div class="muted">${esc(c.micro||'Sin micro-zona')} · radio ${c.radio||500} m</div>
           <div class="muted">${esc(c.rol)}${c.nota?' · '+esc(c.nota):''}</div>
         </div>
-        <a class="mini" href="${waLink(c.tel)}" target="_blank" rel="noopener">WhatsApp</a>
+        <a class="mini wa" href="${waLink(c.tel)}" target="_blank" rel="noopener">${icoWA()} WhatsApp</a>
       </div>
     </div>`).join('') || '<p class="muted">Nadie coordina esta zona todavía. Si usted está allá, inscríbase.</p>';
 
@@ -88,14 +88,12 @@ function abrirZona(zid){
         <div class="grow">
           <h3 style="margin:0">${esc(st.z.n)}</h3>
           <div class="muted">${st.z.t==='comuna'?'Comuna':'Zona rural'} · ${etiqueta(st.idx)} ·
-            última ayuda ${hace(st.ultEnt)}</div>
+            ${st.ultEnt?`última ayuda ${hace(st.ultEnt)}`:'nunca ha llegado ayuda'}</div>
         </div>
       </div>
       <div class="bar"><span style="width:${st.idx}%;background:${color(st.idx)}"></span></div>
-      <div class="btn2">
-        <button class="btn red" data-new="${zid}">${ico('plus')} Reportar necesidad</button>
-        <button class="btn green" data-deliv="${zid}">${ico('check')} Registrar entrega</button>
-      </div>
+      <button class="btn green" data-deliv="${zid}">${ico('check')} Registrar entrega</button>
+      <div class="fbtns"><button type="button" class="mini" data-new="${zid}">${ico('plus')} Reportar necesidad</button></div>
     </div>
 
     ${fs.length?`<div class="sec">Puntos exactos dentro de la zona (${fs.length})</div>
@@ -153,10 +151,8 @@ function abrirFoco(zid, la, lo){
             ${f.n} reporte${f.n>1?'s':''}${f.personas?` · ~${f.personas} personas`:''} · ${hace(f.ts)}</div>
         </div>
       </div>
-      <div class="btn2">
-        <button class="btn red" data-newpt="${f.lat},${f.lng}" data-ref="${esc(f.ref||'')}">${ico('plus')} Otra necesidad aquí</button>
-        <button class="btn green" data-delivpt="${f.lat},${f.lng}">${ico('check')} Registrar entrega</button>
-      </div>
+      <button class="btn green" data-delivpt="${f.lat},${f.lng}">${ico('check')} Registrar entrega</button>
+      <div class="fbtns"><button type="button" class="mini" data-newpt="${f.lat},${f.lng}" data-ref="${esc(f.ref||'')}">${ico('plus')} Otra necesidad aquí</button></div>
     </div>
 
     <div class="sec">Lo que se necesita en este punto (${f.needs.length})</div>
@@ -171,7 +167,7 @@ function abrirFoco(zid, la, lo){
             ${c.ver?'<span class="verif">verificado</span>':'<span class="pend">sin verificar</span>'}</div>
           <div class="cnt">${esc(c.micro||'micro-zona')} · a ${Math.round(dist(f.lat,f.lng,c.lat,c.lng))} m · ${esc(c.rol)}</div>
         </div>
-        <a class="mini" href="${waLink(c.tel)}" target="_blank" rel="noopener">WhatsApp</a>
+        <a class="mini wa" href="${waLink(c.tel)}" target="_blank" rel="noopener">${icoWA()} WhatsApp</a>
       </div>`).join('')
       : `<div class="foco orf"><b style="color:#fca5a5">${ico('alert')} Nadie responde por este punto.</b>
          <div class="cnt" style="margin-top:6px">Si usted está por acá, puede quedar como referencia del sector.</div>
@@ -181,12 +177,11 @@ function abrirFoco(zid, la, lo){
       <button type="button" class="mini" data-verpt="${f.lat},${f.lng}">${ico('zoom')} Ver en el mapa</button>
       <button type="button" class="mini" data-zona="${zid}">Ver toda la zona ${esc(z.n)}</button>
     </div>
-    <button class="btn flat" data-close-btn>Cerrar</button>
   `);
 }
 
 /* ---------- reportar necesidad ---------- */
-let sel = new Set(), urg = 3;
+let sel = new Set(), urg = null;
 /* top de necesidades más pedidas — atajo para no buscar nada */
 function topPedidos(n=10){
   const c={}; S.reportes.forEach(r=>c[r.k]=(c[r.k]||0)+1);
@@ -213,7 +208,7 @@ function itemsHTML(q, cat){
 }
 
 function abrirReporte(zid, pt, refPrev){
-  sel = new Set(); urg = 3;
+  sel = new Set(); urg = null;
   abrirSheet(`
     <h3>¿Qué se necesita?</h3>
     <p class="muted">Sin registro y sin dar su nombre.</p>
@@ -223,11 +218,12 @@ function abrirReporte(zid, pt, refPrev){
     <div id="r-sug" class="sug"></div>
     <input id="r-ref" placeholder="…o escríbalo: la cancha, el salón comunal, la tienda de don Óscar">
 
-    <div class="sec">Qué tan urgente</div>
-    <div class="urg" id="r-urg">
-      <button data-u="3" class="sel">Hoy mismo</button>
-      <button data-u="2">En 24 horas</button>
-      <button data-u="1">Puede esperar</button>
+    <div class="sec">¿Qué tan urgente?</div>
+    <p class="muted" style="margin:0 0 7px">Sea realista: si todo es urgente, nadie sabe adónde ir primero.</p>
+    <div class="urg col" id="r-urg">
+      <button data-u="3">Hoy mismo<span>Hay riesgo para alguien ahora</span></button>
+      <button data-u="2">En 24 horas<span>Se puede aguantar el día</span></button>
+      <button data-u="1">Puede esperar<span>Esta semana está bien</span></button>
     </div>
 
     <div class="sec">¿Qué hace falta?</div>
@@ -245,8 +241,8 @@ function abrirReporte(zid, pt, refPrev){
     <button class="btn flat" data-close-btn>Cancelar</button>
 
     <div class="selbar">
-      <span class="grow" id="r-cnt">Nada seleccionado</span>
-      <button class="btn red" id="r-send" disabled>Enviar</button>
+      <span class="grow" id="r-cnt">Falta: qué se necesita</span>
+      <button class="btn green" id="r-send" disabled>Enviar</button>
     </div>
   `);
 
@@ -287,10 +283,11 @@ function abrirReporte(zid, pt, refPrev){
     repintar();
   };
   const actualizarBarra = ()=>{
-    $('#r-cnt').textContent = sel.size
-      ? `${sel.size} seleccionada${sel.size>1?'s':''}: ` + [...sel].slice(0,3).map(k=>NEED[k]?.n||k).join(', ') + (sel.size>3?'…':'')
-      : 'Nada seleccionado';
-    $('#r-send').disabled = sel.size===0;
+    const faltaNec = sel.size===0, faltaUrg = urg==null;
+    $('#r-cnt').textContent = faltaNec ? 'Falta: qué se necesita'
+      : faltaUrg ? 'Falta: qué tan urgente'
+      : `${sel.size} seleccionada${sel.size>1?'s':''}: ` + [...sel].slice(0,3).map(k=>NEED[k]?.n||k).join(', ') + (sel.size>3?'…':'');
+    $('#r-send').disabled = faltaNec || faltaUrg;
     $('#r-send').textContent = sel.size ? `Enviar ${sel.size}` : 'Enviar';
   };
   $('#r-items').onclick = e=>{
@@ -303,11 +300,13 @@ function abrirReporte(zid, pt, refPrev){
   repintar();
   body.querySelectorAll('#r-urg button').forEach(b=>b.onclick=()=>{
     body.querySelectorAll('#r-urg button').forEach(x=>x.classList.remove('sel'));
-    b.classList.add('sel'); urg=+b.dataset.u;
+    b.classList.add('sel'); urg=+b.dataset.u; actualizarBarra();
   });
+  actualizarBarra();
   $('#r-send').onclick=()=>{
     const pt = pickerVal('r-map');
     if(!pt || !pt.z) return toast('Toque el mapa para marcar dónde es.');
+    if(urg==null) return toast('Escoja qué tan urgente es.');
     const p=parseInt($('#r-pers').value||'0',10)||0, nota=$('#r-nota').value.trim(), ref=$('#r-ref').value.trim();
     const firma = pt.z+'|'+ref+'|'+[...sel].sort().join(',');
     if(repetido(firma)){ cerrarSheet(); return toast('Ese mismo reporte se acaba de enviar.'); }

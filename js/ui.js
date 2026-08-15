@@ -159,7 +159,7 @@ function render(){
         <div class="grow">
           <div class="row"><h3 class="grow trunc">${esc(s.z.n)}</h3>
             <span class="muted">${etiqueta(s.idx)}</span></div>
-          <div class="muted">${s.z.t==='corregimiento'?'Rural · ':''}última ayuda ${hace(s.ultEnt)} ·
+          <div class="muted">${s.z.t==='corregimiento'?'Rural · ':''}${s.ultEnt?`última ayuda ${hace(s.ultEnt)}`:'nunca ha llegado ayuda'} ·
             ${s.nCoord} coordinador${s.nCoord===1?'':'es'}</div>
         </div>
       </div>

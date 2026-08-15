@@ -80,6 +80,9 @@
   .view{position:absolute;inset:0;display:none;overflow-y:auto;-webkit-overflow-scrolling:touch}
   .view.on{display:block}
   .pad{padding:14px 14px calc(28px + var(--safe))}
+  /* En escritorio ancho, que una fila no se estire de lado a lado: cada
+     bloque se centra en una franja legible. Arregla Zonas y Coordinación. */
+  .pad > *{max-width:820px;margin-left:auto;margin-right:auto}
 
   #map{position:absolute;inset:0;background:#1a2436}
   .leaflet-container{background:#1a2436;font-family:inherit}
@@ -171,6 +174,12 @@
   .urg button[data-u="3"].sel{background:#dc2626;border-color:#dc2626}
   .urg button[data-u="2"].sel{background:#d97706;border-color:#d97706}
   .urg button[data-u="1"].sel{background:#3f8f5f;border-color:#3f8f5f}
+  /* urgencia en columna, cada opción con su frase que la define */
+  .urg.col{flex-direction:column;gap:8px}
+  .urg.col button{text-align:left;padding:12px 14px;display:flex;flex-direction:column;
+    align-items:flex-start;gap:2px;line-height:1.25}
+  .urg.col button span{font-size:12px;font-weight:400;color:var(--dim)}
+  .urg.col button.sel span{color:#fff;opacity:.9}
 
   input,textarea,select{
     width:100%;background:#111b2e;border:1.5px solid var(--line);border-radius:11px;
@@ -241,6 +250,10 @@
   .mini{background:#233149;border:1px solid var(--line);color:var(--txt);border-radius:9px;
     padding:8px 11px;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;flex:0 0 auto}
   .mini.go{background:#2f5c41;border-color:#3f8f5f;color:#c9f5d8}
+  /* WhatsApp: siempre el mismo verde, un solo significado en toda la app */
+  .mini.wa{background:#25d366;border-color:#25d366;color:#04220f;display:inline-flex;
+    align-items:center;gap:6px}
+  .mini.wa .ic{width:15px;height:15px}
 
   .verif{background:rgba(63,143,95,.14);border:1px solid #2f5c41;color:#86efac;
     border-radius:9px;padding:2px 7px;font-size:11px;font-weight:700;display:inline-block}
