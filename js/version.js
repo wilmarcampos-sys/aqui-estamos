@@ -17,7 +17,7 @@
              confusión entre día y mes.
    ============================================================ */
 const VERSION = {
-  n:     '1.10.0',
+  n:     '1.10.1',
   fecha: '2026-08-14',
 };
 
@@ -34,7 +34,7 @@ function versionTexto(){
    pasa nada: este archivo no supone nada de quien lo carga. */
 function pintarVersion(){
   const e = document.getElementById('version');
-  if(e) e.innerHTML = 'Hecho con ❤️ por un Pereirano<br>' + versionTexto();
+  if(e) e.textContent = versionTexto();
 }
 if(document.readyState === 'loading')
   document.addEventListener('DOMContentLoaded', pintarVersion);
