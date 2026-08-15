@@ -55,6 +55,9 @@
 
   footer{flex:0 0 auto;background:var(--bg);border-top:1px solid var(--line);
     padding:0 10px calc(6px + var(--safe))}
+  /* en Mapa, el pie se quita para que el mapa llegue abajo y los botones de
+     reportar queden pegados al borde; sigue en Zonas y Coordinación */
+  #app[data-vista="map"] footer{display:none}
   footer button{width:100%;background:none;border:0;color:var(--dim);font-family:inherit;
     font-size:13px;padding:10px 6px;cursor:pointer;display:flex;align-items:center;
     justify-content:center;gap:7px}

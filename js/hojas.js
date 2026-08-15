@@ -14,6 +14,7 @@ function toast(m){ const t=$('#toast'); t.textContent=m; t.classList.add('on');
 document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{
   document.querySelectorAll('nav button').forEach(x=>x.classList.toggle('on',x===b));
   document.querySelectorAll('.view').forEach(v=>v.classList.toggle('on', v.id==='v-'+b.dataset.v));
+  document.getElementById('app').dataset.vista = b.dataset.v;   // el pie se oculta en Mapa
   if(b.dataset.v==='map' && map) setTimeout(()=>map.invalidateSize(),60);
   render();
 });
