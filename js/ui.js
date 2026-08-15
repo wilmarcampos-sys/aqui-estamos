@@ -158,13 +158,23 @@ function render(){
   const personas = todos.reduce((a,s)=>a+s.pend.reduce((x,p)=>x+p.personas,0),0);
   const orf = huerfanos();
   // Un contador en cero no es información: se muestran solo los que dicen algo.
-  const kchips = [
-    criticas   ? `<div class="kpi"><b style="color:#dc2626">${criticas}</b><span>zonas críticas</span></div>` : '',
-    orf.length ? `<div class="kpi"><b style="color:#8b1a1a">${orf.length}</b><span>puntos sin coordinador</span></div>` : '',
-    personas   ? `<div class="kpi"><b>${personas.toLocaleString('es-CO')}</b><span>personas sin cubrir</span></div>` : '',
-  ].filter(Boolean).join('');
-  $('#kpis').innerHTML = kchips;
-  $('#kpis').style.display = kchips ? '' : 'none';
+  // Una alerta accionable, no tres stat-cards decorativas: se lidera con lo más
+  // grave y el resto queda como contexto en una línea.
+  const persTxt = personas.toLocaleString('es-CO');
+  let zAlert;
+  if(criticas){
+    zAlert = `<div class="zalert crit">${ico('alert')}<div class="grow">
+      <b>${criticas} zona${criticas>1?'s':''} en estado crítico</b>, sin ayuda todavía.
+      <div class="muted">${orf.length} punto${orf.length===1?'':'s'} sin coordinador · ${persTxt} personas sin cubrir</div></div></div>`;
+  } else if(orf.length || personas){
+    zAlert = `<div class="zalert warn">${ico('alert')}<div class="grow">
+      <b>${orf.length} punto${orf.length===1?'':'s'} sin coordinador</b>
+      <div class="muted">${persTxt} personas sin cubrir</div></div></div>`;
+  } else {
+    zAlert = `<div class="zalert ok">${ico('check')}<div class="grow"><b>Todo cubierto por ahora</b> — sin zonas críticas.</div></div>`;
+  }
+  $('#kpis').innerHTML = zAlert;
+  $('#kpis').style.display = 'block';
   // ---- ENTRADA DE COORDINACIÓN: un solo bloque claro ----
   // Sin sesión, dos caminos claros (como la hoja del avatar): inscribirse o
   // entrar. Con sesión, su cuenta y un atajo para cubrir otro sector.
@@ -199,7 +209,7 @@ function render(){
           <div class="cnt">${esc(f.zona.n)}${f.zona.t==='corregimiento'?' (rural)':''} ·
             ${f.n} reporte${f.n>1?'s':''}${f.personas?` · ~${f.personas} personas`:''}</div>
         </div>
-        <span class="lnk" data-coordpt="${f.lat},${f.lng}">Hacerme cargo</span>
+        <button type="button" class="mini go" data-coordpt="${f.lat},${f.lng}">Hacerme cargo</button>
       </div>
       <div>${f.needs.slice(0,4).map(x=>`<span class="chip ${x.u===3?'u3':x.u===2?'u2':''}">${esc(NEED[x.k]?.n||x.k)}${x.n>1?` ×${x.n}`:''}</span>`).join('')}</div>
     </div>`).join('') : (S.reportes.length
@@ -243,7 +253,7 @@ function render(){
           <div style="font-size:14px;font-weight:600">${esc(f.ref||'Punto sin nombre')}</div>
           <div class="cnt">${esc(f.zona.n)} · solo <b>${esc(f.solo.nom)}</b> a cargo</div>
         </div>
-        <span class="lnk" data-coordpt="${f.lat},${f.lng}">Sumarme</span>
+        <button type="button" class="mini go" data-coordpt="${f.lat},${f.lng}">Sumarme</button>
       </div>
     </div>`).join('');
   seccion('sec-solo','lista-solo', ico('user')+' Sectores con una sola persona', htmlSolo, true);

@@ -407,6 +407,15 @@
   .kpi{background:var(--card);border:1px solid var(--line);border-radius:13px;padding:11px 9px;text-align:center}
   .kpi b{display:block;font-size:20px;line-height:1.15}
   .kpi span{font-size:11px;color:var(--dim)}
+  /* alerta de estado en Zonas: una sola línea accionable, no 3 stat-cards */
+  .zalert{display:flex;align-items:flex-start;gap:10px;border-radius:13px;padding:13px 14px;
+    margin-bottom:12px;background:var(--surf);border:1px solid var(--line)}
+  .zalert b{font-size:15px}
+  .zalert .muted{margin-top:3px}
+  .zalert > svg{flex:0 0 auto;margin-top:1px}
+  .zalert.crit{background:rgba(220,38,38,.08);border-color:#7f1d1d}
+  .zalert.warn{background:rgba(217,119,6,.08);border-color:#7c4a10}
+  .zalert.ok{background:rgba(63,143,95,.08);border-color:#2f5c41}
 
   .note{background:rgba(79,156,249,.09);border:1px solid #2a4a75;
     border-radius:12px;padding:11px 12px;font-size:13px;color:var(--link);margin-bottom:12px}
