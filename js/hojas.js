@@ -216,6 +216,12 @@ function abrirAlbergue(a){
       </div>
     </div>
 
+    ${(a.ocup!=null || a.cap!=null) ? `<div class="capbox">
+      <div><b>${a.ocup!=null?a.ocup:'—'}</b><span>personas ahora</span></div>
+      <div><b>${a.cap!=null?a.cap:'—'}</b><span>capacidad</span></div>
+      ${(a.cap!=null && a.ocup!=null) ? `<div><b class="${a.cap-a.ocup<=0?'u-alta':''}">${a.cap-a.ocup}</b><span>cupos libres</span></div>` : ''}
+    </div>` : ''}
+
     ${nec ? `<div class="sec">Lo que se necesita (${nec.needs.length})</div>${cards}`
           : `<div class="sec">Necesidades</div><p class="muted" style="margin:0">Sin necesidades reportadas todavía en este albergue.</p>`}
 
@@ -232,7 +238,7 @@ function abrirAlbergue(a){
       ${telDigitos(a.tel) ? `<a class="mini wa" href="${waLink(a.tel)}" target="_blank" rel="noopener">${icoWA()} WhatsApp</a>` : ''}
     </div>
 
-    ${a.nota?`<div class="sec">Requerimiento técnico</div>
+    ${a.nota?`<div class="sec">Servicios y notas</div>
       <p class="muted" style="line-height:1.5;margin:0">${esc(a.nota)}</p>`:''}
 
     <div class="btn2" style="margin-top:14px">

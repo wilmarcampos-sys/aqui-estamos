@@ -80,6 +80,7 @@ const deCoo  = c=>({id:c.id, z:c.zona, micro:c.micro||'', radio:c.radio||500, la
                     nom:c.nombre, rol:c.rol||'', tel:c.tel_e164||c.tel||'', tel_e164:c.tel_e164||'',
                     email:c.email||'', nota:c.nota||'',
                     foto:c.foto||null, ver:!!c.verificado, codigo:c.codigo||'',
+                    cap:(c.capacidad!=null?+c.capacidad:null), ocup:(c.ocupacion!=null?+c.ocupacion:null),
                     device:c.device||'', anulado:!!c.anulado});
 
 /* Modo ejemplo: carga los datos de demostración SOLO en este teléfono, para
