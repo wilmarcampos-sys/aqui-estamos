@@ -197,7 +197,8 @@
     margin:16px 0 7px;font-weight:700}
   .opts{display:flex;flex-wrap:wrap;gap:7px}
   .opt{
-    background:var(--surf);border:1.5px solid var(--line);border-radius:11px;padding:10px 12px;
+    background:var(--surf);border:1.5px solid var(--line);border-radius:11px;padding:10px 12px;min-height:44px;
+    display:inline-flex;align-items:center;
     font-size:13px;color:var(--txt);cursor:pointer;font-family:inherit;text-align:left;line-height:1.25
   }
   .opt.sel{background:rgba(79,156,249,.18);border-color:var(--acc)}
@@ -215,7 +216,7 @@
     scrollbar-width:none;-webkit-overflow-scrolling:touch}
   .cats::-webkit-scrollbar{display:none}
   .cats button{flex:0 0 auto;background:var(--surf);border:1px solid var(--line);color:var(--dim);
-    border-radius:999px;padding:8px 13px;font-size:13px;font-weight:600;font-family:inherit;
+    border-radius:999px;padding:8px 14px;min-height:40px;font-size:13px;font-weight:600;font-family:inherit;
     cursor:pointer;white-space:nowrap}
   .cats button.on{background:var(--acc);border-color:var(--acc);color:#04122b}
 
@@ -273,7 +274,7 @@
   .tli b{font-size:14px}
 
   .urg{display:flex;gap:7px}
-  .urg button{flex:1;padding:11px 6px;border-radius:11px;border:1.5px solid var(--line);
+  .urg button{flex:1;padding:11px 6px;border-radius:11px;border:1.5px solid var(--line);min-height:46px;
     background:var(--surf);color:var(--dim);font-size:13px;font-weight:700;font-family:inherit;cursor:pointer}
   .urg button.sel{color:#fff;background:var(--acc);border-color:var(--acc)}
   .urg button[data-u="3"].sel{background:#dc2626;border-color:#dc2626}
@@ -369,8 +370,9 @@
   .telcopia{font-size:14px;color:var(--txt);font-weight:700;margin-top:3px;letter-spacing:.3px;
     display:flex;align-items:center;gap:9px;flex-wrap:wrap;
     user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
-  .telcopia .tcopy{background:var(--chip);border:1px solid var(--line);color:var(--acc);border-radius:8px;
-    padding:3px 10px;font-size:11px;font-weight:800;font-family:inherit;cursor:pointer}
+  .telcopia .tcopy{background:var(--chip);border:1px solid var(--line);color:var(--acc);border-radius:9px;
+    padding:6px 12px;font-size:12px;font-weight:800;font-family:inherit;cursor:pointer;
+    min-height:40px;display:inline-flex;align-items:center}
   .telcopia .tcopy:active{opacity:.7}
   /* ocupación/capacidad con anillo de % (qué tan lleno), en la línea del título */
   .capmini{flex:0 0 auto;display:flex;align-items:center;gap:8px;padding-left:8px}
@@ -388,7 +390,8 @@
   .dot{width:9px;height:9px;border-radius:50%;flex:0 0 auto}
   .cnt{font-size:11px;color:var(--dim);flex:0 0 auto}
   .mini{background:var(--chip);border:1px solid var(--line);color:var(--txt);border-radius:9px;
-    padding:8px 11px;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;flex:0 0 auto}
+    padding:8px 12px;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;flex:0 0 auto;
+    min-height:44px;display:inline-flex;align-items:center;justify-content:center;gap:5px}
   .mini.go{background:#2f5c41;border-color:#3f8f5f;color:#c9f5d8}
   /* WhatsApp: siempre el mismo verde, un solo significado en toda la app */
   .mini.wa{background:#25d366;border-color:#25d366;color:#04220f;display:inline-flex;
