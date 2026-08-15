@@ -76,11 +76,16 @@ create policy p_ent_leer_admin on entregas for select to authenticated using (es
 -- 4. Código muerto que sigue abierto
 -- ------------------------------------------------------------
 -- ae_retirar() ya no lo llama el front (las cuentas de cuentas.sql
--- lo reemplazaron), pero sigue concedida a anon y la columna llave
--- guarda un sha256 sin sal. Si alguna llave vieja se derivó del
--- teléfono — que es público — se puede recalcular y anular a esa
--- persona. Se cierra.
-revoke execute on function ae_retirar(uuid, text) from anon, authenticated;
+-- lo reemplazaron), pero si sigue concedida a anon y la columna llave
+-- guarda un sha256 sin sal, alguien podría recalcularla y anular a esa
+-- persona. Se cierra — pero solo si la función existe en este proyecto
+-- (en algunos no está, y ahí no hay nada que cerrar).
+do $$
+begin
+  revoke execute on function ae_retirar(uuid, text) from anon, authenticated;
+exception
+  when undefined_function then null;   -- no existe: nada que cerrar
+end $$;
 
 -- Si ya confirmó que ningún registro la usa, se puede borrar:
 -- alter table coordinadores drop column llave;
