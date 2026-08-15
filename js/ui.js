@@ -316,6 +316,26 @@ if(bShare) bShare.onclick = async ()=>{
   }catch(e){ /* si la persona cancela el compartir, no pasa nada */ }
 };
 
+/* Día/noche: el botón alterna el tema y lo recuerda. Si nadie elige, sigue al
+   sistema. Muestra el ícono de a qué cambia (luna = pasar a noche). */
+const SVG_SOL  = '<svg class="ic lg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>';
+const SVG_LUNA = '<svg class="ic lg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"/></svg>';
+function pintarTema(){
+  const eff = window.temaEfectivo ? window.temaEfectivo() : 'dark';
+  document.documentElement.setAttribute('data-eff', eff);
+  const b = document.getElementById('btn-tema');
+  if(b) b.innerHTML = eff==='light' ? SVG_LUNA : SVG_SOL;
+}
+const bTema = document.getElementById('btn-tema');
+if(bTema) bTema.onclick = ()=>{
+  const eff = window.temaEfectivo ? window.temaEfectivo() : 'dark';
+  try{ localStorage.setItem('ae_tema', eff==='light' ? 'oscuro' : 'claro'); }catch(e){}
+  pintarTema();
+  if(map) map.invalidateSize();
+  render();
+};
+pintarTema();
+
 /* ---------- acciones globales ---------- */
 $('#fab-need').onclick = ()=>{
   const pt = mainPt || ptDe('centro');
@@ -370,4 +390,5 @@ window.addEventListener('orientationchange', reajustar);
 /* Si el sistema cambia de día a noche (o al revés), recolorear el mapa y la
    escala, que salen del tema. */
 try{ matchMedia('(prefers-color-scheme: light)').addEventListener('change',
-  ()=>setTimeout(()=>{ if(typeof render==='function') render(); }, 60)); }catch(e){}
+  ()=>setTimeout(()=>{ if(typeof pintarTema==='function') pintarTema();
+    if(typeof render==='function') render(); }, 60)); }catch(e){}

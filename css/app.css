@@ -9,18 +9,19 @@
     --c0:#3f8f5f; --c1:#c9a227; --c2:#d97706; --c3:#dc2626; --c4:#8b1a1a;
     --safe:env(safe-area-inset-bottom,0px);
   }
-  @media (prefers-color-scheme: light){
-    :root{
-      --bg:#F5F7FB; --bg2:#FFFFFF; --card:#FFFFFF; --surf:#F7F9FC; --chip:#EEF2F8;
-      --inp:#FFFFFF; --line:#DCE3EE; --line2:#C6D0E0; --map-bg:#E8EDF4;
-      --panel:rgba(255,255,255,.94);
-      --txt:#0E1729; --dim:#5B6B87; --acc:#1A62C8; --link:#1A62C8;
-      /* escala de desatención recalculada para fondo claro (contrastes AA) */
-      --c0:#26714A; --c1:#8A6508; --c2:#B45309; --c3:#C11B1B; --c4:#7A1616;
-    }
-    .leaflet-tile{opacity:1!important;filter:saturate(.92)}
-    header h1 span{color:#B8860B}
+  /* TEMA CLARO — se activa cuando data-eff="light" (lo pone el script del
+     <head> según el sistema o la preferencia guardada). Así el botón de
+     día/noche puede forzarlo, no solo seguir al sistema. */
+  :root[data-eff="light"]{
+    --bg:#F5F7FB; --bg2:#FFFFFF; --card:#FFFFFF; --surf:#F7F9FC; --chip:#EEF2F8;
+    --inp:#FFFFFF; --line:#DCE3EE; --line2:#C6D0E0; --map-bg:#E8EDF4;
+    --panel:rgba(255,255,255,.94);
+    --txt:#0E1729; --dim:#5B6B87; --acc:#1A62C8; --link:#1A62C8;
+    /* escala de desatención recalculada para fondo claro (contrastes AA) */
+    --c0:#26714A; --c1:#8A6508; --c2:#B45309; --c3:#C11B1B; --c4:#7A1616;
   }
+  :root[data-eff="light"] .leaflet-tile{opacity:1!important;filter:saturate(.92)}
+  :root[data-eff="light"] header h1 span{color:#B8860B}
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
   html,body{margin:0;height:100%;overflow:hidden}
   body{
@@ -430,57 +431,57 @@ input.pin{letter-spacing:9px;font-size:20px;text-align:center;font-weight:700}
    Van al FINAL a propósito: así ganan en la cascada a las reglas
    base (que son de tinte oscuro) cuando el navegador pide el claro.
    ============================================================ */
-@media (prefers-color-scheme: light){
-  /* botones — texto blanco sobre color, valores medidos AA */
-  .btn{color:#fff} .btn.flat{color:var(--txt)}
-  .btn.red,.fab{background:#C81E1E;color:#fff}
-  .btn.green{background:#2E7D4F;color:#fff}
-  .cats button.on{color:#fff}
-  .urg button.sel{color:#fff}
-  .btn.loc.ok{background:#E3F3EA;border-color:#2E7D4F;color:#1B5C39}
-  .mini.go{background:#E3F3EA;border-color:#B7DCC6;color:#1B5C39}
-  /* chips y etiquetas de estado */
-  .chip{color:#41506A}
-  .chip.u3{background:#FDECEC;border-color:#F3B9B9;color:#A81616}
-  .chip.u2{background:#FDF2E2;border-color:#F0CE97;color:#8A4708}
-  .chip.ok{background:#E6F4EC;border-color:#B7DCC6;color:#1B5C39}
-  .verif{background:#E6F4EC;border-color:#B7DCC6;color:#1B5C39}
-  .pend,.fila-mia{border-color:#F0CE97}
-  .pend{background:#FDF2E2;color:#8A4708}
-  .telhint.ok{color:#1B5C39} .telhint.bad{color:#8A4708}
-  .estado.demo,.estado.cola{color:#8A4708}
-  .cc,.pasos .pon.done{color:#1B5C39}
-  .selbar .grow.falta{color:#8A4708}
-  .selbar .grow.falta::before{background:#8A4708}
-  /* opciones y sugerencias */
-  .opt.sel{background:#E7F0FD;border-color:var(--acc);color:#12447F}
-  .opt.pend-o,.foco.orf{background:#FDF1F1;border-color:#F3B9B9}
-  .sugb.sel{background:#E7F0FD;border-color:var(--acc)}
-  /* pasos, tags y azules de selección */
-  .pasos .pon.now{background:#E7F0FD;border-color:#BBD4F5;color:#12447F}
-  .pasos .pon.done{background:#E6F4EC;border-color:#B7DCC6}
-  .tag.req,.pasohead .pasonum{background:#E7F0FD;border-color:#BBD4F5;color:#12447F}
-  /* superficies, avisos y sombras */
-  .note{background:#E9F1FD;border-color:#BBD4F5;color:#274A78}
-  .note b{color:#12447F}
-  .bar{background:#E3E9F2}
-  .grab{background:#C6D0E0}
-  .avisoej{background:#FDF2E2;border-color:#F0CE97;color:#8A4708}
-  .toast{background:#0E1729;color:#fff}
-  .scrim{background:rgba(15,23,41,.34)}
-  .card{box-shadow:0 1px 2px rgba(15,23,41,.05)}
-  .sheet .panel{box-shadow:0 -10px 34px rgba(15,23,41,.14)}
-  .legend,.pinbar{color:#3D4C64;box-shadow:0 6px 20px rgba(15,23,41,.10)}
-  .legend b{color:var(--txt)}
-  .online{color:#41506A}
-  .tabsub button.on{background:#0E1729;border-color:#0E1729;color:#fff}
-  .okmark{background:#E6F4EC;border-color:#B7DCC6;color:#1B5C39}
-  .tld.no{background:#B45309;border-color:#B45309}
-  /* WhatsApp gana siempre: es marca */
-  .btn.wa,a[href*="wa.me"]{background:#25D366;color:#04220F;border-color:#25D366}
-  /* PARCHE: colores del tema oscuro escritos a mano en el JS (ilegibles
-     sobre blanco). Lo correcto sería clases, esto los tapa por ahora. */
-  [style*="#fca5a5"],[style*="#FCA5A5"]{color:#C11B1B!important}
-  [style*="#86efac"],[style*="#86EFAC"]{color:#1B5C39!important}
-  [style*="#fcd34d"],[style*="#FCD34D"]{color:#8A4708!important}
-}
+/* botones — texto blanco sobre color, valores medidos AA */
+:root[data-eff="light"] .btn{color:#fff}
+:root[data-eff="light"] .btn.flat{color:var(--txt)}
+:root[data-eff="light"] .btn.red,:root[data-eff="light"] .fab{background:#C81E1E;color:#fff}
+:root[data-eff="light"] .btn.green{background:#2E7D4F;color:#fff}
+:root[data-eff="light"] .cats button.on{color:#fff}
+:root[data-eff="light"] .urg button.sel{color:#fff}
+:root[data-eff="light"] .btn.loc.ok{background:#E3F3EA;border-color:#2E7D4F;color:#1B5C39}
+:root[data-eff="light"] .mini.go{background:#E3F3EA;border-color:#B7DCC6;color:#1B5C39}
+/* chips y etiquetas de estado */
+:root[data-eff="light"] .chip{color:#41506A}
+:root[data-eff="light"] .chip.u3{background:#FDECEC;border-color:#F3B9B9;color:#A81616}
+:root[data-eff="light"] .chip.u2{background:#FDF2E2;border-color:#F0CE97;color:#8A4708}
+:root[data-eff="light"] .chip.ok{background:#E6F4EC;border-color:#B7DCC6;color:#1B5C39}
+:root[data-eff="light"] .verif{background:#E6F4EC;border-color:#B7DCC6;color:#1B5C39}
+:root[data-eff="light"] .pend,:root[data-eff="light"] .fila-mia{border-color:#F0CE97}
+:root[data-eff="light"] .pend{background:#FDF2E2;color:#8A4708}
+:root[data-eff="light"] .telhint.ok{color:#1B5C39}
+:root[data-eff="light"] .telhint.bad{color:#8A4708}
+:root[data-eff="light"] .estado.demo,:root[data-eff="light"] .estado.cola{color:#8A4708}
+:root[data-eff="light"] .cc,:root[data-eff="light"] .pasos .pon.done{color:#1B5C39}
+:root[data-eff="light"] .selbar .grow.falta{color:#8A4708}
+:root[data-eff="light"] .selbar .grow.falta::before{background:#8A4708}
+/* opciones y sugerencias */
+:root[data-eff="light"] .opt.sel{background:#E7F0FD;border-color:var(--acc);color:#12447F}
+:root[data-eff="light"] .opt.pend-o,:root[data-eff="light"] .foco.orf{background:#FDF1F1;border-color:#F3B9B9}
+:root[data-eff="light"] .sugb.sel{background:#E7F0FD;border-color:var(--acc)}
+/* pasos, tags y azules de selección */
+:root[data-eff="light"] .pasos .pon.now{background:#E7F0FD;border-color:#BBD4F5;color:#12447F}
+:root[data-eff="light"] .pasos .pon.done{background:#E6F4EC;border-color:#B7DCC6}
+:root[data-eff="light"] .tag.req,:root[data-eff="light"] .pasohead .pasonum{background:#E7F0FD;border-color:#BBD4F5;color:#12447F}
+/* superficies, avisos y sombras */
+:root[data-eff="light"] .note{background:#E9F1FD;border-color:#BBD4F5;color:#274A78}
+:root[data-eff="light"] .note b{color:#12447F}
+:root[data-eff="light"] .bar{background:#E3E9F2}
+:root[data-eff="light"] .grab{background:#C6D0E0}
+:root[data-eff="light"] .avisoej{background:#FDF2E2;border-color:#F0CE97;color:#8A4708}
+:root[data-eff="light"] .toast{background:#0E1729;color:#fff}
+:root[data-eff="light"] .scrim{background:rgba(15,23,41,.34)}
+:root[data-eff="light"] .card{box-shadow:0 1px 2px rgba(15,23,41,.05)}
+:root[data-eff="light"] .sheet .panel{box-shadow:0 -10px 34px rgba(15,23,41,.14)}
+:root[data-eff="light"] .legend,:root[data-eff="light"] .pinbar{color:#3D4C64;box-shadow:0 6px 20px rgba(15,23,41,.10)}
+:root[data-eff="light"] .legend b{color:var(--txt)}
+:root[data-eff="light"] .online{color:#41506A}
+:root[data-eff="light"] .tabsub button.on{background:#0E1729;border-color:#0E1729;color:#fff}
+:root[data-eff="light"] .okmark{background:#E6F4EC;border-color:#B7DCC6;color:#1B5C39}
+:root[data-eff="light"] .tld.no{background:#B45309;border-color:#B45309}
+/* WhatsApp gana siempre: es marca */
+:root[data-eff="light"] .btn.wa,:root[data-eff="light"] a[href*="wa.me"]{background:#25D366;color:#04220F;border-color:#25D366}
+/* PARCHE: colores del tema oscuro escritos a mano en el JS (ilegibles sobre
+   blanco). Lo correcto sería clases; esto los tapa por ahora. */
+:root[data-eff="light"] [style*="#fca5a5"],:root[data-eff="light"] [style*="#FCA5A5"]{color:#C11B1B!important}
+:root[data-eff="light"] [style*="#86efac"],:root[data-eff="light"] [style*="#86EFAC"]{color:#1B5C39!important}
+:root[data-eff="light"] [style*="#fcd34d"],:root[data-eff="light"] [style*="#FCD34D"]{color:#8A4708!important}
