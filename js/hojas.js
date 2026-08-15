@@ -36,7 +36,7 @@ function abrirZona(zid){
         <div style="font-size:14px">${esc(NEED[p.k]?.n||p.k)}</div>
         <div class="cnt">${p.n} reporte${p.n>1?'s':''}${p.personas?` · ~${p.personas} personas`:''} ·
           ${p.cubierta?`entregado ${hace(p.ultimaEnt)} por ${esc(p.quien)}`:`sin entrega${p.ultimaEnt?` desde ${hace(p.ultimaEnt)}`:''}`}
-          ${p.subio?`<b style="color:#fca5a5"> · ↑ subió por ${p.corrob} reportes en el mismo punto</b>`:''}</div>
+          ${p.subio?`<b class="u-alta"> · ↑ subió por ${p.corrob} reportes en el mismo punto</b>`:''}</div>
       </div>
       ${p.cubierta?'<span class="chip ok">OK</span>'
         :`<button class="mini go" data-ent="${p.k}" data-z="${zid}">Ya llegó</button>`}
@@ -58,8 +58,8 @@ function abrirZona(zid){
       <div>${f.needs.map(x=>`<span class="chip ${x.u===3?'u3':x.u===2?'u2':''}">${esc(NEED[x.k]?.n||x.k)}${x.n>1?` ×${x.n}`:''}</span>`).join('')}</div>
       <div class="cnt" style="margin-top:7px">${cb.length
         ? `<span class="sdot" style="background:${cb.length>1?'#3f8f5f':'#d97706'}"></span> A cargo: ` + cb.map(c=>esc(c.nom)+' <span class="muted">('+esc(c.micro||'micro-zona')+', '+Math.round(dist(f.lat,f.lng,c.lat,c.lng))+' m)</span>').join(' · ')
-          + (cb.length===1?' · <b style="color:#fcd34d">solo una persona</b> <span class="lnk" data-coordpt="'+f.lat+','+f.lng+'">Sumarme</span>':'')
-        : '<b style="color:#fca5a5">' + ico('alert') + ' Nadie responde por este punto.</b> <span class="lnk" data-coordpt="'+f.lat+','+f.lng+'">Hacerme cargo</span>'}</div>
+          + (cb.length===1?' · <b class="u-media">solo una persona</b> <span class="lnk" data-coordpt="'+f.lat+','+f.lng+'">Sumarme</span>':'')
+        : '<b class="u-alta">' + ico('alert') + ' Nadie responde por este punto.</b> <span class="lnk" data-coordpt="'+f.lat+','+f.lng+'">Hacerme cargo</span>'}</div>
       <div class="fbtns">
         <button type="button" class="mini" data-newpt="${f.lat},${f.lng}" data-ref="${esc(f.ref||'')}">${ico('plus')} Necesidad aquí</button>
         <button type="button" class="mini go" data-delivpt="${f.lat},${f.lng}">${ico('check')} Llegó ayuda aquí</button>
@@ -131,10 +131,10 @@ function abrirFoco(zid, la, lo){
     return `<div class="need-line">
       <span class="dot" style="background:${ok?'#3f8f5f':UCOL[x.u]}"></span>
       <div class="grow">
-        <div style="font-size:14px">${esc(NEED[x.k]?.n||x.k)}${x.n>1?` <b style="color:#fca5a5">×${x.n}</b>`:''}</div>
+        <div style="font-size:14px">${esc(NEED[x.k]?.n||x.k)}${x.n>1?` <b class="u-alta">×${x.n}</b>`:''}</div>
         <div class="cnt">${NEED[x.k]?.cat||''}${x.personas?` · ~${x.personas} personas`:''}
-          ${x.subio?' · <b style="color:#fca5a5">↑ urgencia por corroboración</b>':''}
-          ${ok?` · <b style="color:#86efac">entregado ${hace(e.ts)} por ${esc(e.quien)}</b>`:' · pendiente'}</div>
+          ${x.subio?' · <b class="u-alta">↑ urgencia por corroboración</b>':''}
+          ${ok?` · <b class="u-ok">entregado ${hace(e.ts)} por ${esc(e.quien)}</b>`:' · pendiente'}</div>
       </div>
       ${ok ? '<span class="chip ok">OK</span>'
            : `<button type="button" class="mini go" data-delivpt="${f.lat},${f.lng}" data-k="${x.k}">Ya llegó</button>`}
@@ -169,7 +169,7 @@ function abrirFoco(zid, la, lo){
         </div>
         <a class="mini wa" href="${waLink(c.tel)}" target="_blank" rel="noopener">${icoWA()} WhatsApp</a>
       </div>`).join('')
-      : `<div class="foco orf"><b style="color:#fca5a5">${ico('alert')} Nadie responde por este punto.</b>
+      : `<div class="foco orf"><b class="u-alta">${ico('alert')} Nadie responde por este punto.</b>
          <div class="cnt" style="margin-top:6px">Si usted está por acá, puede quedar como referencia del sector.</div>
          <div class="fbtns"><button type="button" class="mini" data-coordpt="${f.lat},${f.lng}">Hacerme cargo de este sector</button></div></div>`}
 
@@ -265,7 +265,8 @@ function abrirReporte(zid, pt, refPrev){
           <div id="r-sug" class="sug"></div>
           <input id="r-ref" placeholder="…o escríbalo: la cancha, el salón comunal, la tienda de don Óscar" value="${esc(ref)}">
           <label class="f">¿Algo dificulta llegar?</label>
-          <textarea id="r-nota" placeholder="Ej: la vía está bloqueada, solo entra moto, hay un adulto mayor solo">${esc(nota)}</textarea>
+          <textarea id="r-nota" placeholder="Ej: la vía está bloqueada, solo entra moto">${esc(nota)}</textarea>
+          <p class="muted" style="margin:6px 0 0">Esto lo puede leer cualquiera. No escriba datos de una persona.</p>
         </div>
       </details>
       <button class="btn" id="r-next1">Confirmar este sitio</button>

@@ -152,6 +152,8 @@
   .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:13px;margin-bottom:10px}
   .card h3{margin:0 0 3px;font-size:16px}
   .muted{color:var(--dim);font-size:13px}
+  /* estados de urgencia en texto (antes iban con hex a mano en el JS) */
+  .u-alta{color:#fca5a5} .u-media{color:#fcd34d} .u-ok{color:#86efac}
   .row{display:flex;align-items:center;gap:10px}
   .grow{flex:1;min-width:0}
   .trunc{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -348,7 +350,7 @@
   .pend{background:rgba(217,119,6,.14);border:1px solid #7c4a10;color:#fcd34d;
     border-radius:9px;padding:2px 7px;font-size:11px;font-weight:700;display:inline-block}
 
-  .kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
+  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(92px,1fr));gap:8px;margin-bottom:12px}
   .kpi{background:var(--card);border:1px solid var(--line);border-radius:13px;padding:11px 9px;text-align:center}
   .kpi b{display:block;font-size:20px;line-height:1.15}
   .kpi span{font-size:11px;color:var(--dim)}
@@ -480,8 +482,7 @@ input.pin{letter-spacing:9px;font-size:20px;text-align:center;font-weight:700}
 :root[data-eff="light"] .tld.no{background:#B45309;border-color:#B45309}
 /* WhatsApp gana siempre: es marca */
 :root[data-eff="light"] .btn.wa,:root[data-eff="light"] a[href*="wa.me"]{background:#25D366;color:#04220F;border-color:#25D366}
-/* PARCHE: colores del tema oscuro escritos a mano en el JS (ilegibles sobre
-   blanco). Lo correcto sería clases; esto los tapa por ahora. */
-:root[data-eff="light"] [style*="#fca5a5"],:root[data-eff="light"] [style*="#FCA5A5"]{color:#C11B1B!important}
-:root[data-eff="light"] [style*="#86efac"],:root[data-eff="light"] [style*="#86EFAC"]{color:#1B5C39!important}
-:root[data-eff="light"] [style*="#fcd34d"],:root[data-eff="light"] [style*="#FCD34D"]{color:#8A4708!important}
+/* estados de urgencia en claro — más contraste sobre blanco */
+:root[data-eff="light"] .u-alta{color:#C11B1B}
+:root[data-eff="light"] .u-media{color:#8A4708}
+:root[data-eff="light"] .u-ok{color:#1B5C39}

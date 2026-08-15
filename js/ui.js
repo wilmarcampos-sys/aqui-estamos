@@ -107,10 +107,14 @@ function render(){
   const sinNada = todos.filter(s=>s.lista.length && !s.ultEnt).length;
   const personas = todos.reduce((a,s)=>a+s.pend.reduce((x,p)=>x+p.personas,0),0);
   const orf = huerfanos();
-  $('#kpis').innerHTML = `
-    <div class="kpi"><b style="color:#dc2626">${criticas}</b><span>zonas críticas</span></div>
-    <div class="kpi"><b style="color:#8b1a1a">${orf.length}</b><span>puntos sin coordinador</span></div>
-    <div class="kpi"><b>${personas.toLocaleString('es-CO')}</b><span>personas sin cubrir</span></div>`;
+  // Un contador en cero no es información: se muestran solo los que dicen algo.
+  const kchips = [
+    criticas   ? `<div class="kpi"><b style="color:#dc2626">${criticas}</b><span>zonas críticas</span></div>` : '',
+    orf.length ? `<div class="kpi"><b style="color:#8b1a1a">${orf.length}</b><span>puntos sin coordinador</span></div>` : '',
+    personas   ? `<div class="kpi"><b>${personas.toLocaleString('es-CO')}</b><span>personas sin cubrir</span></div>` : '',
+  ].filter(Boolean).join('');
+  $('#kpis').innerHTML = kchips;
+  $('#kpis').style.display = kchips ? '' : 'none';
   // ---- MI CUENTA: que nadie pierda su registro ----
   // El registro no depende del navegador: vive en la cuenta (celular + PIN).
   // Por eso desde cualquier teléfono se recupera con solo entrar.
