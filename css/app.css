@@ -23,7 +23,10 @@
   :root[data-eff="light"] .leaflet-tile{opacity:1!important;filter:saturate(.92)}
   :root[data-eff="light"] header h1 span{color:#B8860B}
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-  html,body{margin:0;height:100%;overflow:hidden}
+  /* En iOS el viewport cambia con la barra de Safari. Si body va con 100%
+     (viewport grande) y #app con dvh (actual), el body queda más alto y se ve
+     un hueco abajo. Ambos en dvh para que encajen siempre. */
+  html,body{margin:0;height:100vh;height:100dvh;overflow:hidden;overscroll-behavior:none}
   body{
     font:16px/1.45 system-ui,-apple-system,"Segoe UI",Helvetica,Arial,sans-serif;
     background:var(--bg);color:var(--txt);
