@@ -224,10 +224,12 @@ function abrirAlbergue(a){
       ${avatar({nombre:a.nom})}
       <div class="grow">
         <div style="font-size:14px;font-weight:700">${esc(a.nom)}</div>
-        <div class="telcopia"><span class="telnum">${esc(telEnmascarado(a.tel))}</span>
-          <button type="button" class="tcopy" data-copiar-tel="+${esc(telDigitos(a.tel))}">Copiar número</button></div>
+        ${telDigitos(a.tel)
+          ? `<div class="telcopia"><span class="telnum">${esc(telEnmascarado(a.tel))}</span>
+              <button type="button" class="tcopy" data-copiar-tel="+${esc(telDigitos(a.tel))}">Copiar número</button></div>`
+          : `<div class="cnt">Contacto por confirmar</div>`}
       </div>
-      <a class="mini wa" href="${waLink(a.tel)}" target="_blank" rel="noopener">${icoWA()} WhatsApp</a>
+      ${telDigitos(a.tel) ? `<a class="mini wa" href="${waLink(a.tel)}" target="_blank" rel="noopener">${icoWA()} WhatsApp</a>` : ''}
     </div>
 
     ${a.nota?`<div class="sec">Requerimiento técnico</div>
