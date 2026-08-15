@@ -359,3 +359,8 @@ let _rz;
 function reajustar(){ clearTimeout(_rz); _rz = setTimeout(()=>{ if(map) map.invalidateSize(); }, 150); }
 window.addEventListener('resize', reajustar);
 window.addEventListener('orientationchange', reajustar);
+
+/* Si el sistema cambia de día a noche (o al revés), recolorear el mapa y la
+   escala, que salen del tema. */
+try{ matchMedia('(prefers-color-scheme: light)').addEventListener('change',
+  ()=>setTimeout(()=>{ if(typeof render==='function') render(); }, 60)); }catch(e){}

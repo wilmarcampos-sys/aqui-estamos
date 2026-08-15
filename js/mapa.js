@@ -92,6 +92,7 @@ function pintarMapa(){
     const r = 260 + Math.sqrt(st.z.pob) * 4.5;
     const c = L.circle([st.z.lat, st.z.lng], {
       radius: r, color: color(st.idx), weight: st.idx>=60?2.5:1.5,
+      dashArray: st.idx>=80 ? '4 5' : null,   // "Sin ayuda": nunca solo color
       fillColor: color(st.idx), fillOpacity: st.idx>=60?.55:.35
     }).addTo(capa);
     c.on('click', ()=>{ map.flyTo([st.z.lat, st.z.lng], 14.6, {duration:.7}); abrirZona(st.z.id); });

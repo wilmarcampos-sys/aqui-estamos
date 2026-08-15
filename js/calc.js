@@ -192,7 +192,18 @@ function porPersona(){
   })).sort((a,b)=>b.n-a.n);
 }
 const MAX_MICRO = 3;   // umbral blando: no bloquea, solo avisa
-function color(i){ return i>=80?'#8b1a1a' : i>=60?'#dc2626' : i>=40?'#d97706' : i>=20?'#c9a227' : '#3f8f5f'; }
+/* La escala de color del índice depende del tema: sobre tiles claros los
+   hex del oscuro pierden contraste (el amarillo queda ilegible). */
+const _SCALE_D = ['#3f8f5f','#c9a227','#d97706','#dc2626','#8b1a1a'];
+const _SCALE_L = ['#26714A','#8A6508','#B45309','#C11B1B','#7A1616'];
+function temaClaro(){
+  try{ const t = document.documentElement.getAttribute('data-tema');
+    if(t==='claro') return true; if(t==='oscuro') return false;
+    return !!(window.matchMedia && matchMedia('(prefers-color-scheme: light)').matches);
+  }catch(e){ return false; }
+}
+function color(i){ const s = temaClaro() ? _SCALE_L : _SCALE_D;
+  return i>=80?s[4] : i>=60?s[3] : i>=40?s[2] : i>=20?s[1] : s[0]; }
 function etiqueta(i){ return i>=80?'Sin ayuda' : i>=60?'Crítica' : i>=40?'Rezagada' : i>=20?'Parcial' : 'Atendida'; }
 function hace(ts){
   if(!ts) return 'nunca';

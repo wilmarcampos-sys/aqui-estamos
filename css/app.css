@@ -11,11 +11,15 @@
   }
   @media (prefers-color-scheme: light){
     :root{
-      --bg:#f2f4f8; --bg2:#ffffff; --card:#ffffff; --surf:#f5f7fb; --chip:#eef1f7;
-      --inp:#ffffff; --line:#e4e8f0; --line2:#d2d9e5; --map-bg:#e3e9f1;
-      --panel:rgba(255,255,255,.95);
-      --txt:#1c2740; --dim:#64728c; --acc:#3667d6; --link:#2456c8;
+      --bg:#F5F7FB; --bg2:#FFFFFF; --card:#FFFFFF; --surf:#F7F9FC; --chip:#EEF2F8;
+      --inp:#FFFFFF; --line:#DCE3EE; --line2:#C6D0E0; --map-bg:#E8EDF4;
+      --panel:rgba(255,255,255,.94);
+      --txt:#0E1729; --dim:#5B6B87; --acc:#1A62C8; --link:#1A62C8;
+      /* escala de desatención recalculada para fondo claro (contrastes AA) */
+      --c0:#26714A; --c1:#8A6508; --c2:#B45309; --c3:#C11B1B; --c4:#7A1616;
     }
+    .leaflet-tile{opacity:1!important;filter:saturate(.92)}
+    header h1 span{color:#B8860B}
   }
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
   html,body{margin:0;height:100%;overflow:hidden}
@@ -118,7 +122,10 @@
     font-size:16px;font-weight:700;font-family:inherit;cursor:pointer;
     box-shadow:0 8px 26px rgba(0,0,0,.5)
   }
-  .fab.ghost{flex:0 0 auto;background:var(--chip);color:var(--txt);border:1px solid var(--line);padding:15px 16px}
+  .fab.ghost{flex:0 0 auto;background:var(--chip);color:var(--txt);border:1px solid var(--line);
+    padding:9px 15px;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:11px;font-weight:700;line-height:1}
+  .fab.ghost .ic.lg{width:22px;height:22px}
+  .fab.ghost .flab{font-size:11px}
 
   .legend{position:absolute;top:10px;left:10px;z-index:600;background:var(--panel);
     border:1px solid var(--line);border-radius:11px;padding:9px 11px;font-size:13px;color:var(--dim);
@@ -422,32 +429,56 @@ input.pin{letter-spacing:9px;font-size:20px;text-align:center;font-weight:700}
    base (que son de tinte oscuro) cuando el navegador pide el claro.
    ============================================================ */
 @media (prefers-color-scheme: light){
-  /* texto blanco sobre los botones de color (en oscuro es oscuro) */
+  /* botones — texto blanco sobre color, valores medidos AA */
   .btn{color:#fff} .btn.flat{color:var(--txt)}
+  .btn.red,.fab{background:#C81E1E;color:#fff}
+  .btn.green{background:#2E7D4F;color:#fff}
   .cats button.on{color:#fff}
   .urg button.sel{color:#fff}
-  /* textos de estado con más contraste sobre fondo claro */
-  .verif{color:#15803d} .pend{color:#b45309}
-  .chip.u3{color:#b91c1c} .chip.u2{color:#b45309} .chip.ok{color:#15803d}
-  .telhint.ok{color:#15803d} .telhint.bad{color:#b45309}
-  .estado.demo,.estado.cola{color:#b45309}
-  .pasos .pon.done{color:#15803d}
-  .selbar .grow.falta{color:#b45309}
-  .selbar .grow.falta::before{background:#b45309}
-  .cc{color:#15803d}
-  /* bordes de estado: suaves en claro */
-  .verif,.chip.ok,.pasos .pon.done,.fila-mia.ok{border-color:#bfe0cc}
-  .pend,.chip.u2,.fila-mia{border-color:#f0d19a}
-  .chip.u3,.foco.orf,.opt.pend-o{border-color:#f3c0c0}
-  .note,.tag.req,.pasohead .pasonum{border-color:#c3d5f5}
-  .note{color:#1d4ed8}
-  .avisoej{background:#fdf3e2;border-color:#f0d19a;color:#8a5a12}
-  .okmark{background:#e7f6ec;border-color:#bfe0cc;color:#15803d}
-  .tld.no{background:#d98a2b;border-color:#d98a2b}
-  /* el azul de selección/paso actual, más suave (no chillón) */
-  .pasos .pon.now{background:#eaf0fc;border-color:#b3c8ef;color:#2456c8}
-  .opt.sel,.sugb.sel{background:#eaf0fc;border-color:#b3c8ef;color:var(--txt)}
-  .tag.req{background:#eaf0fc;border-color:#c3d5f5;color:#2456c8}
-  .pasohead .pasonum{background:#eaf0fc}
-  .note{background:#eef3fc;border-color:#c9dbf5}
+  .btn.loc.ok{background:#E3F3EA;border-color:#2E7D4F;color:#1B5C39}
+  .mini.go{background:#E3F3EA;border-color:#B7DCC6;color:#1B5C39}
+  /* chips y etiquetas de estado */
+  .chip{color:#41506A}
+  .chip.u3{background:#FDECEC;border-color:#F3B9B9;color:#A81616}
+  .chip.u2{background:#FDF2E2;border-color:#F0CE97;color:#8A4708}
+  .chip.ok{background:#E6F4EC;border-color:#B7DCC6;color:#1B5C39}
+  .verif{background:#E6F4EC;border-color:#B7DCC6;color:#1B5C39}
+  .pend,.fila-mia{border-color:#F0CE97}
+  .pend{background:#FDF2E2;color:#8A4708}
+  .telhint.ok{color:#1B5C39} .telhint.bad{color:#8A4708}
+  .estado.demo,.estado.cola{color:#8A4708}
+  .cc,.pasos .pon.done{color:#1B5C39}
+  .selbar .grow.falta{color:#8A4708}
+  .selbar .grow.falta::before{background:#8A4708}
+  /* opciones y sugerencias */
+  .opt.sel{background:#E7F0FD;border-color:var(--acc);color:#12447F}
+  .opt.pend-o,.foco.orf{background:#FDF1F1;border-color:#F3B9B9}
+  .sugb.sel{background:#E7F0FD;border-color:var(--acc)}
+  /* pasos, tags y azules de selección */
+  .pasos .pon.now{background:#E7F0FD;border-color:#BBD4F5;color:#12447F}
+  .pasos .pon.done{background:#E6F4EC;border-color:#B7DCC6}
+  .tag.req,.pasohead .pasonum{background:#E7F0FD;border-color:#BBD4F5;color:#12447F}
+  /* superficies, avisos y sombras */
+  .note{background:#E9F1FD;border-color:#BBD4F5;color:#274A78}
+  .note b{color:#12447F}
+  .bar{background:#E3E9F2}
+  .grab{background:#C6D0E0}
+  .avisoej{background:#FDF2E2;border-color:#F0CE97;color:#8A4708}
+  .toast{background:#0E1729;color:#fff}
+  .scrim{background:rgba(15,23,41,.34)}
+  .card{box-shadow:0 1px 2px rgba(15,23,41,.05)}
+  .sheet .panel{box-shadow:0 -10px 34px rgba(15,23,41,.14)}
+  .legend,.pinbar{color:#3D4C64;box-shadow:0 6px 20px rgba(15,23,41,.10)}
+  .legend b{color:var(--txt)}
+  .online{color:#41506A}
+  .tabsub button.on{background:#0E1729;border-color:#0E1729;color:#fff}
+  .okmark{background:#E6F4EC;border-color:#B7DCC6;color:#1B5C39}
+  .tld.no{background:#B45309;border-color:#B45309}
+  /* WhatsApp gana siempre: es marca */
+  .btn.wa,a[href*="wa.me"]{background:#25D366;color:#04220F;border-color:#25D366}
+  /* PARCHE: colores del tema oscuro escritos a mano en el JS (ilegibles
+     sobre blanco). Lo correcto sería clases, esto los tapa por ahora. */
+  [style*="#fca5a5"],[style*="#FCA5A5"]{color:#C11B1B!important}
+  [style*="#86efac"],[style*="#86EFAC"]{color:#1B5C39!important}
+  [style*="#fcd34d"],[style*="#FCD34D"]{color:#8A4708!important}
 }
