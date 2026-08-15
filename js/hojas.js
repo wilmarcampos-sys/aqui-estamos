@@ -210,7 +210,7 @@ function abrirAlbergue(a){
     const pct=Math.round(ocup/cap*100), dash=Math.min(100,pct);
     const col=pct>=100?'var(--c4)':pct>=90?'var(--c3)':pct>=70?'var(--c2)':'var(--c0)';
     capHtml=`<div class="capmini">
-      <div class="capnums"><b>${ocup}<span class="capsl">/${cap}</span></b><span>Capacidad · ${cap-ocup} libres</span></div>
+      <div class="capnums"><span class="caplabel">Capacidad</span><b>${ocup}<span class="capsl">/${cap}</span></b><span>${cap-ocup} libres</span></div>
       <svg class="capring" viewBox="0 0 36 36" aria-hidden="true">
         <circle class="capbg" cx="18" cy="18" r="15.9"></circle>
         <circle cx="18" cy="18" r="15.9" fill="none" stroke="${col}" stroke-width="3.6"
@@ -218,7 +218,7 @@ function abrirAlbergue(a){
         <text x="18" y="19.4" class="cappct">${pct}%</text>
       </svg></div>`;
   } else if(cap!=null || ocup!=null){
-    capHtml=`<div class="capmini"><div class="capnums"><b>${ocup!=null?ocup:'—'}<span class="capsl">/${cap!=null?cap:'—'}</span></b><span>Capacidad</span></div></div>`;
+    capHtml=`<div class="capmini"><div class="capnums"><span class="caplabel">Capacidad</span><b>${ocup!=null?ocup:'—'}<span class="capsl">/${cap!=null?cap:'—'}</span></b></div></div>`;
   }
 
   abrirSheet(`
