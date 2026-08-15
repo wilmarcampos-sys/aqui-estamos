@@ -229,6 +229,7 @@ const CATALOGO = [
     {k:'voluntarios',n:'Voluntarios / manos',          s:'gente ayuda brazos'},
     {k:'electricista',n:'Electricista (con norma)',    s:'instalacion electrica breaker cableado 240v acometida bifasica polo a tierra handyman'},
     {k:'plomero',    n:'Plomero / fontanero',          s:'fontaneria agua desague tuberia hidrosanitaria bomba handyman'},
+    {k:'gasinstal',  n:'Instalación / conexión de gas', s:'gasista gas propano tuberia estufa punto'},
     {k:'instalequipo',n:'Instalar lavadoras / equipos',s:'lavadora secadora montaje conexion tecnico handyman'},
     {k:'efectivo',   n:'Aportes en efectivo',          s:'plata dinero logistica transporte'},
   ]},
