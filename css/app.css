@@ -245,7 +245,7 @@
 
   /* selector de punto en el mapa */
   .picker{position:relative;margin-top:6px;border-radius:13px;overflow:hidden;border:1.5px solid var(--line)}
-  .pickmap{height:250px;background:#162033;touch-action:none}
+  .pickmap{height:340px;background:#162033;touch-action:none}
   .pickhint{position:absolute;top:8px;left:8px;right:8px;z-index:600;pointer-events:none;
     background:rgba(220,38,38,.94);color:#fff;border-radius:10px;padding:9px 11px;
     font-size:13px;font-weight:700;text-align:center;transition:opacity .35s;

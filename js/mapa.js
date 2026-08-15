@@ -136,6 +136,16 @@ function ptDe(zid){
    La comuna se deduce sola del punto — no hay que buscarla en una lista.
    ============================================================ */
 let pickMap=null, pickSt=null, pickMk=null, pickCb=null;
+/* Zonas ordenadas por cercanía a la zona actual, con la distancia — el
+   dropdown de "ir a una zona" muestra solo las de al lado (no las 31) y a
+   cuánto queda cada una. */
+const fmtDist = d => d<60 ? 'aquí' : d<1000 ? Math.round(d/10)*10+' m' : (d/1000).toFixed(1)+' km';
+function zonasCerca(zid, n=12){
+  const z0 = ZONAS.find(z=>z.id===zid) || ZONAS[0];
+  return ZONAS.map(z=>({z, d: dist(z0.lat,z0.lng,z.lat,z.lng)}))
+    .sort((a,b)=> a.d - b.d)
+    .slice(0, n);
+}
 function pickerHTML(id, zid){
   if(modoSVG){
     return `<label class="f">Zona</label>
@@ -149,8 +159,8 @@ function pickerHTML(id, zid){
     <button type="button" class="btn loc" data-gps="${id}">${ico('pin')} Localízame — poner el pin donde estoy</button>
     <div class="pickinfo" id="${id}-info">…</div>
     <select id="${id}-jump" style="margin-top:8px;font-size:14px">
-      <option value="">¿No encuentra el sitio? Ir a una zona…</option>
-      ${ZONAS.map(z=>`<option value="${z.id}">${z.n}${z.t==='corregimiento'?' (rural)':''}</option>`).join('')}
+      <option value="">¿No encuentra el sitio? Ir a una zona cercana…</option>
+      ${zonasCerca(zid).map(({z,d})=>`<option value="${z.id}">${z.n}${z.t==='corregimiento'?' (rural)':''} · ${fmtDist(d)}</option>`).join('')}
     </select>`;
 }
 const PIN = modoSVG ? null : L.divIcon({className:'', iconSize:[34,34], iconAnchor:[17,30], html:

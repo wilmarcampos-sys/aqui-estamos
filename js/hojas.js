@@ -218,6 +218,14 @@ function itemsHTML(q){
   return html;
 }
 
+/* Guía gráfica compartida: resalta el siguiente elemento a tocar en la hoja
+   (un halo azul que late). La usan el reporte, la inscripción y demás flujos. */
+function guiar(q){
+  const b = $('#sheet-body'); if(!b) return;
+  b.querySelectorAll('.guide').forEach(x=>x.classList.remove('guide'));
+  const el = q && b.querySelector(q); if(el) el.classList.add('guide');
+}
+
 /* Indicador de pasos: el usuario siempre ve dónde va y qué sigue. */
 const PASOS_R = ['Dónde', 'Qué falta', 'Urgencia'];
 function pasosHTML(n){
@@ -241,11 +249,6 @@ function abrirReporte(zid, pt, refPrev){
   const zonaNom = z => ZONAS.find(x=>x.id===z)?.n || '';
   const irA = p => { paso = p; pintarPaso(); };
 
-  /* Guía gráfica: resalta el siguiente elemento que hay que tocar. */
-  const guiar = q => { const b=$('#sheet-body'); if(!b) return;
-    b.querySelectorAll('.guide').forEach(x=>x.classList.remove('guide'));
-    const el = q && b.querySelector(q); if(el) el.classList.add('guide'); };
-
   function pintarPaso(){ paso===1 ? pasoDonde() : paso===2 ? pasoQue() : pasoUrg(); }
 
   /* ---- Paso 1: ¿dónde es? ---- */
@@ -253,15 +256,17 @@ function abrirReporte(zid, pt, refPrev){
     abrirSheet(`
       <div class="pasohead"><h3>¿Dónde es?</h3></div>
       ${pasosHTML(1)}
-      <p class="pasosub">Lo único necesario aquí: <b>marque el sitio en el mapa</b>. Lo demás ayuda, pero es opcional.</p>
+      <p class="pasosub"><b>Confirme en el mapa dónde es.</b> Si el pin ya cayó en el sitio, solo toque continuar.</p>
       ${pickerHTML('r-map', zid)}
-      <div class="sec">Punto de referencia <span class="tag opt">opcional</span></div>
-      <p class="muted" style="margin:0 0 7px">Escoja un sitio ya conocido si aparece: así su reporte se junta con los demás del mismo lugar.</p>
-      <div id="r-sug" class="sug"></div>
-      <input id="r-ref" placeholder="…o escríbalo: la cancha, el salón comunal, la tienda de don Óscar" value="${esc(ref)}">
-      <details class="fold">
-        <summary>Agregar una indicación para llegar (opcional)</summary>
-        <div class="foldbody"><textarea id="r-nota" placeholder="Ej: la vía está bloqueada, solo entra moto, hay un adulto mayor solo">${esc(nota)}</textarea></div>
+      <details class="fold" ${(ref||nota)?'open':''}>
+        <summary>Afinar la ubicación: nombre del sitio y cómo llegar (opcional)</summary>
+        <div class="foldbody">
+          <p class="muted" style="margin:0 0 7px">Si es un sitio ya conocido, escójalo: así su reporte se junta con los demás del mismo lugar.</p>
+          <div id="r-sug" class="sug"></div>
+          <input id="r-ref" placeholder="…o escríbalo: la cancha, el salón comunal, la tienda de don Óscar" value="${esc(ref)}">
+          <label class="f">¿Algo dificulta llegar?</label>
+          <textarea id="r-nota" placeholder="Ej: la vía está bloqueada, solo entra moto, hay un adulto mayor solo">${esc(nota)}</textarea>
+        </div>
       </details>
       <button class="btn" id="r-next1">Confirmar este sitio</button>
       <button class="btn flat" data-close-btn>Cancelar</button>
@@ -618,6 +623,25 @@ function abrirCoord(zid, pt, zExist){
     };
     $('#c-pin1').oninput = revisarPin; $('#c-pin2').oninput = revisarPin;
   }
+
+  /* Guía: resalta el siguiente campo por llenar, y al final el botón. */
+  const sigC = ()=>{
+    if(!$('#c-micro') || !$('#c-micro').value.trim()) return guiar('#c-micro');
+    if(!YO){
+      if($('#c-nom').value.trim().length < 3) return guiar('#c-nom');
+      const d1 = telCrudo('c-tel1'), d2 = telCrudo('c-tel2');
+      if(!telOK(d1)) return guiar('#c-tel1');
+      if(d2 !== d1) return guiar('#c-tel2');
+      const p1 = $('#c-pin1').value, p2 = $('#c-pin2').value;
+      if(!/^\d{4,6}$/.test(p1)) return guiar('#c-pin1');
+      if(p2 !== p1) return guiar('#c-pin2');
+    }
+    guiar('#c-next');
+  };
+  ['c-micro','c-nom','c-tel1','c-tel2','c-pin1','c-pin2'].forEach(id=>{
+    const el = $('#'+id); if(el) el.addEventListener('input', sigC);
+  });
+  sigC();
 
   $('#c-next').onclick = async (e)=>{
     const micro = $('#c-micro').value.trim();
