@@ -189,6 +189,12 @@
     border:1px solid var(--line);color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .pasos .pon.now{background:rgba(79,156,249,.18);border-color:var(--acc);color:#cfe3ff}
   .pasos .pon.done{background:rgba(63,143,95,.16);border-color:#2f5c41;color:#86efac}
+  /* guía gráfica: el siguiente campo a tocar late para llevar el ojo allí */
+  @keyframes guiapulso{
+    0%,100%{box-shadow:0 0 0 0 rgba(120,170,255,0)}
+    50%    {box-shadow:0 0 0 4px rgba(120,170,255,.5)}
+  }
+  .guide{animation:guiapulso 1.3s ease-in-out infinite;border-radius:12px;position:relative;z-index:1}
   .pasohead .volver{width:34px;height:34px;border-radius:10px;background:#1b2740;border:1px solid var(--line);
     color:var(--txt);font-size:20px;font-family:inherit;cursor:pointer;flex:0 0 auto;line-height:1;padding:0}
   .resumen{background:#16223a;border:1px solid var(--line);border-radius:13px;padding:2px 12px;margin-top:4px}

@@ -241,6 +241,11 @@ function abrirReporte(zid, pt, refPrev){
   const zonaNom = z => ZONAS.find(x=>x.id===z)?.n || '';
   const irA = p => { paso = p; pintarPaso(); };
 
+  /* Guía gráfica: resalta el siguiente elemento que hay que tocar. */
+  const guiar = q => { const b=$('#sheet-body'); if(!b) return;
+    b.querySelectorAll('.guide').forEach(x=>x.classList.remove('guide'));
+    const el = q && b.querySelector(q); if(el) el.classList.add('guide'); };
+
   function pintarPaso(){ paso===1 ? pasoDonde() : paso===2 ? pasoQue() : pasoUrg(); }
 
   /* ---- Paso 1: ¿dónde es? ---- */
@@ -288,6 +293,7 @@ function abrirReporte(zid, pt, refPrev){
       if($('#r-nota')) nota = $('#r-nota').value.trim();
       irA(2);
     };
+    guiar('#r-next1');
   }
 
   /* ---- Paso 2: ¿qué hace falta? ---- */
@@ -325,6 +331,7 @@ function abrirReporte(zid, pt, refPrev){
         : 'Falta: qué se necesita';
       $('#r-cnt').classList.toggle('falta', sel.size===0);
       $('#r-next2').disabled = sel.size===0;
+      guiar(sel.size ? '#r-next2' : '#r-busca');
     };
     $('#r-busca').oninput = repintar;
     $('#r-items').onclick = e=>{ const o=e.target.closest('.opt'); if(!o) return;
@@ -367,7 +374,8 @@ function abrirReporte(zid, pt, refPrev){
     const body = $('#sheet-body');
     const barra = ()=>{ $('#r-cnt').textContent = urg==null?'Falta: qué tan urgente':'Todo listo';
       $('#r-cnt').classList.toggle('falta', urg==null);
-      $('#r-send').disabled = urg==null; };
+      $('#r-send').disabled = urg==null;
+      guiar(urg!=null ? '#r-send' : '#r-urg'); };
     body.querySelectorAll('#r-urg button').forEach(b=>{
       if(+b.dataset.u===urg) b.classList.add('sel');
       b.onclick=()=>{ body.querySelectorAll('#r-urg button').forEach(x=>x.classList.remove('sel'));
