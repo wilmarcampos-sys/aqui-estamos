@@ -129,13 +129,12 @@ function abrirFoco(zid, la, lo){
 
   const filas = f.needs.map(x=>{
     const {e, ok} = estadoDe(x.k);
-    const col = ok ? '#3f8f5f' : (UCOL[x.u]||'#c9a227');
     const uName = x.u===3?'Urgente':x.u===2?'Prioritario':'Puede esperar';
     const sub = `${NEED[x.k]?.cat||''}${x.personas?` · ~${x.personas} personas`:''}`
       + (x.subio?' · ↑ subió por corroboración':'')
       + (ok?` · entregado ${hace(e.ts)} por ${esc(e.quien)}`:' · pendiente');
     const nota = (f.reps.filter(r=>r.k===x.k).map(r=>r.nota).find(Boolean))||'';
-    return `<div class="nec-card" style="border-left-color:${col}">
+    return `<div class="nec-card ${ok?'ok':'u'+x.u}">
       <div class="grow">
         <h4>${esc(NEED[x.k]?.n||x.k)}${x.n>1?` <span class="u-alta">×${x.n}</span>`:''}${ok?'':`<span class="upill u${x.u}">${uName}</span>`}</h4>
         <div class="nec-sub">${sub}</div>
@@ -192,10 +191,9 @@ function abrirAlbergue(a){
   let f=null,bd=1e9; focos(a.z).forEach(x=>{const d=dist(a.lat,a.lng,x.lat,x.lng); if(d<bd){bd=d;f=x;}});
   const nec = (f && bd<300) ? f : null;
   const cards = nec ? nec.needs.map(x=>{
-    const col = UCOL[x.u]||'#c9a227';
     const uName = x.u===3?'Urgente':x.u===2?'Prioritario':'Puede esperar';
     const nota = (nec.reps.filter(r=>r.k===x.k).map(r=>r.nota).find(Boolean))||'';
-    return `<div class="nec-card" style="border-left-color:${col}">
+    return `<div class="nec-card u${x.u}">
       <div class="grow">
         <h4>${esc(NEED[x.k]?.n||x.k)}${x.n>1?` <span class="u-alta">×${x.n}</span>`:''}<span class="upill u${x.u}">${uName}</span></h4>
         <div class="nec-sub">${esc(NEED[x.k]?.cat||'')} · pendiente</div>

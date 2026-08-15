@@ -27,6 +27,11 @@
      (viewport grande) y #app con dvh (actual), el body queda más alto y se ve
      un hueco abajo. Ambos en dvh para que encajen siempre. */
   html,body{margin:0;height:100vh;height:100dvh;overflow:hidden;overscroll-behavior:none}
+  /* superficies del navegador tematizadas (no defaults grises) */
+  ::selection{background:rgba(79,156,249,.28);color:var(--txt)}
+  :focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+  /* cifras que no "bailan" */
+  .capnums b,.cappct,.rank,.fbadge,.kpi b,.online b{font-variant-numeric:tabular-nums}
   body{
     font:16px/1.45 system-ui,-apple-system,"Segoe UI",Helvetica,Arial,sans-serif;
     background:var(--bg);color:var(--txt);
@@ -346,7 +351,11 @@
   /* tarjeta de necesidad: que se vea el peso, con color de urgencia como en
      los círculos del mapa — no un renglón de texto */
   .nec-card{display:flex;align-items:center;gap:11px;background:var(--surf);border:1px solid var(--line);
-    border-left:5px solid var(--c1);border-radius:13px;padding:12px 13px;margin-bottom:9px}
+    border-radius:13px;padding:12px 13px;margin-bottom:9px;font-variant-numeric:tabular-nums}
+  .nec-card.u3{background:rgba(220,38,38,.07);border-color:#7f1d1d}
+  .nec-card.u2{background:rgba(217,119,6,.07);border-color:#7c4a10}
+  .nec-card.u1{background:rgba(201,162,39,.06);border-color:#6b5514}
+  .nec-card.ok{background:rgba(63,143,95,.08);border-color:#2f5c41}
   .nec-card h4{margin:0;font-size:16px;font-weight:800;line-height:1.25}
   .nec-card .nec-sub{font-size:12px;color:var(--dim);margin-top:3px}
   .nec-card .nec-nota{font-size:12px;color:var(--txt);margin-top:6px;line-height:1.4;
