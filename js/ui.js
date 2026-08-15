@@ -101,6 +101,29 @@ document.addEventListener('click', e=>{
   e.preventDefault(); copiar(c.getAttribute('data-copiar'));
 });
 
+/* Copia de teléfonos con freno anti-scraping: un invitado puede copiar hasta
+   10 números por dispositivo (ventana de 24 h); pasado eso, tiene que entrar
+   como coordinador. Los coordinadores logueados no tienen límite. */
+const LIMITE_COPIA_TEL = 10, VENTANA_COPIA = 24*3600*1000;
+function copiarTel(txt){
+  if(typeof YO !== 'undefined' && YO) return copiar(txt);   // logueado: sin límite
+  let arr=[]; try{ arr = JSON.parse(localStorage.getItem('ae_copias')||'[]'); }catch(e){}
+  const ahora = Date.now();
+  arr = arr.filter(t => ahora - t < VENTANA_COPIA);
+  if(arr.length >= LIMITE_COPIA_TEL){
+    toast('Copió varios números ya. Entre como coordinador para seguir.');
+    if(typeof abrirCuenta === 'function') abrirCuenta();
+    return;
+  }
+  arr.push(ahora);
+  try{ localStorage.setItem('ae_copias', JSON.stringify(arr)); }catch(e){}
+  copiar(txt);
+}
+document.addEventListener('click', e=>{
+  const c=e.target.closest('[data-copiar-tel]'); if(!c) return;
+  e.preventDefault(); copiarTel(c.getAttribute('data-copiar-tel'));
+});
+
 /* ---------- vistas ---------- */
 let filtro='todas';
 document.querySelectorAll('#filtros button').forEach(b=>b.onclick=()=>{

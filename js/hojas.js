@@ -220,8 +220,8 @@ function abrirAlbergue(a){
       ${avatar({nombre:a.nom})}
       <div class="grow">
         <div style="font-size:14px;font-weight:700">${esc(a.nom)}</div>
-        <div class="telcopia">${esc(telBonito(a.tel))}
-          <button type="button" class="tcopy" data-copiar="+${esc(telDigitos(a.tel))}">Copiar</button></div>
+        <div class="telcopia"><span class="telnum">${esc(telBonito(a.tel))}</span>
+          <button type="button" class="tcopy" data-copiar-tel="+${esc(telDigitos(a.tel))}">Copiar</button></div>
       </div>
       <a class="mini wa" href="${waLink(a.tel)}" target="_blank" rel="noopener">${icoWA()} WhatsApp</a>
     </div>
