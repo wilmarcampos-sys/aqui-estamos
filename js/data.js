@@ -155,6 +155,8 @@ const CATALOGO = [
     {k:'aseo',       n:'Kit de aseo personal',         s:'kit higiene'},
     {k:'jabon',      n:'Jabón',                        s:'barra panela manos'},
     {k:'champu',     n:'Champú',                       s:'shampoo'},
+    {k:'champupiojos',n:'Champú antipiojos',           s:'piojos liendres pediculosis ninos'},
+    {k:'liendrera',  n:'Peineta antipiojos (liendrera)',s:'peineta sacar piojos liendres'},
     {k:'cepillo-d',  n:'Cepillos de dientes',          s:''},
     {k:'pasta-d',    n:'Crema dental',                 s:'pasta dientes'},
     {k:'desodorante',n:'Desodorantes',                 s:''},
