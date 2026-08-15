@@ -89,6 +89,9 @@ document.querySelectorAll('#filtros button').forEach(b=>b.onclick=()=>{
 
 function render(){
   pintarMapa();
+  // avatar del coordinador logueado en el encabezado (entra a su cuenta)
+  const ya = $('#yo-avatar');
+  if(ya){ ya.hidden = !YO; if(YO) ya.innerHTML = avatar({foto:YO.foto, nombre:YO.nombre}); }
   const todos = ZONAS.map(estadoZona);
 
   // KPIs

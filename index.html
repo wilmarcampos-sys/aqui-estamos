@@ -45,6 +45,7 @@
     <div class="online" id="online" hidden>
       <span class="odot"></span><b id="online-n">0</b><span class="olbl">en línea</span>
     </div>
+    <button id="yo-avatar" class="yoav" data-cuenta type="button" aria-label="Mi cuenta" hidden></button>
   </header>
 
   <nav>
@@ -57,14 +58,20 @@
     <!-- MAPA -->
     <section class="view on" id="v-map">
       <div id="map"></div>
-      <div class="legend">
-        <b>Nivel de desatención</b>
-        <div><i style="background:#3f8f5f"></i>Atendida</div>
-        <div><i style="background:#c9a227"></i>Parcial</div>
-        <div><i style="background:#d97706"></i>Rezagada</div>
-        <div><i style="background:#dc2626"></i>Crítica</div>
-        <div><i style="background:#8b1a1a"></i>Sin ayuda</div>
-        <div style="margin-top:5px">Acérquese para ver los puntos exactos y las micro-zonas de cada coordinador</div>
+      <div class="legend" id="legend">
+        <button class="legtog" id="legtog" type="button" aria-label="Mostrar u ocultar niveles">
+          <span class="lchip"><i style="background:#dc2626"></i>Niveles</span>
+          <b class="lfull">Nivel de desatención</b>
+          <span class="lcar" aria-hidden="true">▾</span>
+        </button>
+        <div class="legbody">
+          <div><i style="background:#3f8f5f"></i>Atendida</div>
+          <div><i style="background:#c9a227"></i>Parcial</div>
+          <div><i style="background:#d97706"></i>Rezagada</div>
+          <div><i style="background:#dc2626"></i>Crítica</div>
+          <div><i style="background:#8b1a1a"></i>Sin ayuda</div>
+          <div class="lhelp">Acérquese para ver los puntos exactos y las micro-zonas de cada coordinador</div>
+        </div>
       </div>
       <div class="pinbar" id="pinbar">Toque el mapa donde está, o arrastre el pin</div>
       <div class="fabs">

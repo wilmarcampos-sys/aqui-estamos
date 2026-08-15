@@ -104,6 +104,20 @@ function pintarMapa(){
 }
 if(map) map.on('zoomend', pintarMapa);
 
+/* La leyenda arranca abierta para orientar; apenas el usuario empieza a usar
+   el mapa se minimiza a un chip "Niveles" y el mapa queda de protagonista.
+   Tocar el chip la vuelve a abrir. Igual con la pista de la barra del pin. */
+function minimizarLeyenda(){
+  const lg = document.getElementById('legend');
+  if(lg) lg.classList.add('min');
+  document.body.classList.add('mapa-tocado');
+}
+(function(){
+  const tog = document.getElementById('legtog');
+  if(tog) tog.onclick = ()=>{ const lg=document.getElementById('legend'); if(lg) lg.classList.toggle('min'); };
+})();
+if(map) map.on('movestart zoomstart click', minimizarLeyenda);
+
 /* ---- PIN PRINCIPAL: vive en el mapa grande y lo hereda todo lo demás ---- */
 let mainMk = null, mainPt = null;
 function setMainPt(la, lo){

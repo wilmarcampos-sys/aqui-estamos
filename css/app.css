@@ -123,8 +123,23 @@
   .legend{position:absolute;top:10px;left:10px;z-index:600;background:var(--panel);
     border:1px solid var(--line);border-radius:11px;padding:9px 11px;font-size:13px;color:var(--dim);
     backdrop-filter:blur(6px);max-width:172px}
-  .legend b{color:var(--txt);font-size:13px;display:block;margin-bottom:5px}
+  .legend b{color:var(--txt);font-size:13px}
   .legend i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:5px;vertical-align:-1px}
+  .legend .legtog{display:flex;align-items:center;gap:6px;width:100%;background:none;border:0;padding:0;
+    color:var(--txt);font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;text-align:left}
+  .legend .lcar{margin-left:auto;color:var(--dim);font-size:11px;transition:transform .2s}
+  .legend .lchip{display:none;align-items:center;gap:5px;color:var(--txt)}
+  .legend .lchip i{margin-right:0}
+  .legend .legbody{margin-top:7px}
+  .legend .legbody>div{padding:1px 0}
+  .legend .lhelp{margin-top:6px;color:var(--dim);line-height:1.35}
+  /* minimizada: solo el chip "Niveles", para que el mapa mande */
+  .legend.min{padding:8px 11px;max-width:none}
+  .legend.min .lfull,.legend.min .legbody{display:none}
+  .legend.min .lchip{display:inline-flex}
+  .legend.min .lcar{transform:rotate(-90deg)}
+  /* tras tocar el mapa, la pista de la barra sobra */
+  .mapa-tocado .pinbar .muted{display:none}
 
   .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:13px;margin-bottom:10px}
   .card h3{margin:0 0 3px;font-size:16px}
@@ -346,6 +361,14 @@
 .online .olbl{font-size:11px;color:var(--dim);letter-spacing:.2px}
 .online .odot{width:7px;height:7px;border-radius:50%;background:#3f8f5f;
   box-shadow:0 0 0 0 rgba(63,143,95,.6);animation:pulso 2.2s ease-out infinite;margin-bottom:2px}
+
+/* avatar del coordinador logueado, junto al "en línea": entra a su cuenta
+   y el punto verde le dice que está en línea */
+.yoav{flex:0 0 auto;background:none;border:0;padding:0;cursor:pointer;position:relative;line-height:0}
+.yoav .avatar{width:38px;height:38px;font-size:14px}
+.yoav::after{content:"";position:absolute;right:-1px;bottom:-1px;width:11px;height:11px;border-radius:50%;
+  background:#3f8f5f;border:2px solid var(--bg)}
+.yoav:active{opacity:.7}
 @keyframes pulso{
   0%  {box-shadow:0 0 0 0 rgba(63,143,95,.55)}
   70% {box-shadow:0 0 0 7px rgba(63,143,95,0)}
