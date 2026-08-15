@@ -92,13 +92,19 @@ function render(){
   pintarMapa();
   // acceso de usuario en el encabezado: con sesión, su avatar + punto verde
   // (en línea) y entra a su cuenta; sin sesión, un ícono para entrar.
+  // Solo se re-pinta cuando cambia de verdad (entrar/salir/foto), no en cada
+  // render: si no, el avatar parpadea y los botones del header "saltan".
   const ya = $('#yo-avatar');
   if(ya){
-    ya.hidden = false;
-    ya.classList.toggle('on', !!YO);
-    ya.setAttribute('aria-label', YO ? 'Mi cuenta' : 'Entrar como coordinador');
-    ya.innerHTML = YO ? avatar({foto:YO.foto, nombre:YO.nombre})
-                      : `<span class="avatar">${ico('user')}</span>`;
+    const firma = YO ? ('yo|'+(YO.foto||'')+'|'+(YO.nombre||'')) : 'anon';
+    if(ya.dataset.firma !== firma){
+      ya.dataset.firma = firma;
+      ya.hidden = false;
+      ya.classList.toggle('on', !!YO);
+      ya.setAttribute('aria-label', YO ? 'Mi cuenta' : 'Entrar como coordinador');
+      ya.innerHTML = YO ? avatar({foto:YO.foto, nombre:YO.nombre})
+                        : `<span class="avatar">${ico('user')}</span>`;
+    }
   }
   const todos = ZONAS.map(estadoZona);
 
