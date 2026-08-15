@@ -364,11 +364,15 @@
   .telcopia .tcopy{background:var(--chip);border:1px solid var(--line);color:var(--acc);border-radius:8px;
     padding:3px 10px;font-size:11px;font-weight:800;font-family:inherit;cursor:pointer}
   .telcopia .tcopy:active{opacity:.7}
-  /* ocupación/capacidad compacto, en la línea del título del albergue */
-  .capmini{flex:0 0 auto;text-align:right;line-height:1.15;padding-left:8px}
-  .capmini b{display:block;font-size:17px;font-weight:800}
-  .capmini .capsl{color:var(--dim);font-weight:700}
-  .capmini span{font-size:11px;color:var(--dim);white-space:nowrap}
+  /* ocupación/capacidad con anillo de % (qué tan lleno), en la línea del título */
+  .capmini{flex:0 0 auto;display:flex;align-items:center;gap:8px;padding-left:8px}
+  .capnums{text-align:right;line-height:1.15}
+  .capnums b{display:block;font-size:16px;font-weight:800}
+  .capnums .capsl{color:var(--dim);font-weight:700}
+  .capnums span{font-size:10.5px;color:var(--dim);white-space:nowrap}
+  .capring{width:42px;height:42px;flex:0 0 auto}
+  .capring .capbg{fill:none;stroke:var(--line);stroke-width:3.6}
+  .capring .cappct{fill:var(--txt);font:800 11px system-ui;text-anchor:middle}
   .need-line{display:flex;align-items:center;gap:9px;padding:9px 0;border-bottom:1px solid var(--line2)}
   .need-line:last-child{border-bottom:0}
   .dot{width:9px;height:9px;border-radius:50%;flex:0 0 auto}

@@ -205,6 +205,24 @@ function abrirAlbergue(a){
     </div>`;
   }).join('') : '';
 
+  // ocupación/capacidad con anillo de % para ver de un vistazo qué tan lleno está
+  const cap=a.cap, ocup=a.ocup;
+  let capHtml='';
+  if(cap!=null && ocup!=null && cap>0){
+    const pct=Math.round(ocup/cap*100), dash=Math.min(100,pct);
+    const col=pct>=100?'var(--c4)':pct>=90?'var(--c3)':pct>=70?'var(--c2)':'var(--c0)';
+    capHtml=`<div class="capmini">
+      <div class="capnums"><b>${ocup}<span class="capsl">/${cap}</span></b><span>Capacidad · ${cap-ocup} libres</span></div>
+      <svg class="capring" viewBox="0 0 36 36" aria-hidden="true">
+        <circle class="capbg" cx="18" cy="18" r="15.9"></circle>
+        <circle cx="18" cy="18" r="15.9" fill="none" stroke="${col}" stroke-width="3.6"
+          stroke-dasharray="${dash} 100" stroke-linecap="round" transform="rotate(-90 18 18)"></circle>
+        <text x="18" y="19.4" class="cappct">${pct}%</text>
+      </svg></div>`;
+  } else if(cap!=null || ocup!=null){
+    capHtml=`<div class="capmini"><div class="capnums"><b>${ocup!=null?ocup:'—'}<span class="capsl">/${cap!=null?cap:'—'}</span></b><span>Capacidad</span></div></div>`;
+  }
+
   abrirSheet(`
     <div class="zhead">
       <div class="row">
@@ -213,10 +231,7 @@ function abrirAlbergue(a){
           <h3 style="margin:0">${esc(a.micro||a.nom)}</h3>
           <div class="muted">Albergue · ${esc(z?z.n:'')}${a.ver?' · <span class="verif">verificado</span>':''}</div>
         </div>
-        ${(a.ocup!=null || a.cap!=null) ? `<div class="capmini">
-          <b>${a.ocup!=null?a.ocup:'—'}<span class="capsl">/${a.cap!=null?a.cap:'—'}</span></b>
-          <span>${(a.cap!=null&&a.ocup!=null)?`${a.cap-a.ocup} libres`:'ocup. / cupo'}</span>
-        </div>` : ''}
+        ${capHtml}
       </div>
     </div>
 
