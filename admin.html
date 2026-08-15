@@ -100,6 +100,20 @@
   .waq svg{width:20px;height:20px}
   .kebab{flex:0 0 auto;width:34px;height:40px;border-radius:11px;background:none;border:0;cursor:pointer;
     color:var(--dim);font-size:20px;font-family:inherit}
+  .chev{flex:0 0 auto;width:34px;height:40px;border-radius:11px;background:none;border:0;cursor:pointer;
+    color:var(--dim);font-size:15px;font-family:inherit;transition:transform .15s}
+  .pgroup{margin-bottom:8px}
+  .pgroup .prow{margin-bottom:0}
+  .pgroup.abierto .chev{transform:rotate(180deg)}
+  .pgroup.abierto .prow{border-bottom-left-radius:0;border-bottom-right-radius:0}
+  .subzones{background:var(--card);border:1px solid var(--line);border-top:0;
+    border-radius:0 0 14px 14px;padding:2px 10px 10px;margin-top:-1px}
+  .subrow{display:flex;align-items:center;gap:10px;width:100%;text-align:left;background:#141f33;
+    border:1px solid var(--line);border-radius:11px;padding:9px 11px;margin-top:7px;cursor:pointer;
+    font-family:inherit;color:var(--txt)}
+  .subrow .sm{font-size:13.5px;font-weight:600;display:block}
+  .subrow .mt{font-size:12px;color:var(--dim);display:block}
+  .subrow .cd{font-family:ui-monospace,Menlo,monospace;font-size:12px;color:#7aa7ff;letter-spacing:.5px;flex:0 0 auto}
 
   /* ---- ficha (bottom sheet) ---- */
   .fichacab{display:flex;align-items:center;gap:12px;margin:2px 0 4px}
@@ -452,6 +466,9 @@ function movimientos(){
 }
 
 /* ---------- PERSONAS ---------- */
+const WA_SVG = `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.5 14.4c-.3-.2-1.7-.9-2-1-.3-.1-.5-.1-.6.1-.2.3-.7.9-.8 1.1-.2.2-.3.2-.6.1-.3-.2-1.2-.5-2.3-1.4-.9-.8-1.4-1.7-1.6-2-.2-.3 0-.5.1-.6l.5-.6c.1-.2.2-.3.3-.5.1-.2 0-.4 0-.5-.1-.2-.6-1.6-.9-2.2-.2-.5-.4-.5-.6-.5h-.5c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.5s1.1 2.9 1.2 3.1c.2.2 2.1 3.3 5.2 4.6.7.3 1.3.5 1.7.6.7.2 1.4.2 1.9.1.6-.1 1.7-.7 2-1.4.2-.7.2-1.3.2-1.4-.1-.2-.3-.3-.6-.4Z"/><path d="M12 2C6.5 2 2 6.5 2 12c0 1.8.5 3.4 1.3 4.9L2 22l5.3-1.4A10 10 0 1 0 12 2Zm0 18.2c-1.5 0-3-.4-4.3-1.2l-.3-.2-3.1.8.8-3-.2-.3A8.2 8.2 0 1 1 12 20.2Z"/></svg>`;
+const TICK_SVG = `<svg class="tick ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>`;
+
 function vPersonas(){
   const q = norm(BUSCA).trim(), qd = soloDigitos(BUSCA);
   const cont = { esperando:0, autorizados:0, anulados:0 };
@@ -459,8 +476,18 @@ function vPersonas(){
 
   let filas = COORDS.filter(c=>estadoDe(c)===SEG);
   if(q) filas = filas.filter(c=>coincide(c,q,qd));
-  // el que lleva más esperando primero; el resto, más nuevo primero
-  filas.sort((a,b)=> SEG==='esperando' ? a.creado-b.creado : b.creado-a.creado);
+
+  // UNA fila por persona; sus micro-zonas (de este estado) van en el collapse
+  const m = new Map();
+  filas.forEach(c=>{ const k=claveP(c); let g=m.get(k);
+    if(!g){ g={clave:k, nom:c.nom, foto:c.foto, tel:c.tel, tel_e164:c.tel_e164, zonas:[], _ts:0}; m.set(k,g); }
+    g.zonas.push(c);
+    if(c.creado > g._ts){ g._ts=c.creado; g.nom=c.nom; g.foto=c.foto||g.foto; g.tel=c.tel; g.tel_e164=c.tel_e164; } });
+  const grupos = [...m.values()];
+  grupos.forEach(g=>{ g.zonas.sort((a,b)=>b.creado-a.creado);
+    g.min=Math.min(...g.zonas.map(z=>z.creado)); g.max=Math.max(...g.zonas.map(z=>z.creado)); });
+  // esperando: el que lleva más tiempo primero; el resto: más reciente primero
+  grupos.sort((a,b)=> SEG==='esperando' ? a.min-b.min : b.max-a.max);
 
   const vacTxt = {
     esperando: BUSCA?'Nadie esperando con esa búsqueda.':'Nadie esperando. Todo al día.',
@@ -478,26 +505,50 @@ function vPersonas(){
       <button data-s="autorizados" class="${SEG==='autorizados'?'on':''}">Autorizados <span class="c">${cont.autorizados}</span></button>
       <button data-s="anulados"    class="${SEG==='anulados'?'on':''}">Anulados <span class="c">${cont.anulados}</span></button>
     </div>
-    ${filas.length ? filas.map(filaPersona).join('')
+    ${grupos.length ? grupos.map(grupoPersona).join('')
       : `<div class="vacio"><div class="vic">${ico('search')}</div><b>${esc(vacTxt[SEG])}</b>
            <p>${SEG==='esperando'?'Cuando alguien se inscriba y le envíe su código, aparece aquí.':''}</p></div>`}`;
 }
 
-function filaPersona(c){
-  const cls = c.anulado?'anulada' : (!c.ver?'pendiente':'');
-  const wa = waLink(c.tel_e164||c.tel, `Hola ${c.nom||''}, le escribo de Aquí Estamos para confirmar su inscripción como coordinador de ${c.micro||zonaNombre(c.z)}.`);
-  return `<div class="prow ${cls}">
-    ${avatar(c)}
-    <div class="info" data-ficha="${esc(c.id)}">
-      <div class="nm">${esc(c.nom)}${c.ver?'<svg class="tick ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>':''}</div>
-      <div class="mt">${esc(zonaNombre(c.z))}${c.micro?' · '+esc(c.micro):''} · ${hace(c.creado)}</div>
-      <div class="cd">${esc(c.codigo||'—')}</div>
+/* Una persona = una fila. Si maneja varias micro-zonas (en este estado),
+   la fila se despliega para verlas; si es una sola, va directo a su ficha. */
+function grupoPersona(g){
+  const zs = g.zonas;
+  const wa = waLink(g.tel_e164||g.tel, `Hola ${g.nom||''}, le escribo de Aquí Estamos para confirmar su inscripción.`);
+  const waBtn = `<a class="waq" href="${wa}" target="_blank" rel="noopener" aria-label="WhatsApp">${WA_SVG}</a>`;
+  const tick = zs.every(z=>z.ver && !z.anulado) ? TICK_SVG : '';
+
+  if(zs.length === 1){
+    const c = zs[0];
+    const cls = c.anulado?'anulada' : (!c.ver?'pendiente':'');
+    return `<div class="pgroup"><div class="prow ${cls}">
+      ${avatar(g)}
+      <div class="info" data-ficha="${esc(c.id)}">
+        <div class="nm">${esc(g.nom)}${tick}</div>
+        <div class="mt">${esc(zonaNombre(c.z))}${c.micro?' · '+esc(c.micro):''} · ${hace(c.creado)}</div>
+        <div class="cd">${esc(c.codigo||'—')}</div>
+      </div>
+      ${waBtn}
+      <button class="kebab" data-ficha="${esc(c.id)}" aria-label="Ver ficha">⋮</button>
+    </div></div>`;
+  }
+
+  const cls = zs.every(z=>z.anulado)?'anulada' : (zs.some(z=>!z.ver)?'pendiente':'');
+  const zonasResumen = [...new Set(zs.map(z=>zonaNombre(z.z)))].join(', ');
+  const sub = zs.map(z=>`<button class="subrow" data-ficha="${esc(z.id)}">
+      <span class="grow"><span class="sm">${esc(z.micro||zonaNombre(z.z))}</span>
+      <span class="mt">${esc(zonaNombre(z.z))} · ${hace(z.creado)}</span></span>
+      <span class="cd">${esc(z.codigo||'—')}</span></button>`).join('');
+  return `<div class="pgroup"><div class="prow ${cls}">
+    ${avatar(g)}
+    <div class="info" data-toggle>
+      <div class="nm">${esc(g.nom)}${tick}</div>
+      <div class="mt">${zs.length} micro-zonas · ${esc(zonasResumen)}</div>
     </div>
-    <a class="waq" href="${wa}" target="_blank" rel="noopener" aria-label="WhatsApp">
-      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.5 14.4c-.3-.2-1.7-.9-2-1-.3-.1-.5-.1-.6.1-.2.3-.7.9-.8 1.1-.2.2-.3.2-.6.1-.3-.2-1.2-.5-2.3-1.4-.9-.8-1.4-1.7-1.6-2-.2-.3 0-.5.1-.6l.5-.6c.1-.2.2-.3.3-.5.1-.2 0-.4 0-.5-.1-.2-.6-1.6-.9-2.2-.2-.5-.4-.5-.6-.5h-.5c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.5s1.1 2.9 1.2 3.1c.2.2 2.1 3.3 5.2 4.6.7.3 1.3.5 1.7.6.7.2 1.4.2 1.9.1.6-.1 1.7-.7 2-1.4.2-.7.2-1.3.2-1.4-.1-.2-.3-.3-.6-.4Z"/><path d="M12 2C6.5 2 2 6.5 2 12c0 1.8.5 3.4 1.3 4.9L2 22l5.3-1.4A10 10 0 1 0 12 2Zm0 18.2c-1.5 0-3-.4-4.3-1.2l-.3-.2-3.1.8.8-3-.2-.3A8.2 8.2 0 1 1 12 20.2Z"/></svg>
-    </a>
-    <button class="kebab" data-ficha="${esc(c.id)}" aria-label="Ver ficha">⋮</button>
-  </div>`;
+    ${waBtn}
+    <button class="chev" data-toggle aria-label="Ver sus micro-zonas">▾</button>
+  </div>
+  <div class="subzones" hidden>${sub}</div></div>`;
 }
 
 /* ---------- FICHA (hoja) ---------- */
@@ -743,6 +794,10 @@ document.addEventListener('click', e=>{
   const g = e.target.closest('[data-goto]');
   if(g){ return ir(g.dataset.goto, g.dataset.seg); }
 
+  const tg = e.target.closest('[data-toggle]');
+  if(tg){ const grp=tg.closest('.pgroup'), sz=grp&&grp.querySelector('.subzones');
+    if(sz){ sz.hidden=!sz.hidden; grp.classList.toggle('abierto', !sz.hidden); } return; }
+
   const f = e.target.closest('[data-ficha]');
   if(f){ return abrirFicha(f.dataset.ficha); }
 
@@ -871,6 +926,10 @@ function cargarDemo(){
     C('Wilson Arboleda','caimalito','Vecino','3145550109', false, false, 'Caimalito casco urbano', 1000, near('caimalito',0.002,0.001), 'AE-552018', 3),
     C('Julio Ramírez','rocio','Vecino','3175550144', false, true, 'Sector La Y', 400, near('rocio',0,0), 'AE-115062', 50),
   ];
+  // una persona con dos micro-zonas (misma cuenta) para ver la agrupación
+  const anaExtra = C('Ana María Ocampo','univ','Líder comunal','3105550142', true, false, 'UTP · portería', 500, near('univ',0.001,-0.001), 'AE-660011', 12);
+  anaExtra.cuenta = coordRows[0].cuenta; anaExtra.tel_e164 = coordRows[0].tel_e164;
+  coordRows.push(anaExtra);
 
   // --- reportes ---
   const R=(zona,nec,urg,horas,personas,ref,pt)=>({id:uid(), zona, necesidad:nec, urgencia:urg,
