@@ -10,7 +10,10 @@
     font:16px/1.45 system-ui,-apple-system,"Segoe UI",Helvetica,Arial,sans-serif;
     background:var(--bg);color:var(--txt);
   }
-  #app{display:flex;flex-direction:column;height:100%}
+  /* Altura dinámica: en el celular la barra del navegador cambia de tamaño;
+     con 100dvh la pantalla siempre encaja y los botones de reportar no se
+     cortan ni quedan detrás de la barra. 100vh queda de respaldo. */
+  #app{display:flex;flex-direction:column;height:100vh;height:100dvh}
 
   header{
     padding:10px 14px 8px;background:var(--bg);border-bottom:1px solid var(--line);

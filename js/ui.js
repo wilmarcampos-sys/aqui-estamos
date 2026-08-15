@@ -331,3 +331,10 @@ iniciarDatos().then(async ok=>{
     if(e){ e.className='estado demo'; e.textContent='Sin conexión · modo demostración'; } }
 });
 setTimeout(()=>{ if(map) map.invalidateSize(); }, 300);
+
+/* Que el mapa se reajuste al cambiar el tamaño de la ventana o girar el
+   teléfono — si no, quedan franjas grises o el mapa desalineado. */
+let _rz;
+function reajustar(){ clearTimeout(_rz); _rz = setTimeout(()=>{ if(map) map.invalidateSize(); }, 150); }
+window.addEventListener('resize', reajustar);
+window.addEventListener('orientationchange', reajustar);
