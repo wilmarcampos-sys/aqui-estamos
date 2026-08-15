@@ -127,23 +127,27 @@ function abrirFoco(zid, la, lo){
     return {e, ok: !!e && e.ts > ultRep - 2*H && (now()-e.ts) < 24*H};
   };
 
+  let hayPend = false;
   const filas = f.needs.map(x=>{
     const {e, ok} = estadoDe(x.k);
+    if(!ok) hayPend = true;
     const uName = x.u===3?'Urgente':x.u===2?'Prioritario':'Puede esperar';
     const sub = `${NEED[x.k]?.cat||''}${x.personas?` · ~${x.personas} personas`:''}`
       + (x.subio?' · ↑ subió por corroboración':'')
       + (ok?` · entregado ${hace(e.ts)} por ${esc(e.quien)}`:' · pendiente');
     const nota = (f.reps.filter(r=>r.k===x.k).map(r=>r.nota).find(Boolean))||'';
-    return `<div class="nec-card ${ok?'ok':'u'+x.u}">
+    return `<div class="nec-card ${ok?'ok':'u'+x.u+' nsel'}"${ok?'':` data-nsel="${x.k}"`}>
+      ${ok?'':'<span class="nchk" aria-hidden="true"></span>'}
       <div class="grow">
         <h4>${esc(NEED[x.k]?.n||x.k)}${x.n>1?` <span class="u-alta">×${x.n}</span>`:''}${ok?'':`<span class="upill u${x.u}">${uName}</span>`}</h4>
         <div class="nec-sub">${sub}</div>
         ${nota?`<div class="nec-nota">${esc(nota)}</div>`:''}
       </div>
-      ${ok ? '<span class="chip ok">✓ Llegó</span>'
-           : `<button type="button" class="mini go" data-delivpt="${f.lat},${f.lng}" data-k="${x.k}">Ya llegó</button>`}
+      ${ok ? '<span class="chip ok">✓ Llegó</span>' : ''}
     </div>`;
-  }).join('');
+  }).join('')
+  + (hayPend ? `<button type="button" class="btn green" id="ya-multi" data-z="${zid}" data-pt="${f.lat},${f.lng}" disabled>Marque lo que llegó</button>
+     <p class="muted" style="font-size:12px;margin:5px 0 0">Toque las que ya llegaron y regístrelas juntas.</p>` : '');
 
   abrirSheet(`
     <div class="zhead">
@@ -193,13 +197,13 @@ function abrirAlbergue(a){
   const cards = nec ? nec.needs.map(x=>{
     const uName = x.u===3?'Urgente':x.u===2?'Prioritario':'Puede esperar';
     const nota = (nec.reps.filter(r=>r.k===x.k).map(r=>r.nota).find(Boolean))||'';
-    return `<div class="nec-card u${x.u}">
+    return `<div class="nec-card u${x.u} nsel" data-nsel="${x.k}">
+      <span class="nchk" aria-hidden="true"></span>
       <div class="grow">
         <h4>${esc(NEED[x.k]?.n||x.k)}${x.n>1?` <span class="u-alta">×${x.n}</span>`:''}<span class="upill u${x.u}">${uName}</span></h4>
         <div class="nec-sub">${esc(NEED[x.k]?.cat||'')} · pendiente</div>
         ${nota?`<div class="nec-nota">${esc(nota)}</div>`:''}
       </div>
-      <button type="button" class="mini go" data-delivpt="${a.lat},${a.lng}" data-k="${x.k}">Ya llegó</button>
     </div>`;
   }).join('') : '';
 
@@ -233,7 +237,9 @@ function abrirAlbergue(a){
       </div>
     </div>
 
-    ${nec ? `<div class="sec">Lo que se necesita (${nec.needs.length})</div>${cards}`
+    ${nec ? `<div class="sec">Lo que se necesita (${nec.needs.length})</div>${cards}
+      <button type="button" class="btn green" id="ya-multi" data-z="${a.z}" data-pt="${a.lat},${a.lng}" disabled>Marque lo que llegó</button>
+      <p class="muted" style="font-size:12px;margin:5px 0 0">Toque las que ya llegaron y regístrelas juntas.</p>`
           : `<div class="sec">Necesidades</div><p class="muted" style="margin:0">Sin necesidades reportadas todavía en este albergue.</p>`}
 
     <div class="sec">Coordinador del albergue</div>
@@ -541,7 +547,7 @@ function abrirEntrega(zid, kfijo, pt){
   const st = estadoZona(z0);
   const pk = f ? f.needs.map(x=>x.k) : st.pend.map(p=>p.k);
   const sitio = f ? (f.ref || 'Punto sin nombre') : z0.n;
-  const eSel = new Set(kfijo ? [kfijo] : []);
+  const eSel = new Set(Array.isArray(kfijo) ? kfijo.filter(Boolean) : kfijo ? [kfijo] : []);
 
   const btn = k=>`<button type="button" class="opt ${eSel.has(k)?'sel':''}" data-k="${k}"
     data-t="${esc(NORM((NEED[k]?.n||k)+' '+(NEED[k]?.s||'')+' '+(NEED[k]?.cat||'')))}">${esc(NEED[k]?.n||k)}</button>`;

@@ -5,6 +5,16 @@
 $('#sheet-body').addEventListener('click', e=>{
   const g=e.target.closest('[data-gps]');
   if(g) return pickerGPS(g.dataset.gps);
+  // selección múltiple de necesidades → un solo "Ya llegó"
+  const ym=e.target.closest('#ya-multi');
+  if(ym){
+    const keys=[...document.querySelectorAll('#sheet-body .nec-card.sel[data-nsel]')].map(c=>c.getAttribute('data-nsel'));
+    if(!keys.length) return toast('Marque al menos una necesidad.');
+    const [la,lo]=ym.dataset.pt.split(',').map(Number);
+    return abrirEntrega(ym.dataset.z, keys, {z:ym.dataset.z, lat:la, lng:lo});
+  }
+  const ns=e.target.closest('.nec-card[data-nsel]');
+  if(ns){ ns.classList.toggle('sel'); actualizarYaMulti(); return; }
   const t=e.target.closest('[data-new],[data-deliv],[data-coord],[data-ent],[data-close-btn]');
   if(!t) return;
   if(t.hasAttribute('data-close-btn')) return cerrarSheet();
@@ -13,6 +23,14 @@ $('#sheet-body').addEventListener('click', e=>{
   if(t.dataset.coord) return abrirCoord(t.dataset.coord);
   if(t.dataset.ent) return abrirEntrega(t.dataset.z, t.dataset.ent);
 });
+
+/* actualiza el botón "Ya llegó (N)" según cuántas necesidades hay marcadas */
+function actualizarYaMulti(){
+  const b=document.getElementById('ya-multi'); if(!b) return;
+  const n=document.querySelectorAll('#sheet-body .nec-card.sel[data-nsel]').length;
+  b.disabled=n===0;
+  b.innerHTML=n ? `${ico('check')} Ya llegó (${n})` : 'Marque lo que llegó';
+}
 
 /* focos y "hacerme cargo" funcionan igual dentro de la hoja o en la lista general */
 const xy = s => s.split(',').map(Number);
