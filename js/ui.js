@@ -168,6 +168,7 @@ function render(){
   let lz = todos.filter(s=>s.lista.length).sort((a,b)=>b.idx-a.idx);
   if(filtro==='comuna') lz=lz.filter(s=>s.z.t==='comuna');
   if(filtro==='corregimiento') lz=lz.filter(s=>s.z.t==='corregimiento');
+  if(filtro==='municipio') lz=lz.filter(s=>s.z.t==='municipio');
   if(filtro==='critica') lz=lz.filter(s=>s.idx>=60);
   $('#lista-zonas').innerHTML = lz.map((s,i)=>`
     <div class="card" data-zona="${s.z.id}" style="cursor:pointer">
@@ -176,7 +177,7 @@ function render(){
         <div class="grow">
           <div class="row"><h3 class="grow trunc">${esc(s.z.n)}</h3>
             <span class="muted">${etiqueta(s.idx)}</span></div>
-          <div class="muted">${s.z.t==='corregimiento'?'Rural · ':''}${s.ultEnt?`última ayuda ${hace(s.ultEnt)}`:'nunca ha llegado ayuda'} ·
+          <div class="muted">${s.z.t==='corregimiento'?'Rural · ':s.z.t==='municipio'?'Municipio vecino · ':''}${s.ultEnt?`última ayuda ${hace(s.ultEnt)}`:'nunca ha llegado ayuda'} ·
             ${s.nCoord} coordinador${s.nCoord===1?'':'es'}</div>
         </div>
       </div>

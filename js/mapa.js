@@ -13,7 +13,7 @@ if(!modoSVG){
 
 /* Mapa de respaldo sin internet: esquema SVG con las mismas zonas.
    Clave en emergencia — la app sigue sirviendo aunque no cargue el mapa de calles. */
-const BB = {n:4.885, s:4.680, w:-75.975, e:-75.585};
+const BB = {n:5.00, s:4.680, w:-75.975, e:-75.585};
 function pintarSVG(){
   const W=1000, H=Math.round(W*(BB.n-BB.s)/(BB.e-BB.w));
   const X=lng=>(lng-BB.w)/(BB.e-BB.w)*W, Y=lat=>(BB.n-lat)/(BB.n-BB.s)*H;

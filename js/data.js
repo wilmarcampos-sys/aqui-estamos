@@ -73,6 +73,13 @@ const ZONAS = [
   {id:'ptocaldas', n:'Puerto Caldas',       t:'corregimiento', lat:4.7770, lng:-75.9530, pob:4100},
   {id:'tribunas',  n:'Tribunas Córcega',    t:'corregimiento', lat:4.7300, lng:-75.6800, pob:8200},
   {id:'laestrella',n:'La Estrella-La Palmilla', t:'corregimiento', lat:4.8300, lng:-75.6350, pob:2600},
+  // --- municipios vecinos (también golpeados por el terremoto) ---
+  {id:'dosquebradas', n:'Dosquebradas',        t:'municipio', lat:4.8352, lng:-75.6749, pob:200000},
+  {id:'santarosa',    n:'Santa Rosa de Cabal', t:'municipio', lat:4.8657, lng:-75.6211, pob:72000},
+  {id:'lavirginia',   n:'La Virginia',         t:'municipio', lat:4.8973, lng:-75.8834, pob:32000},
+  {id:'marsella',     n:'Marsella',            t:'municipio', lat:4.9366, lng:-75.7386, pob:22000},
+  {id:'chinchina',    n:'Chinchiná',           t:'municipio', lat:4.9829, lng:-75.6045, pob:52000},
+  {id:'cartago',      n:'Cartago',             t:'municipio', lat:4.7466, lng:-75.9116, pob:132000},
 ];
 
 /* ============================================================
