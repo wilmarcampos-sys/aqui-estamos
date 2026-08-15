@@ -288,6 +288,24 @@ function abrirSoporte(){
 $('#btn-soporte').onclick = abrirSoporte;
 $('#btn-soporte .fic').innerHTML = ico('help');
 
+/* Compartir la app: usa el menú nativo del celular (WhatsApp, mensajes,
+   Telegram…). Si el navegador no lo tiene, cae directo a WhatsApp. */
+const bShare = document.getElementById('btn-share');
+if(bShare) bShare.onclick = async ()=>{
+  const datos = {
+    title: 'Aquí Estamos',
+    text: 'Aquí Estamos — mapa abierto para la emergencia. Reporte lo que hace falta y vea dónde no ha llegado ayuda:',
+    url: 'https://aquiestamos.co',
+  };
+  try{
+    if(navigator.share){ await navigator.share(datos); }
+    else {
+      window.open('https://wa.me/?text=' + encodeURIComponent(datos.text + ' ' + datos.url), '_blank', 'noopener');
+      toast('Se abrió WhatsApp para compartir.');
+    }
+  }catch(e){ /* si la persona cancela el compartir, no pasa nada */ }
+};
+
 /* ---------- acciones globales ---------- */
 $('#fab-need').onclick = ()=>{
   const pt = mainPt || ptDe('centro');

@@ -211,7 +211,7 @@ function itemsHTML(q){
   CATALOGO.forEach(c=>{
     const elegidos = c.items.filter(i=>sel.has(i.k)).length;
     html += `<details class="fold catfold"${elegidos?' open':''}>
-      <summary>${ico(c.ic)} ${esc(c.cat)}${elegidos?` · <b style="color:#86efac">${elegidos} elegido${elegidos>1?'s':''}</b>`:''}</summary>
+      <summary>${ico(c.ic)} ${esc(c.cat)}<span class="cc">${elegidos?` · ${elegidos} elegido${elegidos>1?'s':''}`:''}</span></summary>
       <div class="foldbody"><div class="opts">${c.items.map(i=>optHTML(i.k)).join('')}</div></div>
     </details>`;
   });
@@ -338,10 +338,16 @@ function abrirReporte(zid, pt, refPrev){
       $('#r-next2').disabled = sel.size===0;
       guiar(sel.size ? '#r-next2' : '#r-busca');
     };
+    /* Cada categoría muestra en vivo cuántos ítems lleva elegidos, para que
+       el usuario vea lo que va seleccionando sin abrirla. */
+    const conteos = ()=>{ body.querySelectorAll('#r-items details.catfold').forEach(det=>{
+      const n = det.querySelectorAll('.opt.sel').length, cc = det.querySelector('summary .cc');
+      if(cc) cc.innerHTML = n ? ` · ${n} elegido${n>1?'s':''}` : ''; }); };
     $('#r-busca').oninput = repintar;
     $('#r-items').onclick = e=>{ const o=e.target.closest('.opt'); if(!o) return;
       const k=o.dataset.k; sel.has(k)?sel.delete(k):sel.add(k);
-      body.querySelectorAll(`.opt[data-k="${k}"]`).forEach(x=>x.classList.toggle('sel', sel.has(k))); barra(); };
+      body.querySelectorAll(`.opt[data-k="${k}"]`).forEach(x=>x.classList.toggle('sel', sel.has(k)));
+      conteos(); barra(); };
     body.querySelectorAll('#r-pers button').forEach(b=>{
       if(b.dataset.p===persRango) b.classList.add('sel');
       b.onclick = ()=>{ const era=b.classList.contains('sel');
@@ -512,8 +518,10 @@ function abrirEntrega(zid, kfijo, pt){
     $('#e-cnt').textContent = eSel.size
       ? [...eSel].map(k=>NEED[k]?.n||k).slice(0,3).join(', ') + (eSel.size>3?` +${eSel.size-3}`:'')
       : 'Nada marcado';
+    $('#e-cnt').classList.toggle('falta', eSel.size===0);
     $('#e-send').disabled = eSel.size===0;
     $('#e-send').textContent = eSel.size>1 ? `Registrar ${eSel.size}` : 'Registrar';
+    guiar(eSel.size ? '#e-send' : '#e-pend');
   };
   body.addEventListener('click', e=>{
     const o = e.target.closest('#e-pend .opt, #e-otros .opt'); if(!o) return;
