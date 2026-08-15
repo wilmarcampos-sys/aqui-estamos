@@ -417,8 +417,11 @@
   .zalert.warn{background:rgba(217,119,6,.08);border-color:#7c4a10}
   .zalert.ok{background:rgba(63,143,95,.08);border-color:#2f5c41}
 
-  .note{background:rgba(79,156,249,.09);border:1px solid #2a4a75;
-    border-radius:12px;padding:11px 12px;font-size:13px;color:var(--link);margin-bottom:12px}
+  .note{position:relative;background:rgba(79,156,249,.09);border:1px solid #2a4a75;
+    border-radius:12px;padding:11px 34px 11px 12px;font-size:13px;color:var(--link);margin-bottom:12px}
+  .nota-x{position:absolute;top:4px;right:4px;background:none;border:0;color:var(--link);
+    font-size:22px;line-height:1;cursor:pointer;padding:4px 9px;opacity:.7}
+  .nota-x:active{opacity:1}
   a{color:var(--acc)}
   .tabsub{display:flex;gap:7px;margin-bottom:12px;overflow-x:auto;padding-bottom:2px}
   .tabsub button{flex:0 0 auto;background:var(--surf);border:1px solid var(--line);color:var(--dim);

@@ -131,6 +131,14 @@ document.querySelectorAll('#filtros button').forEach(b=>b.onclick=()=>{
   filtro=b.dataset.f; render();
 });
 
+/* La explicación de Zonas se lee una vez; se puede ocultar y no vuelve. */
+(function(){
+  const n=document.getElementById('zonas-nota'), x=document.getElementById('zonas-nota-x');
+  if(!n) return;
+  try{ if(localStorage.getItem('ae_nota_zonas')==='off') n.style.display='none'; }catch(e){}
+  if(x) x.onclick=()=>{ n.style.display='none'; try{ localStorage.setItem('ae_nota_zonas','off'); }catch(e){} };
+})();
+
 function render(){
   pintarMapa();
   // acceso de usuario en el encabezado: con sesión, su avatar + punto verde
