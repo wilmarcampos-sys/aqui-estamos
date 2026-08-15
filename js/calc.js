@@ -94,6 +94,15 @@ function telBonito(v){
   if(d.startsWith('57') && d.length === 12) return `+57 ${d.slice(2,5)} ${d.slice(5,8)} ${d.slice(8)}`;
   return '+' + d;
 }
+/* Número enmascarado para MOSTRAR: solo los primeros 3 dígitos del móvil, el
+   resto en X. Contra el scraping visual. El WhatsApp y el botón Copiar siguen
+   usando el número completo. */
+function telEnmascarado(v){
+  const d = telDigitos(v);
+  if(!d) return '';
+  if(d.startsWith('57') && d.length === 12) return `+57 ${d.slice(2,5)} XXX XXXX`;
+  return '+' + d.slice(0,3) + 'X'.repeat(Math.max(0, d.length - 3));
+}
 const waLink = (v, msg)=>{
   const d = telDigitos(v); if(!d) return '#';
   return 'https://wa.me/' + d + (msg ? '?text=' + encodeURIComponent(msg) : '');
