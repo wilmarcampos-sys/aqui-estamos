@@ -160,12 +160,38 @@
     cursor:pointer;white-space:nowrap}
   .cats button.on{background:var(--acc);border-color:var(--acc);color:#04122b}
 
-  /* barra fija con lo seleccionado */
+  /* barra fija con lo seleccionado — la guía tiene que saltar a la vista */
   .selbar{position:sticky;bottom:0;z-index:20;display:flex;align-items:center;gap:10px;
-    background:var(--bg2);border-top:1px solid var(--line);
-    margin:8px -14px 0;padding:11px 14px calc(6px + var(--safe));
-    font-size:13px;color:var(--dim)}
+    background:var(--bg2);border-top:1px solid #3a4a68;
+    margin:8px -14px 0;padding:12px 14px calc(8px + var(--safe));
+    font-size:13px;color:var(--dim);box-shadow:0 -6px 18px rgba(2,6,18,.5)}
   .selbar .btn{margin:0;width:auto;flex:0 0 auto;padding:14px 20px}
+  .selbar .grow{color:var(--txt);font-weight:700;font-size:14px}
+  .selbar .grow.falta{color:#f5a524}
+  .selbar .grow.falta::before{content:"";display:inline-block;width:8px;height:8px;border-radius:50%;
+    background:#f5a524;margin-right:7px;vertical-align:1px;animation:pulso 2s ease-out infinite}
+
+  /* ---- reporte en 3 pasos ---- */
+  .pasohead{display:flex;align-items:center;gap:10px;margin:2px 0 12px}
+  .pasohead h3{margin:0;font-size:19px;flex:1}
+  .pasohead .pasonum{font-size:12px;color:var(--dim);font-weight:700;flex:0 0 auto}
+  .pasohead .volver{width:34px;height:34px;border-radius:10px;background:#1b2740;border:1px solid var(--line);
+    color:var(--txt);font-size:20px;font-family:inherit;cursor:pointer;flex:0 0 auto;line-height:1;padding:0}
+  .resumen{background:#16223a;border:1px solid var(--line);border-radius:13px;padding:2px 12px;margin-top:4px}
+  .resline{display:flex;align-items:center;gap:10px;padding:11px 0;border-bottom:1px solid #223050;font-size:13.5px}
+  .resline:last-child{border-bottom:0}
+  .resline>span{flex:1;min-width:0}
+  .okmark{width:64px;height:64px;border-radius:50%;background:#2f5c41;border:1px solid #3f8f5f;
+    color:#c9f5d8;display:grid;place-items:center;margin:8px auto 4px}
+  .okmark .ic{width:32px;height:32px}
+  .tl{background:#16223a;border:1px solid var(--line);border-radius:13px;padding:4px 13px}
+  .tli{display:flex;gap:12px;padding:10px 0;position:relative}
+  .tli:not(:last-child)::before{content:"";position:absolute;left:6px;top:24px;bottom:-2px;width:2px;background:#2a3750}
+  .tld{width:14px;height:14px;border-radius:50%;border:2px solid #3a4a68;background:#0d1626;
+    flex:0 0 auto;margin-top:3px;z-index:1}
+  .tld.ok{background:#3f8f5f;border-color:#3f8f5f}
+  .tld.no{background:#7c4a10;border-color:#7c4a10}
+  .tli b{font-size:14px}
 
   .urg{display:flex;gap:7px}
   .urg button{flex:1;padding:11px 6px;border-radius:11px;border:1.5px solid var(--line);

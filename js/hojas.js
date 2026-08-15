@@ -207,121 +207,196 @@ function itemsHTML(q, cat){
     y el coordinador de la zona lo verá igual.</p>`;
 }
 
+/* Reporte en 3 pasos: dónde · qué · urgencia, y una pantalla de
+   confirmación al final. El estado vive en el cierre y se conserva al ir
+   y volver entre pasos; el picker se vuelve a montar en el paso 1.        */
 function abrirReporte(zid, pt, refPrev){
   sel = new Set(); urg = null;
-  abrirSheet(`
-    <h3>¿Qué se necesita?</h3>
-    <p class="muted">Sin registro y sin dar su nombre.</p>
-    ${pickerHTML('r-map', zid)}
+  let paso = 1;
+  let punto = pt || ptDe(zid) || null;
+  let ref = refPrev || '';
+  let persRango = '';
+  let nota = '';
+  const PERSNUM = {'1-3':2, '4-8':6, '8+':15, '':0};
+  const zonaNom = z => ZONAS.find(x=>x.id===z)?.n || '';
+  const irA = p => { paso = p; pintarPaso(); };
 
-    <div class="sec">Punto de referencia</div>
-    <div id="r-sug" class="sug"></div>
-    <input id="r-ref" placeholder="…o escríbalo: la cancha, el salón comunal, la tienda de don Óscar">
+  function pintarPaso(){ paso===1 ? pasoDonde() : paso===2 ? pasoQue() : pasoUrg(); }
 
-    <div class="sec">¿Qué tan urgente?</div>
-    <p class="muted" style="margin:0 0 7px">Sea realista: si todo es urgente, nadie sabe adónde ir primero.</p>
-    <div class="urg col" id="r-urg">
-      <button data-u="3">Hoy mismo<span>Hay riesgo para alguien ahora</span></button>
-      <button data-u="2">En 24 horas<span>Se puede aguantar el día</span></button>
-      <button data-u="1">Puede esperar<span>Esta semana está bien</span></button>
-    </div>
-
-    <div class="sec">¿Qué hace falta?</div>
-    <input id="r-busca" type="search" placeholder="Buscar: gasas, pañales, linterna, agua…">
-    <div class="cats" id="r-cats">
-      <button class="on" data-c="">Todo</button>
-      ${CATALOGO.map(c=>`<button data-c="${esc(c.cat)}">${ico(c.ic)} ${esc(c.cat)}</button>`).join('')}
-    </div>
-    <div id="r-items"></div>
-
-    <label class="f">¿Cuántas personas aproximadamente?</label>
-    <input id="r-pers" type="number" inputmode="numeric" min="1" placeholder="Ej: 40">
-    <label class="f">Algo más que ayude a llegar (opcional)</label>
-    <textarea id="r-nota" placeholder="Ej: la vía está bloqueada, solo entra moto, hay un adulto mayor solo"></textarea>
-    <button class="btn flat" data-close-btn>Cancelar</button>
-
-    <div class="selbar">
-      <span class="grow" id="r-cnt">Falta: qué se necesita</span>
-      <button class="btn green" id="r-send" disabled>Enviar</button>
-    </div>
-  `);
-
-  const body=$('#sheet-body');
-  // sugerencias de referencia cercanas al pin — se recalculan al moverlo
-  const pintarSug = (la, lo)=>{
-    const rs = refsCerca(la, lo, 5);
-    $('#r-sug').innerHTML = rs.length
-      ? rs.map(r=>`<button type="button" class="sugb" data-ref="${esc(r.ref)}"
-           data-rlat="${r.lat}" data-rlng="${r.lng}">${esc(r.ref)}
-           <span class="muted">${Math.round(r.d)} m</span></button>`).join('')
-      : '<span class="muted" style="font-size:13px">No hay sitios ya nombrados cerca. Escriba uno abajo.</span>';
-  };
-  pickerInit('r-map', zid, pt || ptDe(zid), pintarSug);
-  if(modoSVG) pintarSug((ZONAS.find(z=>z.id===zid)||ZONAS[0]).lat, (ZONAS.find(z=>z.id===zid)||ZONAS[0]).lng);
-  if(refPrev){                       // viene desde un punto que ya tiene nombre
-    $('#r-ref').value = refPrev;
-    body.querySelectorAll('.sugb').forEach(x=>x.classList.toggle('sel', x.dataset.ref===refPrev));
+  /* ---- Paso 1: ¿dónde es? ---- */
+  function pasoDonde(){
+    abrirSheet(`
+      <div class="pasohead"><h3>¿Dónde es?</h3><span class="pasonum">1 de 3</span></div>
+      ${pickerHTML('r-map', zid)}
+      <div class="sec">Punto de referencia</div>
+      <p class="muted" style="margin:0 0 7px">Escoja un sitio ya conocido si aparece: así su reporte se junta con los demás del mismo lugar.</p>
+      <div id="r-sug" class="sug"></div>
+      <input id="r-ref" placeholder="…o escríbalo: la cancha, el salón comunal, la tienda de don Óscar" value="${esc(ref)}">
+      <details class="fold">
+        <summary>Agregar una indicación para llegar (opcional)</summary>
+        <div class="foldbody"><textarea id="r-nota" placeholder="Ej: la vía está bloqueada, solo entra moto, hay un adulto mayor solo">${esc(nota)}</textarea></div>
+      </details>
+      <button class="btn" id="r-next1">Confirmar este sitio</button>
+      <button class="btn flat" data-close-btn>Cancelar</button>
+    `);
+    const body = $('#sheet-body');
+    const pintarSug = (la, lo)=>{
+      const rs = refsCerca(la, lo, 5);
+      $('#r-sug').innerHTML = rs.length
+        ? rs.map(r=>`<button type="button" class="sugb" data-ref="${esc(r.ref)}"
+             data-rlat="${r.lat}" data-rlng="${r.lng}">${esc(r.ref)}
+             <span class="muted">${Math.round(r.d)} m</span></button>`).join('')
+        : '<span class="muted" style="font-size:13px">No hay sitios ya nombrados cerca. Escriba uno abajo.</span>';
+    };
+    pickerInit('r-map', zid, punto || ptDe(zid), pintarSug);
+    if(modoSVG) pintarSug((ZONAS.find(z=>z.id===zid)||ZONAS[0]).lat, (ZONAS.find(z=>z.id===zid)||ZONAS[0]).lng);
+    if(ref) body.querySelectorAll('.sugb').forEach(x=>x.classList.toggle('sel', x.dataset.ref===ref));
+    $('#r-sug').onclick = e=>{
+      const b = e.target.closest('[data-ref]'); if(!b) return;
+      $('#r-ref').value = b.dataset.ref;
+      body.querySelectorAll('.sugb').forEach(x=>x.classList.toggle('sel', x===b));
+      const la=+b.dataset.rlat, lo=+b.dataset.rlng;
+      if(!modoSVG && pickMk){ pickMk.setLatLng([la,lo]); pickMap.panTo([la,lo]); pickMk.fire('dragend',{target:pickMk}); }
+      toast('Punto fijado en ' + b.dataset.ref);
+    };
+    $('#r-next1').onclick = ()=>{
+      const v = pickerVal('r-map');
+      if(!v || !v.z) return toast('Toque el mapa para marcar dónde es.');
+      punto = v; ref = $('#r-ref').value.trim();
+      if($('#r-nota')) nota = $('#r-nota').value.trim();
+      irA(2);
+    };
   }
 
-  $('#r-sug').onclick = e=>{
-    const b = e.target.closest('[data-ref]'); if(!b) return;
-    $('#r-ref').value = b.dataset.ref;
-    body.querySelectorAll('.sugb').forEach(x=>x.classList.toggle('sel', x===b));
-    // al escoger un sitio conocido, el pin se va exactamente allá
-    const la=+b.dataset.rlat, lo=+b.dataset.rlng;
-    if(!modoSVG && pickMk){ pickMk.setLatLng([la,lo]); pickMap.panTo([la,lo]); pickMk.fire('dragend',{target:pickMk}); }
-    toast('Punto fijado en ' + b.dataset.ref);
-  };
+  /* ---- Paso 2: ¿qué hace falta? ---- */
+  function pasoQue(){
+    abrirSheet(`
+      <div class="pasohead"><button class="volver" id="r-back2">‹</button><h3>¿Qué hace falta?</h3><span class="pasonum">2 de 3</span></div>
+      <div class="sec" style="margin-top:2px">¿Para cuántas personas?</div>
+      <div class="urg" id="r-pers">
+        <button data-p="1-3">1 a 3</button>
+        <button data-p="4-8">4 a 8</button>
+        <button data-p="8+">Más de 8</button>
+      </div>
+      <div class="sec">¿Qué se necesita?</div>
+      <input id="r-busca" type="search" placeholder="Buscar: gasas, pañales, linterna, agua…">
+      <div class="cats" id="r-cats">
+        <button class="on" data-c="">Todo</button>
+        ${CATALOGO.map(c=>`<button data-c="${esc(c.cat)}">${ico(c.ic)} ${esc(c.cat)}</button>`).join('')}
+      </div>
+      <div id="r-items"></div>
+      <div class="selbar">
+        <span class="grow" id="r-cnt">Falta: qué se necesita</span>
+        <button class="btn" id="r-next2" disabled>Siguiente</button>
+      </div>
+    `);
+    const body = $('#sheet-body');
+    const repintar = ()=>{
+      $('#r-items').innerHTML = itemsHTML($('#r-busca').value, body.querySelector('#r-cats button.on').dataset.c);
+      body.querySelectorAll('#r-items .opt').forEach(o=>o.classList.toggle('sel', sel.has(o.dataset.k)));
+    };
+    const barra = ()=>{
+      $('#r-cnt').textContent = sel.size
+        ? `${sel.size} seleccionada${sel.size>1?'s':''}: ` + [...sel].slice(0,3).map(k=>NEED[k]?.n||k).join(', ') + (sel.size>3?'…':'')
+        : 'Falta: qué se necesita';
+      $('#r-cnt').classList.toggle('falta', sel.size===0);
+      $('#r-next2').disabled = sel.size===0;
+    };
+    $('#r-busca').oninput = repintar;
+    $('#r-cats').onclick = e=>{ const b=e.target.closest('button'); if(!b) return;
+      body.querySelectorAll('#r-cats button').forEach(x=>x.classList.toggle('on', x===b)); repintar(); };
+    $('#r-items').onclick = e=>{ const o=e.target.closest('.opt'); if(!o) return;
+      const k=o.dataset.k; sel.has(k)?sel.delete(k):sel.add(k);
+      body.querySelectorAll(`.opt[data-k="${k}"]`).forEach(x=>x.classList.toggle('sel', sel.has(k))); barra(); };
+    body.querySelectorAll('#r-pers button').forEach(b=>{
+      if(b.dataset.p===persRango) b.classList.add('sel');
+      b.onclick = ()=>{ const era=b.classList.contains('sel');
+        body.querySelectorAll('#r-pers button').forEach(x=>x.classList.remove('sel'));
+        if(!era){ b.classList.add('sel'); persRango=b.dataset.p; } else persRango=''; };
+    });
+    repintar(); barra();
+    $('#r-back2').onclick = ()=>irA(1);
+    $('#r-next2').onclick = ()=>{ if(!sel.size) return toast('Escoja al menos una cosa.'); irA(3); };
+  }
 
-  // buscador + categorías
-  const repintar = ()=>{ $('#r-items').innerHTML = itemsHTML($('#r-busca').value,
-      body.querySelector('#r-cats button.on').dataset.c); };
-  $('#r-busca').oninput = repintar;
-  $('#r-cats').onclick = e=>{
-    const b=e.target.closest('button'); if(!b) return;
-    body.querySelectorAll('#r-cats button').forEach(x=>x.classList.toggle('on', x===b));
-    repintar();
-  };
-  const actualizarBarra = ()=>{
-    const faltaNec = sel.size===0, faltaUrg = urg==null;
-    $('#r-cnt').textContent = faltaNec ? 'Falta: qué se necesita'
-      : faltaUrg ? 'Falta: qué tan urgente'
-      : `${sel.size} seleccionada${sel.size>1?'s':''}: ` + [...sel].slice(0,3).map(k=>NEED[k]?.n||k).join(', ') + (sel.size>3?'…':'');
-    $('#r-send').disabled = faltaNec || faltaUrg;
-    $('#r-send').textContent = sel.size ? `Enviar ${sel.size}` : 'Enviar';
-  };
-  $('#r-items').onclick = e=>{
-    const o = e.target.closest('.opt'); if(!o) return;
-    const k = o.dataset.k;
-    sel.has(k) ? sel.delete(k) : sel.add(k);
-    body.querySelectorAll(`.opt[data-k="${k}"]`).forEach(x=>x.classList.toggle('sel', sel.has(k)));
-    actualizarBarra();
-  };
-  repintar();
-  body.querySelectorAll('#r-urg button').forEach(b=>b.onclick=()=>{
-    body.querySelectorAll('#r-urg button').forEach(x=>x.classList.remove('sel'));
-    b.classList.add('sel'); urg=+b.dataset.u; actualizarBarra();
-  });
-  actualizarBarra();
-  $('#r-send').onclick=()=>{
-    const pt = pickerVal('r-map');
-    if(!pt || !pt.z) return toast('Toque el mapa para marcar dónde es.');
-    if(urg==null) return toast('Escoja qué tan urgente es.');
-    const p=parseInt($('#r-pers').value||'0',10)||0, nota=$('#r-nota').value.trim(), ref=$('#r-ref').value.trim();
-    const firma = pt.z+'|'+ref+'|'+[...sel].sort().join(',');
-    if(repetido(firma)){ cerrarSheet(); return toast('Ese mismo reporte se acaba de enviar.'); }
-    cerrarSheet();
-    sel.forEach(k=>guardar('reportes',
-      {zona:pt.z, necesidad:k, urgencia:urg, lat:pt.lat, lng:pt.lng,
-       referencia:ref, personas:p, nota, device:DEVICE},
-      {id:uid(), z:pt.z, lat:pt.lat, lng:pt.lng, k, u:urg, ts:now(), personas:p, nota, ref}));
-    render();
-    // ¿el reporte cayó en un foco que ya existía?
-    const f = focos(pt.z).find(x=>x.reps.some(r=>r.lat===pt.lat && r.lng===pt.lng));
-    toast(f && f.n>1
-      ? `Reporte #${f.n} en este punto. La urgencia subió.`
-      : 'Reporte enviado desde ' + (ZONAS.find(z=>z.id===pt.z)?.n||'') + '. Gracias.');
-  };
+  /* ---- Paso 3: ¿qué tan urgente? + resumen ---- */
+  function pasoUrg(){
+    const needList = [...sel].map(k=>NEED[k]?.n||k).join(', ');
+    const persTxt = persRango ? ` · ${persRango==='8+'?'más de 8':persRango.replace('-',' a ')} personas` : '';
+    abrirSheet(`
+      <div class="pasohead"><button class="volver" id="r-back3">‹</button><h3>¿Qué tan urgente?</h3><span class="pasonum">3 de 3</span></div>
+      <p class="muted" style="margin:0 0 7px">Sea realista: si todo es urgente, nadie sabe adónde ir primero.</p>
+      <div class="urg col" id="r-urg">
+        <button data-u="3">Hoy mismo<span>Hay riesgo para alguien ahora</span></button>
+        <button data-u="2">En 24 horas<span>Se puede aguantar el día</span></button>
+        <button data-u="1">Puede esperar<span>Esta semana está bien</span></button>
+      </div>
+      <div class="sec">Antes de enviar</div>
+      <div class="resumen">
+        <div class="resline"><span>${ico('pin')} <b>${esc(zonaNom(punto.z))}</b>${ref?' · '+esc(ref):''}</span><button class="lnk" id="r-edit1">Editar</button></div>
+        <div class="resline"><span>${ico('bolt')} ${esc(needList)}${persTxt}</span><button class="lnk" id="r-edit2">Editar</button></div>
+      </div>
+      <div class="selbar">
+        <span class="grow" id="r-cnt">Falta: qué tan urgente</span>
+        <button class="btn green" id="r-send" disabled>Enviar reporte</button>
+      </div>
+    `);
+    const body = $('#sheet-body');
+    const barra = ()=>{ $('#r-cnt').textContent = urg==null?'Falta: qué tan urgente':'Todo listo';
+      $('#r-cnt').classList.toggle('falta', urg==null);
+      $('#r-send').disabled = urg==null; };
+    body.querySelectorAll('#r-urg button').forEach(b=>{
+      if(+b.dataset.u===urg) b.classList.add('sel');
+      b.onclick=()=>{ body.querySelectorAll('#r-urg button').forEach(x=>x.classList.remove('sel'));
+        b.classList.add('sel'); urg=+b.dataset.u; barra(); };
+    });
+    barra();
+    $('#r-back3').onclick = ()=>irA(2);
+    $('#r-edit1').onclick = ()=>irA(1);
+    $('#r-edit2').onclick = ()=>irA(2);
+    $('#r-send').onclick = ()=>{
+      if(urg==null) return toast('Escoja qué tan urgente es.');
+      const firma = punto.z+'|'+ref+'|'+[...sel].sort().join(',');
+      if(repetido(firma)) return confirmar(true);
+      const p = PERSNUM[persRango] || 0;
+      sel.forEach(k=>guardar('reportes',
+        {zona:punto.z, necesidad:k, urgencia:urg, lat:punto.lat, lng:punto.lng,
+         referencia:ref, personas:p, nota, device:DEVICE},
+        {id:uid(), z:punto.z, lat:punto.lat, lng:punto.lng, k, u:urg, ts:now(), personas:p, nota, ref}));
+      render();
+      confirmar(false);
+    };
+  }
+
+  /* ---- Confirmación: en qué va + mis reportes (por DEVICE, sin cuenta) ---- */
+  function confirmar(yaEstaba){
+    const fs = focos(punto.z);
+    const f = fs.find(x=>x.reps.some(r=>Math.abs(r.lat-punto.lat)<1e-6 && Math.abs(r.lng-punto.lng)<1e-6))
+           || fs.sort((a,b)=>dist(punto.lat,punto.lng,a.lat,a.lng)-dist(punto.lat,punto.lng,b.lat,b.lng))[0];
+    const cb = cubridores(punto.lat, punto.lng, punto.z);
+    const mios = S.reportes.filter(r=>r.device===DEVICE).length;
+    abrirSheet(`
+      <div class="okmark">${ico('check')}</div>
+      <h3 style="text-align:center;margin:6px 0 3px">Reporte enviado desde ${esc(zonaNom(punto.z))}</h3>
+      <p class="muted" style="text-align:center;margin:0 0 6px">${
+        yaEstaba ? 'Ese mismo reporte ya estaba: no se duplicó, pero cuenta como corroboración.'
+        : (f && f.n>1 ? `Es el reporte #${f.n} en este punto. La urgencia subió por corroboración.`
+                      : 'Gracias. Ya aparece en el mapa.')}</p>
+      <div class="sec">En qué va</div>
+      <div class="tl">
+        <div class="tli"><span class="tld ok"></span><div class="grow"><b>Recibido</b><div class="cnt">ahora</div></div></div>
+        <div class="tli"><span class="tld ${cb.length?'ok':'no'}"></span><div class="grow">
+          <b>${cb.length ? (cb.length===1?'1 persona cubre este punto':cb.length+' personas cubren este punto') : 'Falta quién cubra este punto'}</b>
+          <div class="cnt">${cb.length ? esc(cb.map(c=>c.nom).join(', ')) : 'Aún nadie a cargo aquí'}</div></div></div>
+        <div class="tli"><span class="tld"></span><div class="grow"><b>Llegó la ayuda</b><div class="cnt">pendiente</div></div></div>
+      </div>
+      <div class="sec">Mis reportes</div>
+      <p class="muted" style="margin:0 0 4px">Quedan guardados en este teléfono, sin cuenta y sin su nombre. Lleva <b>${mios}</b> en total.</p>
+      <button class="btn flat" data-close-btn>Volver al mapa</button>
+    `);
+  }
+
+  pintarPaso();
 }
 
 /* ---------- registrar entrega ---------- */

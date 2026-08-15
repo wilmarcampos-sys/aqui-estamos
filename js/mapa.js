@@ -174,8 +174,7 @@ function pickerInit(id, zid, pt, onMove){
   const fijar = (la, lo, ocultarHint)=>{
     const z = zonaDe(la, lo);
     pickSt = {z:z.id, lat:+la.toFixed(5), lng:+lo.toFixed(5)};
-    info.innerHTML = `${ico('pin')} <b>${esc(z.n)}</b>${z.t==='corregimiento'?' (rural)':''}
-      <span class="muted"> · ${pickSt.lat}, ${pickSt.lng}</span>`;
+    info.innerHTML = `${ico('pin')} <b>${esc(z.n)}</b>${z.t==='corregimiento'?' (rural)':''}`;
     if(ocultarHint && !tocado){ tocado = true; if(hint) hint.classList.add('off'); }
     if(pickCb) pickCb(la, lo);
   };
@@ -191,7 +190,7 @@ function pickerInit(id, zid, pt, onMove){
   pickMk.on('drag',    e=>fijar(e.target.getLatLng().lat, e.target.getLatLng().lng, true));
   pickMk.on('dragend', e=>fijar(e.target.getLatLng().lat, e.target.getLatLng().lng, true));
   fijar(c0.lat, c0.lng, false);
-  setTimeout(()=>pickMap.invalidateSize(), 150);
+  setTimeout(()=>{ if(pickMap) pickMap.invalidateSize(); }, 150);
 }
 function pickerVal(id){
   if(modoSVG){
