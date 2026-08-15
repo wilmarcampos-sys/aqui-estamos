@@ -129,15 +129,17 @@ function abrirFoco(zid, la, lo){
 
   const filas = f.needs.map(x=>{
     const {e, ok} = estadoDe(x.k);
-    return `<div class="need-line">
-      <span class="dot" style="background:${ok?'#3f8f5f':UCOL[x.u]}"></span>
+    const col = ok ? '#3f8f5f' : (UCOL[x.u]||'#c9a227');
+    const uName = x.u===3?'Urgente':x.u===2?'Prioritario':'Puede esperar';
+    const sub = `${NEED[x.k]?.cat||''}${x.personas?` · ~${x.personas} personas`:''}`
+      + (x.subio?' · ↑ subió por corroboración':'')
+      + (ok?` · entregado ${hace(e.ts)} por ${esc(e.quien)}`:' · pendiente');
+    return `<div class="nec-card" style="border-left-color:${col}">
       <div class="grow">
-        <div style="font-size:14px">${esc(NEED[x.k]?.n||x.k)}${x.n>1?` <b class="u-alta">×${x.n}</b>`:''}</div>
-        <div class="cnt">${NEED[x.k]?.cat||''}${x.personas?` · ~${x.personas} personas`:''}
-          ${x.subio?' · <b class="u-alta">↑ urgencia por corroboración</b>':''}
-          ${ok?` · <b class="u-ok">entregado ${hace(e.ts)} por ${esc(e.quien)}</b>`:' · pendiente'}</div>
+        <h4>${esc(NEED[x.k]?.n||x.k)}${x.n>1?` <span class="u-alta">×${x.n}</span>`:''}${ok?'':`<span class="upill u${x.u}">${uName}</span>`}</h4>
+        <div class="nec-sub">${sub}</div>
       </div>
-      ${ok ? '<span class="chip ok">OK</span>'
+      ${ok ? '<span class="chip ok">✓ Llegó</span>'
            : `<button type="button" class="mini go" data-delivpt="${f.lat},${f.lng}" data-k="${x.k}">Ya llegó</button>`}
     </div>`;
   }).join('');
@@ -184,6 +186,21 @@ function abrirFoco(zid, la, lo){
 /* ---------- ficha de un albergue (punto fijo, coordinador verificado) ---------- */
 function abrirAlbergue(a){
   const z = ZONAS.find(x=>x.id===a.z);
+  // necesidades en el punto del albergue (mismo foco)
+  let f=null,bd=1e9; focos(a.z).forEach(x=>{const d=dist(a.lat,a.lng,x.lat,x.lng); if(d<bd){bd=d;f=x;}});
+  const nec = (f && bd<300) ? f : null;
+  const cards = nec ? nec.needs.map(x=>{
+    const col = UCOL[x.u]||'#c9a227';
+    const uName = x.u===3?'Urgente':x.u===2?'Prioritario':'Puede esperar';
+    return `<div class="nec-card" style="border-left-color:${col}">
+      <div class="grow">
+        <h4>${esc(NEED[x.k]?.n||x.k)}${x.n>1?` <span class="u-alta">×${x.n}</span>`:''}<span class="upill u${x.u}">${uName}</span></h4>
+        <div class="nec-sub">${esc(NEED[x.k]?.cat||'')} · pendiente</div>
+      </div>
+      <button type="button" class="mini go" data-delivpt="${a.lat},${a.lng}" data-k="${x.k}">Ya llegó</button>
+    </div>`;
+  }).join('') : '';
+
   abrirSheet(`
     <div class="zhead">
       <div class="row">
@@ -194,6 +211,9 @@ function abrirAlbergue(a){
         </div>
       </div>
     </div>
+
+    ${nec ? `<div class="sec">Lo que se necesita (${nec.needs.length})</div>${cards}`
+          : `<div class="sec">Necesidades</div><p class="muted" style="margin:0">Sin necesidades reportadas todavía en este albergue.</p>`}
 
     <div class="sec">Coordinador del albergue</div>
     <div class="need-line">

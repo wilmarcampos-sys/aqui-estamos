@@ -343,6 +343,17 @@
     max-width:88%;text-align:center}
   .toast.on{opacity:1}
 
+  /* tarjeta de necesidad: que se vea el peso, con color de urgencia como en
+     los círculos del mapa — no un renglón de texto */
+  .nec-card{display:flex;align-items:center;gap:11px;background:var(--surf);border:1px solid var(--line);
+    border-left:5px solid var(--c1);border-radius:13px;padding:12px 13px;margin-bottom:9px}
+  .nec-card h4{margin:0;font-size:16px;font-weight:800;line-height:1.25}
+  .nec-card .nec-sub{font-size:12px;color:var(--dim);margin-top:3px}
+  .upill{display:inline-block;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.3px;
+    padding:2px 7px;border-radius:7px;margin-left:6px;vertical-align:2px}
+  .upill.u3{background:rgba(220,38,38,.18);color:#fca5a5;border:1px solid #7f1d1d}
+  .upill.u2{background:rgba(217,119,6,.18);color:#fcd34d;border:1px solid #7c4a10}
+  .upill.u1{background:rgba(201,162,39,.16);color:#e6c34d;border:1px solid #6b5514}
   .need-line{display:flex;align-items:center;gap:9px;padding:9px 0;border-bottom:1px solid var(--line2)}
   .need-line:last-child{border-bottom:0}
   .dot{width:9px;height:9px;border-radius:50%;flex:0 0 auto}

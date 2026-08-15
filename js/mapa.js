@@ -52,13 +52,17 @@ function pintarMapa(){
   capa.clearLayers();
   const z = map.getZoom();
 
-  // Albergues: puntos fijos, visibles a cualquier zoom, con carpa dorada
-  // para distinguirlos de las burbujas de necesidad.
+  // Albergues: puntos fijos, visibles a cualquier zoom, con carpa dorada y un
+  // badge rojo con cuántas necesidades tiene, para identificarlos bien.
   S.coords.filter(c=>c.lat && (c.rol||'')==='Albergue').forEach(a=>{
-    L.marker([a.lat,a.lng],{zIndexOffset:900,icon:L.divIcon({className:'',iconSize:[28,28],iconAnchor:[14,14],
-      html:`<div style="width:28px;height:28px;border-radius:9px;background:#F2B705;border:2px solid #7a1616;
-        display:grid;place-items:center;color:#3a1500;box-shadow:0 2px 8px rgba(0,0,0,.55)">${ico('tent')}</div>`})}).addTo(capa)
-      .bindTooltip(`<b>${esc(a.micro||a.nom)}</b><br>Albergue${a.ver?' · verificado':''}<br><i>Toque para ver</i>`,{direction:'top'})
+    let f=null,bd=1e9; focos(a.z).forEach(x=>{const d=dist(a.lat,a.lng,x.lat,x.lng); if(d<bd){bd=d;f=x;}});
+    const nnec = (f && bd<300) ? f.needs.length : 0;
+    const badge = nnec ? `<span style="position:absolute;top:-7px;right:-7px;min-width:18px;height:18px;padding:0 3px;
+      border-radius:9px;background:#dc2626;border:2px solid #fff;color:#fff;font:800 11px/15px system-ui;text-align:center">${nnec}</span>` : '';
+    L.marker([a.lat,a.lng],{zIndexOffset:900,icon:L.divIcon({className:'',iconSize:[30,30],iconAnchor:[15,15],
+      html:`<div style="position:relative;width:30px;height:30px;border-radius:10px;background:#F2B705;border:2px solid #7a1616;
+        display:grid;place-items:center;color:#3a1500;box-shadow:0 2px 8px rgba(0,0,0,.55)">${ico('tent')}${badge}</div>`})}).addTo(capa)
+      .bindTooltip(`<b>${esc(a.micro||a.nom)}</b><br>Albergue${a.ver?' · verificado':''}${nnec?` · <b>${nnec} necesidad${nnec>1?'es':''}</b>`:''}<br><i>Toque para ver</i>`,{direction:'top'})
       .on('click',()=>abrirAlbergue(a));
   });
 
