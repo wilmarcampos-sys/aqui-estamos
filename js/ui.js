@@ -81,6 +81,26 @@ document.addEventListener('click', e=>{
   if(e.target.closest('[data-inscribir]')){ const pt = mainPt || ptDe('centro'); return abrirCoord(pt.z, pt); }
 });
 
+/* Copiar al portapapeles (teléfonos, códigos): en móvil el link de WhatsApp a
+   veces falla, así que el número copiable es el plan B seguro. */
+function copiarFallback(txt){
+  const t=document.createElement('textarea'); t.value=txt;
+  t.style.position='fixed'; t.style.top='-1000px'; t.style.opacity='0';
+  document.body.appendChild(t); t.focus(); t.select();
+  try{ document.execCommand('copy'); toast('Copiado: '+txt); }
+  catch(e){ toast('Cópielo a mano: '+txt); }
+  document.body.removeChild(t);
+}
+function copiar(txt){
+  if(navigator.clipboard && navigator.clipboard.writeText)
+    navigator.clipboard.writeText(txt).then(()=>toast('Copiado: '+txt), ()=>copiarFallback(txt));
+  else copiarFallback(txt);
+}
+document.addEventListener('click', e=>{
+  const c=e.target.closest('[data-copiar]'); if(!c) return;
+  e.preventDefault(); copiar(c.getAttribute('data-copiar'));
+});
+
 /* ---------- vistas ---------- */
 let filtro='todas';
 document.querySelectorAll('#filtros button').forEach(b=>b.onclick=()=>{

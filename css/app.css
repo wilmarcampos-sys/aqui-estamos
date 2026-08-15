@@ -354,6 +354,12 @@
   .upill.u3{background:rgba(220,38,38,.18);color:#fca5a5;border:1px solid #7f1d1d}
   .upill.u2{background:rgba(217,119,6,.18);color:#fcd34d;border:1px solid #7c4a10}
   .upill.u1{background:rgba(201,162,39,.16);color:#e6c34d;border:1px solid #6b5514}
+  /* teléfono visible y copiable (el link de WhatsApp a veces falla en móvil) */
+  .telcopia{font-size:14px;color:var(--txt);font-weight:700;margin-top:3px;letter-spacing:.3px;
+    display:flex;align-items:center;gap:9px;flex-wrap:wrap;user-select:text;-webkit-user-select:text}
+  .telcopia .tcopy{background:var(--chip);border:1px solid var(--line);color:var(--acc);border-radius:8px;
+    padding:3px 10px;font-size:11px;font-weight:800;font-family:inherit;cursor:pointer}
+  .telcopia .tcopy:active{opacity:.7}
   .need-line{display:flex;align-items:center;gap:9px;padding:9px 0;border-bottom:1px solid var(--line2)}
   .need-line:last-child{border-bottom:0}
   .dot{width:9px;height:9px;border-radius:50%;flex:0 0 auto}
