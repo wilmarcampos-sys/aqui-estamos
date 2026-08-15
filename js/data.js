@@ -225,6 +225,9 @@ const CATALOGO = [
     {k:'transporte', n:'Transporte / vehículo',        s:'camion camioneta moto flete 4x4'},
     {k:'bodega',     n:'Bodega o punto de acopio',     s:'almacenar guardar'},
     {k:'voluntarios',n:'Voluntarios / manos',          s:'gente ayuda brazos'},
+    {k:'electricista',n:'Electricista (con norma)',    s:'instalacion electrica breaker cableado 240v acometida bifasica polo a tierra handyman'},
+    {k:'plomero',    n:'Plomero / fontanero',          s:'fontaneria agua desague tuberia hidrosanitaria bomba handyman'},
+    {k:'instalequipo',n:'Instalar lavadoras / equipos',s:'lavadora secadora montaje conexion tecnico handyman'},
     {k:'efectivo',   n:'Aportes en efectivo',          s:'plata dinero logistica transporte'},
   ]},
   {cat:'Población vulnerable', ic:'access', items:[
