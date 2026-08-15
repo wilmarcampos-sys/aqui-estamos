@@ -172,9 +172,23 @@
     background:#f5a524;margin-right:7px;vertical-align:1px;animation:pulso 2s ease-out infinite}
 
   /* ---- reporte en 3 pasos ---- */
-  .pasohead{display:flex;align-items:center;gap:10px;margin:2px 0 12px}
+  .pasohead{display:flex;align-items:center;gap:10px;margin:2px 0 8px}
   .pasohead h3{margin:0;font-size:19px;flex:1}
-  .pasohead .pasonum{font-size:12px;color:var(--dim);font-weight:700;flex:0 0 auto}
+  .pasohead .pasonum{font-size:12px;color:var(--acc);font-weight:800;flex:0 0 auto;
+    background:rgba(79,156,249,.14);border:1px solid #2a4a75;border-radius:8px;padding:3px 8px}
+  .pasosub{font-size:13px;color:var(--dim);margin:0 0 14px;line-height:1.4}
+  .pasosub b{color:var(--txt)}
+  /* etiquetas de "qué es obligatorio ahora" */
+  .tag{display:inline-block;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;
+    padding:2px 7px;border-radius:7px;margin-left:7px;vertical-align:1px}
+  .tag.req{background:rgba(79,156,249,.18);color:#9dc4f7;border:1px solid #2a4a75}
+  .tag.opt{background:#233149;color:var(--dim);border:1px solid var(--line)}
+  /* indicador de pasos: dónde voy y qué sigue */
+  .pasos{display:flex;align-items:center;gap:6px;margin:0 0 12px;font-size:11px;font-weight:800}
+  .pasos .pon{flex:1;text-align:center;padding:7px 3px;border-radius:9px;background:#111b2e;
+    border:1px solid var(--line);color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .pasos .pon.now{background:rgba(79,156,249,.18);border-color:var(--acc);color:#cfe3ff}
+  .pasos .pon.done{background:rgba(63,143,95,.16);border-color:#2f5c41;color:#86efac}
   .pasohead .volver{width:34px;height:34px;border-radius:10px;background:#1b2740;border:1px solid var(--line);
     color:var(--txt);font-size:20px;font-family:inherit;cursor:pointer;flex:0 0 auto;line-height:1;padding:0}
   .resumen{background:#16223a;border:1px solid var(--line);border-radius:13px;padding:2px 12px;margin-top:4px}

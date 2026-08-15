@@ -218,6 +218,15 @@ function itemsHTML(q){
   return html;
 }
 
+/* Indicador de pasos: el usuario siempre ve dónde va y qué sigue. */
+const PASOS_R = ['Dónde', 'Qué falta', 'Urgencia'];
+function pasosHTML(n){
+  return `<div class="pasos">${PASOS_R.map((t,i)=>{
+    const k = i+1, st = k<n ? 'done' : k===n ? 'now' : '';
+    return `<span class="pon ${st}">${k<n?'✓':k} ${t}</span>`;
+  }).join('')}</div>`;
+}
+
 /* Reporte en 3 pasos: dónde · qué · urgencia, y una pantalla de
    confirmación al final. El estado vive en el cierre y se conserva al ir
    y volver entre pasos; el picker se vuelve a montar en el paso 1.        */
@@ -237,9 +246,11 @@ function abrirReporte(zid, pt, refPrev){
   /* ---- Paso 1: ¿dónde es? ---- */
   function pasoDonde(){
     abrirSheet(`
-      <div class="pasohead"><h3>¿Dónde es?</h3><span class="pasonum">1 de 3</span></div>
+      <div class="pasohead"><h3>¿Dónde es?</h3></div>
+      ${pasosHTML(1)}
+      <p class="pasosub">Lo único necesario aquí: <b>marque el sitio en el mapa</b>. Lo demás ayuda, pero es opcional.</p>
       ${pickerHTML('r-map', zid)}
-      <div class="sec">Punto de referencia</div>
+      <div class="sec">Punto de referencia <span class="tag opt">opcional</span></div>
       <p class="muted" style="margin:0 0 7px">Escoja un sitio ya conocido si aparece: así su reporte se junta con los demás del mismo lugar.</p>
       <div id="r-sug" class="sug"></div>
       <input id="r-ref" placeholder="…o escríbalo: la cancha, el salón comunal, la tienda de don Óscar" value="${esc(ref)}">
@@ -282,7 +293,9 @@ function abrirReporte(zid, pt, refPrev){
   /* ---- Paso 2: ¿qué hace falta? ---- */
   function pasoQue(){
     abrirSheet(`
-      <div class="pasohead"><button class="volver" id="r-back2">‹</button><h3>¿Qué hace falta?</h3><span class="pasonum">2 de 3</span></div>
+      <div class="pasohead"><button class="volver" id="r-back2">‹</button><h3>¿Qué hace falta?</h3></div>
+      ${pasosHTML(2)}
+      <p class="pasosub">Elija <b>al menos una cosa</b> que se necesita. Lo demás es opcional.</p>
       <details class="fold" ${persRango?'open':''} style="margin-top:2px">
         <summary>¿Para cuántas personas? · ayuda a priorizar la ayuda</summary>
         <div class="foldbody">
@@ -293,7 +306,7 @@ function abrirReporte(zid, pt, refPrev){
           </div>
         </div>
       </details>
-      <div class="sec">¿Qué se necesita?</div>
+      <div class="sec">¿Qué se necesita? <span class="tag req">necesario</span></div>
       <input id="r-busca" type="search" placeholder="Buscar: gasas, pañales, linterna, agua…">
       <div id="r-items"></div>
       <div class="selbar">
@@ -333,8 +346,9 @@ function abrirReporte(zid, pt, refPrev){
     const needList = [...sel].map(k=>NEED[k]?.n||k).join(', ');
     const persTxt = persRango ? ` · ${persRango==='8+'?'más de 8':persRango.replace('-',' a ')} personas` : '';
     abrirSheet(`
-      <div class="pasohead"><button class="volver" id="r-back3">‹</button><h3>¿Qué tan urgente?</h3><span class="pasonum">3 de 3</span></div>
-      <p class="muted" style="margin:0 0 7px">Sea realista: si todo es urgente, nadie sabe adónde ir primero.</p>
+      <div class="pasohead"><button class="volver" id="r-back3">‹</button><h3>¿Qué tan urgente?</h3></div>
+      ${pasosHTML(3)}
+      <p class="pasosub"><b>Último paso.</b> Elija una opción y ya se envía. Sea realista: si todo es urgente, nadie sabe adónde ir primero.</p>
       <div class="urg col" id="r-urg">
         <button data-u="3">Hoy mismo<span>Hay riesgo para alguien ahora</span></button>
         <button data-u="2">En 24 horas<span>Se puede aguantar el día</span></button>
