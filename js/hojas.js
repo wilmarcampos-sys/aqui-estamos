@@ -188,23 +188,34 @@ function topPedidos(n=10){
   return Object.keys(c).filter(k=>NEED[k]).sort((a,b)=>c[b]-c[a]).slice(0,n);
 }
 const optHTML = k=>`<button type="button" class="opt ${sel.has(k)?'sel':''}" data-k="${k}">${esc(NEED[k]?.n||k)}</button>`;
-function itemsHTML(q, cat){
+/* Buscando: lista plana de coincidencias. Sin buscar: "lo más pedido" a la
+   vista y el resto del catálogo en acordeón — solo los títulos, cada
+   categoría abre su lista al tocarla. Así no hay un muro de botones.       */
+function itemsHTML(q){
   const nq = NORM(q||'');
-  let html = '';
-  if(!nq && !cat){
-    const top = topPedidos(10);
-    if(top.length) html += `<div class="sec">${ico('bolt')} Lo más pedido ahora</div>
-      <div class="opts">${top.map(optHTML).join('')}</div>`;
+  if(nq){
+    let html = '';
+    CATALOGO.forEach(c=>{
+      const its = c.items.filter(i=>NORM(i.n+' '+(i.s||'')+' '+c.cat).includes(nq));
+      if(its.length) html += `<div class="sec">${ico(c.ic)} ${c.cat}</div>
+        <div class="opts">${its.map(i=>optHTML(i.k)).join('')}</div>`;
+    });
+    return html || `<p class="muted">No encontramos "${esc(q)}". Escríbalo en la indicación del paso 1
+      y el coordinador de la zona lo verá igual.</p>`;
   }
+  let html = '';
+  const top = topPedidos(8);
+  if(top.length) html += `<div class="sec">${ico('bolt')} Lo más pedido ahora</div>
+    <div class="opts">${top.map(optHTML).join('')}</div>
+    <div class="sec">Todo el catálogo</div>`;
   CATALOGO.forEach(c=>{
-    if(cat && cat!==c.cat) return;
-    const its = c.items.filter(i=>!nq || NORM(i.n+' '+(i.s||'')+' '+c.cat).includes(nq));
-    if(!its.length) return;
-    html += `<div class="sec">${ico(c.ic)} ${c.cat}</div>
-      <div class="opts">${its.map(i=>optHTML(i.k)).join('')}</div>`;
+    const elegidos = c.items.filter(i=>sel.has(i.k)).length;
+    html += `<details class="fold catfold"${elegidos?' open':''}>
+      <summary>${ico(c.ic)} ${esc(c.cat)}${elegidos?` · <b style="color:#86efac">${elegidos} elegido${elegidos>1?'s':''}</b>`:''}</summary>
+      <div class="foldbody"><div class="opts">${c.items.map(i=>optHTML(i.k)).join('')}</div></div>
+    </details>`;
   });
-  return html || `<p class="muted">No encontramos "${esc(q)}". Escríbalo en la nota de abajo
-    y el coordinador de la zona lo verá igual.</p>`;
+  return html;
 }
 
 /* Reporte en 3 pasos: dónde · qué · urgencia, y una pantalla de
@@ -272,18 +283,18 @@ function abrirReporte(zid, pt, refPrev){
   function pasoQue(){
     abrirSheet(`
       <div class="pasohead"><button class="volver" id="r-back2">‹</button><h3>¿Qué hace falta?</h3><span class="pasonum">2 de 3</span></div>
-      <div class="sec" style="margin-top:2px">¿Para cuántas personas?</div>
-      <div class="urg" id="r-pers">
-        <button data-p="1-3">1 a 3</button>
-        <button data-p="4-8">4 a 8</button>
-        <button data-p="8+">Más de 8</button>
-      </div>
+      <details class="fold" ${persRango?'open':''} style="margin-top:2px">
+        <summary>¿Para cuántas personas? · ayuda a priorizar la ayuda</summary>
+        <div class="foldbody">
+          <div class="urg" id="r-pers">
+            <button data-p="1-3">1 a 3</button>
+            <button data-p="4-8">4 a 8</button>
+            <button data-p="8+">Más de 8</button>
+          </div>
+        </div>
+      </details>
       <div class="sec">¿Qué se necesita?</div>
       <input id="r-busca" type="search" placeholder="Buscar: gasas, pañales, linterna, agua…">
-      <div class="cats" id="r-cats">
-        <button class="on" data-c="">Todo</button>
-        ${CATALOGO.map(c=>`<button data-c="${esc(c.cat)}">${ico(c.ic)} ${esc(c.cat)}</button>`).join('')}
-      </div>
       <div id="r-items"></div>
       <div class="selbar">
         <span class="grow" id="r-cnt">Falta: qué se necesita</span>
@@ -292,7 +303,7 @@ function abrirReporte(zid, pt, refPrev){
     `);
     const body = $('#sheet-body');
     const repintar = ()=>{
-      $('#r-items').innerHTML = itemsHTML($('#r-busca').value, body.querySelector('#r-cats button.on').dataset.c);
+      $('#r-items').innerHTML = itemsHTML($('#r-busca').value);
       body.querySelectorAll('#r-items .opt').forEach(o=>o.classList.toggle('sel', sel.has(o.dataset.k)));
     };
     const barra = ()=>{
@@ -303,8 +314,6 @@ function abrirReporte(zid, pt, refPrev){
       $('#r-next2').disabled = sel.size===0;
     };
     $('#r-busca').oninput = repintar;
-    $('#r-cats').onclick = e=>{ const b=e.target.closest('button'); if(!b) return;
-      body.querySelectorAll('#r-cats button').forEach(x=>x.classList.toggle('on', x===b)); repintar(); };
     $('#r-items').onclick = e=>{ const o=e.target.closest('.opt'); if(!o) return;
       const k=o.dataset.k; sel.has(k)?sel.delete(k):sel.add(k);
       body.querySelectorAll(`.opt[data-k="${k}"]`).forEach(x=>x.classList.toggle('sel', sel.has(k))); barra(); };
