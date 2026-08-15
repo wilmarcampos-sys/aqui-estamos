@@ -134,10 +134,12 @@ function abrirFoco(zid, la, lo){
     const sub = `${NEED[x.k]?.cat||''}${x.personas?` · ~${x.personas} personas`:''}`
       + (x.subio?' · ↑ subió por corroboración':'')
       + (ok?` · entregado ${hace(e.ts)} por ${esc(e.quien)}`:' · pendiente');
+    const nota = (f.reps.filter(r=>r.k===x.k).map(r=>r.nota).find(Boolean))||'';
     return `<div class="nec-card" style="border-left-color:${col}">
       <div class="grow">
         <h4>${esc(NEED[x.k]?.n||x.k)}${x.n>1?` <span class="u-alta">×${x.n}</span>`:''}${ok?'':`<span class="upill u${x.u}">${uName}</span>`}</h4>
         <div class="nec-sub">${sub}</div>
+        ${nota?`<div class="nec-nota">${esc(nota)}</div>`:''}
       </div>
       ${ok ? '<span class="chip ok">✓ Llegó</span>'
            : `<button type="button" class="mini go" data-delivpt="${f.lat},${f.lng}" data-k="${x.k}">Ya llegó</button>`}
@@ -192,10 +194,12 @@ function abrirAlbergue(a){
   const cards = nec ? nec.needs.map(x=>{
     const col = UCOL[x.u]||'#c9a227';
     const uName = x.u===3?'Urgente':x.u===2?'Prioritario':'Puede esperar';
+    const nota = (nec.reps.filter(r=>r.k===x.k).map(r=>r.nota).find(Boolean))||'';
     return `<div class="nec-card" style="border-left-color:${col}">
       <div class="grow">
         <h4>${esc(NEED[x.k]?.n||x.k)}${x.n>1?` <span class="u-alta">×${x.n}</span>`:''}<span class="upill u${x.u}">${uName}</span></h4>
         <div class="nec-sub">${esc(NEED[x.k]?.cat||'')} · pendiente</div>
+        ${nota?`<div class="nec-nota">${esc(nota)}</div>`:''}
       </div>
       <button type="button" class="mini go" data-delivpt="${a.lat},${a.lng}" data-k="${x.k}">Ya llegó</button>
     </div>`;
