@@ -63,8 +63,10 @@
   footer button:active{color:var(--txt)}
   footer .fic{display:inline-flex;color:var(--acc)}
   footer .fic svg{width:13px;height:13px}
-  footer .corazon{font-size:11px}
+  footer .corazon{color:var(--dim);font-size:11px}
   .version{color:var(--dim);font-size:11px;letter-spacing:.2px}
+  /* separador "·" entre soporte, versión y firma */
+  footer > *:not(:first-child)::before{content:"·";color:var(--dim);margin-right:6px}
 
   .ic{width:1.05em;height:1.05em;vertical-align:-.16em;flex:0 0 auto;display:inline-block}
   .ic.lg{width:1.35em;height:1.35em;vertical-align:-.28em}
