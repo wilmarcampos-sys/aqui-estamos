@@ -99,6 +99,9 @@ function render(){
     ya.innerHTML = YO ? avatar({foto:YO.foto, nombre:YO.nombre})
                       : `<span class="avatar">${ico('user')}</span>`;
   }
+  // sin sesión, la acción principal de Coordinación late para guiar el ojo
+  const bAdd = $('#btn-add-coord');
+  if(bAdd) bAdd.classList.toggle('guide', !YO);
   const todos = ZONAS.map(estadoZona);
 
   // KPIs
