@@ -74,8 +74,11 @@ const deRep  = r=>({id:r.id, z:r.zona, k:r.necesidad, u:r.urgencia, lat:+r.lat, 
                     ref:r.referencia||'', personas:r.personas||0, nota:r.nota||'', ts:+new Date(r.creado)});
 const deEnt  = e=>({id:e.id, z:e.zona, k:e.necesidad, lat:+e.lat, lng:+e.lng,
                     quien:e.quien||'Anónimo', cant:e.cantidad||'', ts:+new Date(e.creado)});
+// La vista pública trae tel_e164 (para WhatsApp), no el celular crudo ni el
+// código; por eso tel sale de tel_e164.
 const deCoo  = c=>({id:c.id, z:c.zona, micro:c.micro||'', radio:c.radio||500, lat:+c.lat, lng:+c.lng,
-                    nom:c.nombre, rol:c.rol||'', tel:c.tel, email:c.email||'', nota:c.nota||'',
+                    nom:c.nombre, rol:c.rol||'', tel:c.tel_e164||c.tel||'', tel_e164:c.tel_e164||'',
+                    email:c.email||'', nota:c.nota||'',
                     foto:c.foto||null, ver:!!c.verificado, codigo:c.codigo||'',
                     device:c.device||'', anulado:!!c.anulado});
 
@@ -87,10 +90,20 @@ let MODO_EJEMPLO = false;
 async function dbCargar(){
   if(!EN_LINEA || MODO_EJEMPLO) return;
   const desde = new Date(now() - 30*24*H).toISOString();
+  // Se lee de las VISTAS públicas, no de las tablas: no exponen device,
+  // codigo, email ni el celular crudo. Ver seguridad.sql. Si la vista aún no
+  // existe (SQL sin correr), cae a la tabla para no dejar la app sin datos
+  // durante el despliegue; apenas se corre seguridad.sql, queda cerrada.
+  const leer = async (vista, tabla, arma)=>{
+    let res = await arma(db.from(vista).select('*'));
+    if(res.error) res = await arma(db.from(tabla).select('*'));
+    return res;
+  };
+  const recientes = q => q.gte('creado', desde).order('creado',{ascending:false}).limit(5000);
   const [r,e,c] = await Promise.all([
-    db.from('reportes').select('*').gte('creado', desde).order('creado',{ascending:false}).limit(5000),
-    db.from('entregas').select('*').gte('creado', desde).order('creado',{ascending:false}).limit(5000),
-    db.from('coordinadores').select('*').order('creado',{ascending:false}).limit(2000),
+    leer('reportes_publicos',      'reportes',      recientes),
+    leer('entregas_publicas',      'entregas',      recientes),
+    leer('coordinadores_publicos', 'coordinadores', q=>q.order('creado',{ascending:false}).limit(2000)),
   ]);
   if(r.error||e.error||c.error){ console.warn(r.error||e.error||c.error); return; }
   S.reportes = (r.data||[]).map(deRep);
@@ -175,7 +188,7 @@ async function iniciarDatos(){
       realtime:{params:{eventsPerSecond:3}},
     });
     EN_LINEA = true;
-    S = {reportes:[], entregas:[], coords:[]};   // fuera los datos de demostración
+    if(!MODO_EJEMPLO) S = {reportes:[], entregas:[], coords:[]};   // en modo ejemplo, conservar los datos de muestra
     await dbCargar();
     dbSuscribir();
     presenciaIniciar();
