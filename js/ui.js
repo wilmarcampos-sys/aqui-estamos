@@ -89,9 +89,16 @@ document.querySelectorAll('#filtros button').forEach(b=>b.onclick=()=>{
 
 function render(){
   pintarMapa();
-  // avatar del coordinador logueado en el encabezado (entra a su cuenta)
+  // acceso de usuario en el encabezado: con sesión, su avatar + punto verde
+  // (en línea) y entra a su cuenta; sin sesión, un ícono para entrar.
   const ya = $('#yo-avatar');
-  if(ya){ ya.hidden = !YO; if(YO) ya.innerHTML = avatar({foto:YO.foto, nombre:YO.nombre}); }
+  if(ya){
+    ya.hidden = false;
+    ya.classList.toggle('on', !!YO);
+    ya.setAttribute('aria-label', YO ? 'Mi cuenta' : 'Entrar como coordinador');
+    ya.innerHTML = YO ? avatar({foto:YO.foto, nombre:YO.nombre})
+                      : `<span class="avatar">${ico('user')}</span>`;
+  }
   const todos = ZONAS.map(estadoZona);
 
   // KPIs

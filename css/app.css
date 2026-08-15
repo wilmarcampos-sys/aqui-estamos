@@ -373,7 +373,9 @@
    y el punto verde le dice que está en línea */
 .yoav{flex:0 0 auto;background:none;border:0;padding:0;cursor:pointer;position:relative;line-height:0}
 .yoav .avatar{width:38px;height:38px;font-size:14px}
-.yoav::after{content:"";position:absolute;right:-1px;bottom:-1px;width:11px;height:11px;border-radius:50%;
+.yoav .avatar .ic{width:20px;height:20px}
+/* punto verde de "en línea" solo cuando hay sesión iniciada */
+.yoav.on::after{content:"";position:absolute;right:-1px;bottom:-1px;width:11px;height:11px;border-radius:50%;
   background:#3f8f5f;border:2px solid var(--bg)}
 .yoav:active{opacity:.7}
 @keyframes pulso{
