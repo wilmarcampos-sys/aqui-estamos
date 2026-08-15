@@ -75,9 +75,10 @@ const irAlMapa = ()=>{ cerrarSheet(); document.querySelector('nav button[data-v=
 const bMarca = document.getElementById('ir-mapa');
 if(bMarca) bMarca.onclick = irAlMapa;
 
-/* Entrar / ver mi cuenta desde cualquier parte */
+/* Entrar / inscribirse desde cualquier parte (los botones se re-pintan) */
 document.addEventListener('click', e=>{
-  if(e.target.closest('[data-cuenta]')) abrirCuenta();
+  if(e.target.closest('[data-cuenta]')) return abrirCuenta();
+  if(e.target.closest('[data-inscribir]')){ const pt = mainPt || ptDe('centro'); return abrirCoord(pt.z, pt); }
 });
 
 /* ---------- vistas ---------- */
@@ -99,9 +100,6 @@ function render(){
     ya.innerHTML = YO ? avatar({foto:YO.foto, nombre:YO.nombre})
                       : `<span class="avatar">${ico('user')}</span>`;
   }
-  // sin sesión, la acción principal de Coordinación late para guiar el ojo
-  const bAdd = $('#btn-add-coord');
-  if(bAdd) bAdd.classList.toggle('guide', !YO);
   const todos = ZONAS.map(estadoZona);
 
   // KPIs
@@ -118,31 +116,27 @@ function render(){
   ].filter(Boolean).join('');
   $('#kpis').innerHTML = kchips;
   $('#kpis').style.display = kchips ? '' : 'none';
-  // ---- MI CUENTA: que nadie pierda su registro ----
-  // El registro no depende del navegador: vive en la cuenta (celular + PIN).
-  // Por eso desde cualquier teléfono se recupera con solo entrar.
-  seccion('sec-mias','lista-mias', ico('user') + (YO ? ' Mi cuenta' : ' Su registro'),
-    YO
-      ? `<div class="fila-mia ok">
-           <div class="row">
-             ${avatar({foto:YO.foto, nombre:YO.nombre})}
-             <div class="grow">
-               <div style="font-weight:700">${esc(YO.nombre)}</div>
-               <div class="cnt">${esc(telBonito(YO.tel))} ·
-                 ${(YO.zonas||[]).length} sector(es) a su cargo</div>
-             </div>
+  // ---- ENTRADA DE COORDINACIÓN: un solo bloque claro ----
+  // Sin sesión, dos caminos claros (como la hoja del avatar): inscribirse o
+  // entrar. Con sesión, su cuenta y un atajo para cubrir otro sector.
+  const entrada = $('#coord-entrada');
+  if(entrada) entrada.innerHTML = YO
+    ? `<div class="fila-mia ok">
+         <div class="row">
+           ${avatar({foto:YO.foto, nombre:YO.nombre})}
+           <div class="grow">
+             <div style="font-weight:700">${esc(YO.nombre)}</div>
+             <div class="cnt">${esc(telBonito(YO.tel))} · ${(YO.zonas||[]).length} sector(es) a su cargo</div>
            </div>
-           <div class="fbtns">
-             <button type="button" class="mini go" data-cuenta>Ver y corregir lo mío</button>
-           </div>
-         </div>`
-      : `<div class="fila-mia">
-           <div class="cnt">Si ya se inscribió antes, entre con su celular y su PIN y
-             recupera todo, así sea desde otro teléfono.</div>
-           <div class="fbtns">
-             <button type="button" class="mini go" data-cuenta>Entrar a mi cuenta</button>
-           </div>
-         </div>`);
+           <button type="button" class="mini go" data-cuenta>Ver y corregir</button>
+         </div>
+       </div>
+       <button type="button" class="btn" data-inscribir>${ico('plus')} Cubrir otro sector</button>`
+    : `<div class="card">
+         <p class="muted" style="margin:0 0 11px">¿Vas a ayudar a coordinar un sector? Con tu celular y un PIN, sin correo ni contraseñas largas.</p>
+         <button type="button" class="btn guide" data-inscribir style="margin-top:0">Inscribirme como coordinador</button>
+         <button type="button" class="btn flat" data-cuenta>Ya me inscribí, quiero entrar</button>
+       </div>`;
 
   const secO=$('#sec-orf'), secS=$('#sec-solo');
   if(secO) secO.innerHTML = ico('alert')+' Puntos sin nadie a cargo';
@@ -220,15 +214,12 @@ function render(){
         style="width:${Math.min(100, p.n/Math.max(1,pers[0].n)*100)}%;background:${p.exceso?'#d97706':'#4f9cf9'}"></span></div>
     </div>`).join('');
   $('#lista-personas').innerHTML = htmlPers;
-  document.querySelectorAll('.sec').forEach(el=>{
-    if(el.textContent.trim()==='Reparto de la coordinación'){
-      el.style.display = htmlPers ? '' : 'none';
-      const p = el.nextElementSibling; if(p && p.tagName==='P') p.style.display = htmlPers ? '' : 'none';
-    }
-    if(el.textContent.trim()==='Coordinadores por zona') el.style.display = htmlPers ? '' : 'none';
-    if(el.textContent.trim()==='Últimas entregas registradas')
-      el.style.display = S.entregas.length ? '' : 'none';
-  });
+  // cada bloque se oculta entero cuando no tiene nada que mostrar
+  const verBloque = (id, hay)=>{ const el=document.getElementById(id); if(el) el.style.display = hay ? '' : 'none'; };
+  verBloque('b-solo', !!htmlSolo);
+  verBloque('b-personas', !!htmlPers);
+  verBloque('b-coord', !!htmlPers);
+  verBloque('b-entregas', S.entregas.length > 0);
 
   // coordinadores
   const byZone = {};
@@ -357,7 +348,6 @@ $('#fab-loc').onclick = ()=>{
     else abrirReporte(zonaDe(la,lo).id);
   }, ()=>toast('No se pudo obtener la ubicación'), {enableHighAccuracy:true, timeout:9000});
 };
-$('#btn-add-coord').onclick = ()=>{ const pt = mainPt || ptDe('centro'); abrirCoord(pt.z, pt); };
 
 /* Ver ejemplo: para mostrarle la app a alguien sin ensuciar el mapa real.
    Ya no es un botón — al vecino que necesita agua no le sirve de nada y solo

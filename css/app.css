@@ -150,6 +150,10 @@
   .mapa-tocado .pinbar .muted{display:none}
 
   .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:13px;margin-bottom:10px}
+  /* cada sección de Coordinación en su bloque, claramente separada */
+  .bloque{background:var(--surf);border:1px solid var(--line);border-radius:15px;
+    padding:10px 13px 13px;margin-bottom:13px}
+  .bloque > .sec:first-child{margin-top:3px}
   .card h3{margin:0 0 3px;font-size:16px}
   .muted{color:var(--dim);font-size:13px}
   /* estados de urgencia en texto (antes iban con hex a mano en el JS) */

@@ -107,7 +107,7 @@ document.documentElement.setAttribute('data-eff', window.temaEfectivo());
 
     <!-- COORDINACIÓN -->
     <section class="view" id="v-coord"><div class="pad">
-      <button class="btn" id="btn-add-coord">Inscribirme como coordinador</button>
+      <div id="coord-entrada"></div>
       <details class="fold">
         <summary>Cómo funciona la coordinación</summary>
         <div class="foldbody muted" style="font-size:13px;line-height:1.5">
@@ -121,20 +121,29 @@ document.documentElement.setAttribute('data-eff', window.temaEfectivo());
           No hay que esperar ningún SMS.
         </div>
       </details>
-      <div class="sec" id="sec-mias"></div>
-      <div id="lista-mias"></div>
-      <div class="sec" id="sec-orf"></div>
-      <div id="lista-orf"></div>
-      <div class="sec" id="sec-solo"></div>
-      <p class="muted" style="margin:-2px 0 9px">Si esa persona falla, el sector queda ciego.</p>
-      <div id="lista-solo"></div>
-      <div class="sec">Reparto de la coordinación</div>
-      <p class="muted" style="margin:-2px 0 9px">Muchos sectores en una sola persona = falta gente.</p>
-      <div id="lista-personas"></div>
-      <div class="sec">Coordinadores por zona</div>
-      <div id="lista-coord"></div>
-      <div class="sec">Últimas entregas registradas</div>
-      <div id="lista-entregas"></div>
+
+      <div class="bloque" id="b-orf">
+        <div class="sec" id="sec-orf"></div>
+        <div id="lista-orf"></div>
+      </div>
+      <div class="bloque" id="b-solo">
+        <div class="sec" id="sec-solo"></div>
+        <p class="muted" style="margin:-2px 0 9px">Si esa persona falla, el sector queda ciego.</p>
+        <div id="lista-solo"></div>
+      </div>
+      <div class="bloque" id="b-personas">
+        <div class="sec">Reparto de la coordinación</div>
+        <p class="muted" style="margin:-2px 0 9px">Muchos sectores en una sola persona = falta gente.</p>
+        <div id="lista-personas"></div>
+      </div>
+      <div class="bloque" id="b-coord">
+        <div class="sec">Coordinadores por zona</div>
+        <div id="lista-coord"></div>
+      </div>
+      <div class="bloque" id="b-entregas">
+        <div class="sec">Últimas entregas registradas</div>
+        <div id="lista-entregas"></div>
+      </div>
     </div></section>
   </main>
 

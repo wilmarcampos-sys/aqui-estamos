@@ -182,8 +182,13 @@ function abrirFoco(zid, la, lo){
 
 /* ---------- reportar necesidad ---------- */
 let sel = new Set(), urg = null;
-/* top de necesidades más pedidas — atajo para no buscar nada */
+/* top de necesidades más pedidas — atajo para no buscar nada.
+   Al arranque, mientras no hay al menos 10 reportes, se muestran las
+   necesidades más comunes en una emergencia; apenas se juntan datos, el
+   sistema toma el mando y muestra lo que de verdad se está pidiendo. */
+const TOP_DEFAULT = ['agua','mercado','caliente','carpas','colchoneta','cobijas','panalb','aseo','medicam','linterna'];
 function topPedidos(n=10){
+  if(S.reportes.length < 10) return TOP_DEFAULT.filter(k=>NEED[k]).slice(0,n);
   const c={}; S.reportes.forEach(r=>c[r.k]=(c[r.k]||0)+1);
   return Object.keys(c).filter(k=>NEED[k]).sort((a,b)=>c[b]-c[a]).slice(0,n);
 }
