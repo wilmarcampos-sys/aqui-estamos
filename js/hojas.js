@@ -213,14 +213,12 @@ function abrirAlbergue(a){
           <h3 style="margin:0">${esc(a.micro||a.nom)}</h3>
           <div class="muted">Albergue · ${esc(z?z.n:'')}${a.ver?' · <span class="verif">verificado</span>':''}</div>
         </div>
+        ${(a.ocup!=null || a.cap!=null) ? `<div class="capmini">
+          <b>${a.ocup!=null?a.ocup:'—'}<span class="capsl">/${a.cap!=null?a.cap:'—'}</span></b>
+          <span>${(a.cap!=null&&a.ocup!=null)?`${a.cap-a.ocup} libres`:'ocup. / cupo'}</span>
+        </div>` : ''}
       </div>
     </div>
-
-    ${(a.ocup!=null || a.cap!=null) ? `<div class="capbox">
-      <div><b>${a.ocup!=null?a.ocup:'—'}</b><span>personas ahora</span></div>
-      <div><b>${a.cap!=null?a.cap:'—'}</b><span>capacidad</span></div>
-      ${(a.cap!=null && a.ocup!=null) ? `<div><b class="${a.cap-a.ocup<=0?'u-alta':''}">${a.cap-a.ocup}</b><span>cupos libres</span></div>` : ''}
-    </div>` : ''}
 
     ${nec ? `<div class="sec">Lo que se necesita (${nec.needs.length})</div>${cards}`
           : `<div class="sec">Necesidades</div><p class="muted" style="margin:0">Sin necesidades reportadas todavía en este albergue.</p>`}
