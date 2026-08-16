@@ -379,12 +379,39 @@ function ubicame(){
     {timeout:8000, maximumAge:60000}
   );
 }
-/* donar por Amazon: si hay una sola lista, la abre; si hay varias o aún no cargan, lleva a centros */
+/* donar por Amazon: 0 listas → a centros; 1 → abre directo; varias → elige el más cercano */
 function irAmazon(){
   const lists = CENTROS.filter(c=>c.amazon_url);
+  if(lists.length===0){ irCentros(); return; }
   if(lists.length===1){ window.open(lists[0].amazon_url, '_blank', 'noopener'); return; }
-  irCentros();
+  openAmazon();
 }
+function openAmazon(){
+  let lists = CENTROS.filter(c=>c.amazon_url);
+  if(USERLOC){
+    lists.forEach(c=> c._d=(c.lat&&c.lng)?haversine(USERLOC.lat,USERLOC.lng,c.lat,c.lng):Infinity);
+    lists = lists.slice().sort((a,b)=> a._d-b._d);
+  }
+  const rows = lists.map((c,i)=>{
+    const mk = CMK[CENTROS.indexOf(c) % CMK.length];
+    const donde = [c.ciudad, c.pais].filter(Boolean).join(' · ');
+    const near = USERLOC && i===0 && isFinite(c._d);
+    const sub = (USERLOC && isFinite(c._d))
+      ? `<small>${esc(kmTxt(c._d))}${near?' · '+esc(t(DONAR_UI.cercano)):''}</small>`
+      : (c.coordinador?`<small>${esc(c.coordinador)}</small>`:'');
+    return `<button class="dsopt amzrow" data-url="${esc(c.amazon_url)}">
+      <span class="dsopt-ic" style="color:${mk};background:${mk}22">${pinIcon()}</span>
+      <span class="grow"><b>${esc(c.nombre)}${donde?` · <span class="muted" style="font-weight:600">${esc(donde)}</span>`:''}</b>${sub}</span>
+      <span class="amzgo">${amzIcon()}</span></button>`;
+  }).join('');
+  $('#d-amazon .dsheet-card').innerHTML =
+    `<div class="dsheet-h">${esc(t(DONAR_UI.amz_t))}</div>
+     <p class="amz-sub">${esc(t(DONAR_UI.amz_p))}</p>
+     ${rows}
+     <button class="dsheet-x" data-x="1">${esc(t(DONAR_UI.cancelar))}</button>`;
+  const sh=$('#d-amazon'); sh.hidden=false; requestAnimationFrame(()=>sh.classList.add('on'));
+}
+function closeAmazon(){ const sh=$('#d-amazon'); sh.classList.remove('on'); setTimeout(()=>sh.hidden=true,220); }
 $('#d-ir-centros').onclick  = irCentros;
 $('#d-ubicame').onclick     = ubicame;
 $('#d-amazon-hero').onclick = irAmazon;
@@ -431,6 +458,13 @@ $('#d-share').addEventListener('click', e=>{
   if(s==='texto') shareTexto(); else if(s==='imagen') imagenLista(); else if(s==='pdf') pdfLista();
 });
 document.addEventListener('keydown', e=>{ if(e.key==='Escape' && !$('#d-share').hidden) closeShare(); });
+
+$('#d-amazon').addEventListener('click', e=>{
+  const row=e.target.closest('[data-url]');
+  if(row){ const u=row.dataset.url; closeAmazon(); window.open(u,'_blank','noopener'); return; }
+  if(e.target.closest('[data-x]')) closeAmazon();
+});
+document.addEventListener('keydown', e=>{ if(e.key==='Escape' && !$('#d-amazon').hidden) closeAmazon(); });
 
 /* parallax suave del aura (se apaga con reduce-motion) */
 (function(){

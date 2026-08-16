@@ -256,6 +256,12 @@
   color:var(--txt);font:800 15px/1 inherit;cursor:pointer}
 .dsheet-x:active{transform:scale(.99)}
 
+/* selector de centro para Amazon */
+.amz-sub{margin:0 8px 12px;font-size:13.5px;line-height:1.45;color:var(--dim);text-wrap:pretty}
+.amzrow small{display:block;font-size:12.5px;color:var(--dim);margin-top:3px;font-variant-numeric:tabular-nums}
+.amzrow .amzgo{flex:0 0 auto;display:grid;place-items:center;color:#FF9900}
+.amzrow .amzgo .ic{width:22px;height:22px}
+
 /* ---------- bienvenida (agradecer + elegir) ---------- */
 .dwelcome{position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;padding:18px}
 .dwelcome[hidden]{display:none}
