@@ -56,7 +56,11 @@ function pintarMapa(){
   // badge rojo con cuántas necesidades tiene, para identificarlos bien.
   S.coords.filter(c=>c.lat && (c.rol||'')==='Albergue').forEach(a=>{
     let f=null,bd=1e9; focos(a.z).forEach(x=>{const d=dist(a.lat,a.lng,x.lat,x.lng); if(d<bd){bd=d;f=x;}});
-    const nnec = (f && bd<300) ? f.needs.length : 0;
+    // solo las PENDIENTES (sin entrega reciente de esa necesidad), no las ya cubiertas
+    const nnec = (f && bd<300) ? f.needs.filter(x=>{
+      const e = S.entregas.filter(y=>y.k===x.k && y.lat && dist(a.lat,a.lng,y.lat,y.lng)<400).sort((p,q)=>q.ts-p.ts)[0];
+      return !(e && (now()-e.ts) < 7*24*H);
+    }).length : 0;
     const badge = nnec ? `<span style="position:absolute;top:-7px;right:-7px;min-width:18px;height:18px;padding:0 3px;
       border-radius:9px;background:#dc2626;border:2px solid #fff;color:#fff;font:800 11px/15px system-ui;text-align:center">${nnec}</span>` : '';
     L.marker([a.lat,a.lng],{zIndexOffset:900,icon:L.divIcon({className:'',iconSize:[30,30],iconAnchor:[15,15],

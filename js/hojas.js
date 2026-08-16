@@ -218,6 +218,12 @@ function abrirAlbergue(a){
     </div>`;
   }).join('') : '';
 
+  // cuántas siguen pendientes (para el título; las ya entregadas no cuentan)
+  const pendCount = nec ? nec.needs.filter(x=>{
+    const e = S.entregas.filter(y=>y.k===x.k && y.lat && dist(a.lat,a.lng,y.lat,y.lng)<400).sort((p,q)=>q.ts-p.ts)[0];
+    return !(e && (now()-e.ts) < 7*24*H);
+  }).length : 0;
+
   // ocupación/capacidad con anillo de % para ver de un vistazo qué tan lleno está
   const cap=a.cap, ocup=a.ocup;
   let capHtml='';
@@ -248,7 +254,7 @@ function abrirAlbergue(a){
       </div>
     </div>
 
-    ${nec ? `<div class="sec">Lo que se necesita (${nec.needs.length})</div>${cards}
+    ${nec ? `<div class="sec">Lo que se necesita (${pendCount})</div>${cards}
       <button type="button" class="btn green" id="ya-multi" data-z="${a.z}" data-pt="${a.lat},${a.lng}" disabled>Marque lo que llegó</button>
       <p class="muted" style="font-size:12px;margin:5px 0 0">Toque las que ya llegaron y regístrelas juntas.</p>`
           : `<div class="sec">Necesidades</div><p class="muted" style="margin:0">Sin necesidades reportadas todavía en este albergue.</p>`}
