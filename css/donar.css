@@ -72,6 +72,18 @@
 .dh-btn.ghost{background:rgba(255,255,255,.06)}
 .dh-btn.amz-hero{background:#FF9900;color:#131A22;box-shadow:none}
 .dh-btn.amz-hero:hover{background:#ffab2e}
+
+/* logo del header (es un enlace en /donar) — sin subrayado */
+.marcabtn{text-decoration:none;color:inherit}
+
+/* botón "Ubícame" dentro de la sección de centros */
+.dubi{display:inline-flex;align-items:center;gap:8px;height:44px;padding:0 16px;margin:0 0 16px;border-radius:12px;
+  border:0;background:var(--chip);color:var(--txt);font:800 14px/1 inherit;letter-spacing:-.2px;cursor:pointer;transition:background .15s}
+.dubi .ic{width:18px;height:18px;color:var(--acc)}
+.dubi:hover{background:var(--line)}
+.dubi:active{transform:scale(.98)}
+.dubi.load{opacity:.7;pointer-events:none}
+.dubi.load .ic{animation:locspin 1s linear infinite}
 .dh-btn.load{opacity:.7;pointer-events:none}
 .dh-btn.load .ic{animation:locspin 1s linear infinite}
 @keyframes locspin{to{transform:rotate(360deg)}}

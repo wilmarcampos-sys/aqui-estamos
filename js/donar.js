@@ -336,7 +336,7 @@ function pintarTextos(){
   $('#d-sub').textContent         = t(DONAR_UI.sub);
   $('#d-busca').placeholder       = t(DONAR_UI.buscar);
   $('#d-amazon-hero').innerHTML   = amzIcon()+'<span>'+esc(t(DONAR_UI.donar_amazon))+'</span>';
-  $('#d-ir-centros').innerHTML    = pinIcon()+'<span>'+esc(t(DONAR_UI.ir_centros))+'</span>';
+  $('#d-ir-centros').innerHTML    = boxIcon()+'<span>'+esc(t(DONAR_UI.llevar))+'</span>';
   $('#d-ubicame').innerHTML       = locIcon()+'<span>'+esc(t(DONAR_UI.ubicame))+'</span>';
   $('#d-centros-h').textContent   = t(DONAR_UI.centros);
   $('#d-centros-sub').textContent = t(DONAR_UI.centros_sub);
@@ -369,13 +369,13 @@ function irCentros(){
   const i=$('#d-busca'); if(i.value){ i.value=''; modoBusqueda(''); renderCats(''); }
   const h=$('#d-centros-h'); if(h) h.scrollIntoView({behavior:'smooth', block:'start'});
 }
-function ubicame(){
+function ubicame(cb){
   if(!navigator.geolocation){ toast(t(DONAR_UI.sin_ubi)); return; }
-  const b=$('#d-ubicame'); b.classList.add('load'); b.disabled=true;
+  const b=$('#d-ubicame'); if(b){ b.classList.add('load'); b.disabled=true; }
   navigator.geolocation.getCurrentPosition(
-    p=>{ USERLOC={lat:p.coords.latitude, lng:p.coords.longitude}; b.classList.remove('load'); b.disabled=false;
-         renderCentros(); irCentros(); },
-    ()=>{ b.classList.remove('load'); b.disabled=false; toast(t(DONAR_UI.sin_ubi)); },
+    p=>{ USERLOC={lat:p.coords.latitude, lng:p.coords.longitude}; if(b){ b.classList.remove('load'); b.disabled=false; }
+         renderCentros(); if(typeof cb==='function') cb(); else irCentros(); },
+    ()=>{ if(b){ b.classList.remove('load'); b.disabled=false; } toast(t(DONAR_UI.sin_ubi)); },
     {timeout:8000, maximumAge:60000}
   );
 }
@@ -404,10 +404,13 @@ function openAmazon(){
       <span class="grow"><b>${esc(c.nombre)}${donde?` · <span class="muted" style="font-weight:600">${esc(donde)}</span>`:''}</b>${sub}</span>
       <span class="amzgo">${amzIcon()}</span></button>`;
   }).join('');
+  const locRow = !USERLOC ? `<button class="dsopt amzloc" data-loc="1">
+      <span class="dsopt-ic" style="color:var(--acc);background:color-mix(in srgb, var(--acc) 14%, transparent)">${locIcon()}</span>
+      <span class="grow"><b>${esc(t(DONAR_UI.ubicame))}</b><small>${esc(t(DONAR_UI.ubicar_sub))}</small></span></button>` : '';
   $('#d-amazon .dsheet-card').innerHTML =
     `<div class="dsheet-h">${esc(t(DONAR_UI.amz_t))}</div>
      <p class="amz-sub">${esc(t(DONAR_UI.amz_p))}</p>
-     ${rows}
+     ${locRow}${rows}
      <button class="dsheet-x" data-x="1">${esc(t(DONAR_UI.cancelar))}</button>`;
   const sh=$('#d-amazon'); sh.hidden=false; requestAnimationFrame(()=>sh.classList.add('on'));
 }
@@ -460,6 +463,7 @@ $('#d-share').addEventListener('click', e=>{
 document.addEventListener('keydown', e=>{ if(e.key==='Escape' && !$('#d-share').hidden) closeShare(); });
 
 $('#d-amazon').addEventListener('click', e=>{
+  if(e.target.closest('[data-loc]')){ ubicame(()=>openAmazon()); return; }
   const row=e.target.closest('[data-url]');
   if(row){ const u=row.dataset.url; closeAmazon(); window.open(u,'_blank','noopener'); return; }
   if(e.target.closest('[data-x]')) closeAmazon();

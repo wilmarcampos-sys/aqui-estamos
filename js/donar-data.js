@@ -137,8 +137,10 @@ const DONAR_UI = {
   facil_sub:   {es:'Lo más necesario que consigues en farmacia, supermercado o ferretería (CVS, Target, Home Depot). Toca para armar tu lista.',
                 en:'The most-needed items you can grab at a pharmacy, supermarket or hardware store (CVS, Target, Home Depot). Tap to build your list.'},
   ir_centros:  {es:'Centros de acopio', en:'Drop-off centers'},
-  donar_amazon:{es:'Donar por Amazon', en:'Donate via Amazon'},
-  ubicame:     {es:'Ubícame', en:'Find nearest'},
+  donar_amazon:{es:'Ordenar en Amazon', en:'Order on Amazon'},
+  llevar:      {es:'Llevar en persona', en:'Drop off in person'},
+  ubicame:     {es:'Ubícame (ver el más cercano)', en:'Locate me (see the nearest)'},
+  ubicar_sub:  {es:'Ordenar por cercanía a tu casa', en:'Sort by distance to your home'},
   /* bienvenida */
   bienv_t:     {es:'Gracias por tu ayuda', en:'Thank you for your help'},
   bienv_p:     {es:'Cada donación es una bendición para las familias de Pereira. Que Dios te bendiga. ¿Cómo quieres ayudar?',
