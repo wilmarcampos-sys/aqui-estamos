@@ -157,8 +157,46 @@ document.querySelectorAll('#filtros button').forEach(b=>b.onclick=()=>{
   if(x) x.onclick=()=>{ n.style.display='none'; try{ localStorage.setItem('ae_nota_zonas','off'); }catch(e){} };
 })();
 
+/* Feed vivo: una píldora discreta sobre el mapa que rota la actividad reciente
+   (reportes y entregas). Salta a lo nuevo en vivo; si no hay novedades, hace
+   auto-play de lo que hay — siempre se ve movimiento, como plataforma activa. */
+(function(){
+  const wrap=document.getElementById('feed');
+  if(!wrap) return;
+  let items=[], idx=0, ultimoTop=0;
+  const zN = z => (ZONAS.find(x=>x.id===z)||{}).n || '';
+  function armar(){
+    const reps=(S.reportes||[]).filter(r=>r.k&&r.ts).map(r=>({ts:r.ts,tipo:'rep',k:r.k,z:r.z,ref:r.ref}));
+    const ents=(S.entregas||[]).filter(e=>e.k&&e.ts).map(e=>({ts:e.ts,tipo:'ent',k:e.k,z:e.z}));
+    items=reps.concat(ents).sort((a,b)=>b.ts-a.ts).slice(0,25);
+  }
+  function texto(it){
+    const need=NEED[it.k]?.n||it.k, donde=it.ref||zN(it.z);
+    return it.tipo==='ent' ? `Llegó ${need}${donde?' a '+donde:''}`
+                           : `${need}${donde?' en '+donde:''}`;
+  }
+  function lanzar(it){
+    if(!it || !wrap.offsetParent) return;   // no gastar si el mapa no está a la vista
+    const c=document.createElement('div'); c.className='feeditem';
+    const d=document.createElement('span'); d.className='feed-dot';
+    d.style.background = it.tipo==='ent' ? '#3f8f5f' : (UCOL[3]||'#dc2626');
+    const t=document.createElement('span'); t.textContent=texto(it);
+    c.appendChild(d); c.appendChild(t); wrap.appendChild(c);
+    c.addEventListener('animationend',()=>c.remove());
+    setTimeout(()=>{ if(c.parentNode) c.remove(); }, 5400);
+  }
+  window.feedRefrescar=function(){
+    armar();
+    if(items.length && items[0].ts>ultimoTop){ ultimoTop=items[0].ts; lanzar(items[0]); idx=0; }  // en vivo
+  };
+  // auto-play: sube una cada tanto para que siempre haya movimiento, sin apurar
+  setInterval(()=>{ if(!items.length) return; idx=(idx+1)%items.length; lanzar(items[idx]); }, 6500);
+  feedRefrescar();
+})();
+
 function render(){
   pintarMapa();
+  if(typeof feedRefrescar==='function') feedRefrescar();   // feed vivo de actividad
   // acceso de usuario en el encabezado: con sesión, su avatar + punto verde
   // (en línea) y entra a su cuenta; sin sesión, un ícono para entrar.
   // Solo se re-pinta cuando cambia de verdad (entrar/salir/foto), no en cada
