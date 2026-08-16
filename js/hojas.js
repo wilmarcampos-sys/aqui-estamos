@@ -197,6 +197,17 @@ function abrirAlbergue(a){
   const cards = nec ? nec.needs.map(x=>{
     const uName = x.u===3?'Urgente':x.u===2?'Prioritario':'Puede esperar';
     const nota = (nec.reps.filter(r=>r.k===x.k).map(r=>r.nota).find(Boolean))||'';
+    // ¿ya llegó? entrega de esa misma necesidad, cerca del punto, en la última semana
+    const e = S.entregas.filter(y=>y.k===x.k && y.lat && dist(a.lat,a.lng,y.lat,y.lng)<400)
+                        .sort((p,q)=>q.ts-p.ts)[0];
+    const ok = !!e && (now()-e.ts) < 7*24*H;
+    if(ok) return `<div class="nec-card ok">
+      <div class="grow">
+        <h4>${esc(NEED[x.k]?.n||x.k)}</h4>
+        <div class="nec-sub">Entregado ${hace(e.ts)}${e.quien?` por ${esc(e.quien)}`:''}</div>
+      </div>
+      <span class="chip ok">✓ Llegó</span>
+    </div>`;
     return `<div class="nec-card u${x.u} nsel" data-nsel="${x.k}">
       <span class="nchk" aria-hidden="true"></span>
       <div class="grow">
@@ -638,12 +649,15 @@ function abrirEntrega(zid, kfijo, pt){
     if(!p || !p.z) return toast('Toque el mapa para marcar dónde se entregó.');
     const quien = $('#e-quien').value.trim() || 'Anónimo';
     const cant  = $('#e-cant') ? $('#e-cant').value.trim() : '';
-    cerrarSheet();
+    const n = eSel.size;
     eSel.forEach(k=>guardar('entregas',
       {zona:p.z, necesidad:k, lat:p.lat, lng:p.lng, quien, cantidad:cant, device:DEVICE},
       {id:uid(), z:p.z, lat:p.lat, lng:p.lng, k, ts:now(), quien, cant}));
     render();
-    toast(`${eSel.size} entrega${eSel.size>1?'s':''} registrada${eSel.size>1?'s':''}. El mapa se actualizó.`);
+    toast(`${n} entrega${n>1?'s':''} registrada${n>1?'s':''}. El mapa se actualizó.`);
+    // si el punto es un albergue, reabrir su ficha ya con lo entregado marcado
+    const alb = S.coords.find(c=>(c.rol||'')==='Albergue' && c.lat && dist(p.lat,p.lng,c.lat,c.lng)<400);
+    if(alb) abrirAlbergue(alb); else cerrarSheet();
   };
 }
 
