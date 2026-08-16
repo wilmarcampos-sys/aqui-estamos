@@ -299,6 +299,10 @@
   .btn.red{background:#dc2626;color:#fff}
   .btn.green{background:#3f8f5f;color:#fff}
   .btn.flat{background:var(--chip);color:var(--txt);border:1px solid var(--line)}
+  /* cerrar/cancelar: enlace discreto, no un botón que compita en la zona del pulgar */
+  .cerrar-txt{display:block;width:100%;background:none;border:0;color:var(--dim);
+    font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;padding:13px;margin-top:4px}
+  .cerrar-txt:active{color:var(--txt)}
   .btn:disabled{opacity:.4}
   .btn2{display:flex;gap:8px}
   .btn2 .btn{margin-top:10px}
@@ -306,10 +310,10 @@
   /* selector de punto en el mapa */
   .picker{position:relative;margin-top:6px;border-radius:13px;overflow:hidden;border:1.5px solid var(--line)}
   .pickmap{height:340px;background:var(--map-bg);touch-action:none}
-  .pickhint{position:absolute;top:8px;left:8px;right:8px;z-index:600;pointer-events:none;
-    background:rgba(220,38,38,.94);color:#fff;border-radius:10px;padding:9px 11px;
-    font-size:13px;font-weight:700;text-align:center;transition:opacity .35s;
-    box-shadow:0 4px 14px rgba(0,0,0,.45)}
+  .pickhint{position:absolute;bottom:10px;left:50%;transform:translateX(-50%);z-index:600;pointer-events:none;
+    background:rgba(15,23,42,.82);color:#fff;border-radius:999px;padding:6px 14px;white-space:nowrap;
+    font-size:12px;font-weight:600;text-align:center;transition:opacity .35s;backdrop-filter:blur(5px);
+    box-shadow:0 2px 8px rgba(0,0,0,.35)}
   .pickhint.off{opacity:0}
   .pinwrap{position:relative;width:34px;height:34px;display:grid;place-items:center;cursor:grab}
   .pindot{width:20px;height:20px;border-radius:50%;background:#dc2626;border:3px solid #fff;
@@ -319,7 +323,8 @@
   @keyframes pp{0%{transform:scale(.55);opacity:.85}100%{transform:scale(1.5);opacity:0}}
   .btn.wa{background:#25d366;color:#04220f;display:flex;align-items:center;justify-content:center;
     gap:9px;text-decoration:none}
-  .btn.loc{background:var(--chip);color:var(--txt);border:1.5px solid var(--line2);margin-top:9px;font-size:16px}
+  .btn.loc{background:rgba(79,156,249,.12);color:var(--acc);border:1.5px solid var(--acc);margin-top:9px;
+    font-size:16px;font-weight:700}
   .btn.loc.ok{background:#2f5c41;border-color:#3f8f5f;color:#c9f5d8}
   .pickinfo{font-size:13px;color:var(--dim);margin-top:7px}
   .pickinfo b{color:var(--txt)}
@@ -510,6 +515,7 @@ input.pin{letter-spacing:9px;font-size:20px;text-align:center;font-weight:700}
 /* botones — texto blanco sobre color, valores medidos AA */
 :root[data-eff="light"] .btn{color:#fff}
 :root[data-eff="light"] .btn.flat{color:var(--txt)}
+:root[data-eff="light"] .btn.loc{color:var(--acc)}
 :root[data-eff="light"] .btn.red,:root[data-eff="light"] .fab{background:#C81E1E;color:#fff}
 :root[data-eff="light"] .btn.green{background:#2E7D4F;color:#fff}
 :root[data-eff="light"] .cats button.on{color:#fff}

@@ -362,7 +362,7 @@ function abrirSoporte(){
       ${icoWA()} Abrir WhatsApp y enviar</a>
     <p class="muted" style="margin-top:10px">Se abre WhatsApp con el mensaje ya escrito.
       Solo tiene que darle enviar.</p>
-    <button class="btn flat" data-close-btn>Cerrar</button>
+    <button class="cerrar-txt" data-close-btn>Cerrar</button>
   `);
   let tipo = TIPOS_SOPORTE[0];
   const armar = ()=>{

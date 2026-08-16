@@ -364,7 +364,7 @@ function abrirReporte(zid, pt, refPrev){
         </div>
       </details>
       <button class="btn" id="r-next1">Confirmar este sitio</button>
-      <button class="btn flat" data-close-btn>Cancelar</button>
+      <button class="cerrar-txt" data-close-btn>Cancelar</button>
     `);
     const body = $('#sheet-body');
     const pintarSug = (la, lo)=>{
@@ -595,7 +595,7 @@ function abrirEntrega(zid, kfijo, pt){
       </div>
     </details>
 
-    <button class="btn flat" data-close-btn>Cancelar</button>
+    <button class="cerrar-txt" data-close-btn>Cancelar</button>
 
     <div class="selbar">
       <span class="grow" id="e-cnt">Nada marcado</span>
@@ -697,7 +697,7 @@ function abrirCoord(zid, pt, zExist){
       ${campoPin('c-pin2', 'Repita el PIN', 'Los dos tienen que ser iguales.')}`}
 
     <button class="btn" id="c-next">Inscribirme en este sector</button>
-    <button class="btn flat" data-close-btn>Cancelar</button>
+    <button class="cerrar-txt" data-close-btn>Cancelar</button>
   `);
 
   pickerInit('c-map', zid, pt || ptDe(zid));
