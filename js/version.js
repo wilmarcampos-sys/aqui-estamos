@@ -17,8 +17,8 @@
              confusión entre día y mes.
    ============================================================ */
 const VERSION = {
-  n:     '1.17.0',
-  fecha: '2026-08-14',
+  n:     '1.18.0',
+  fecha: '2026-08-16',
 };
 
 /* La fecha se arma partiendo el texto, no con new Date(): "2026-08-14" se

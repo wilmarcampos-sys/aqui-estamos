@@ -55,6 +55,14 @@
   .hbtn{flex:0 0 auto;width:40px;height:40px;border-radius:12px;background:none;
     border:0;color:var(--acc);cursor:pointer;display:grid;place-items:center}
   .hbtn:active{opacity:.55}
+  /* Barra "Donar desde USA" bajo el header → lleva a /donar */
+  .usbar{flex:0 0 auto;display:flex;align-items:center;justify-content:center;gap:9px;
+    height:42px;text-decoration:none;color:#fff;font:800 14.5px/1 inherit;letter-spacing:-.2px;
+    background:linear-gradient(135deg,#F2B705 0%,#F97316 55%,#D62828 100%)}
+  .usbar .ic{width:17px;height:17px}
+  .usbar .arw{width:18px;height:18px;transition:transform .15s}
+  .usbar:active{filter:brightness(1.05)}
+  .usbar:active .arw{transform:translateX(3px)}
   .estado.demo{color:#fcd34d}
   .estado.cola{color:#F2B705}
 

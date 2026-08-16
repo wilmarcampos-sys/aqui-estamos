@@ -1,0 +1,18 @@
+FOTO DE FONDO DEL HERO (página /donar)
+======================================
+
+Deja aquí la imagen real de la tragedia con el nombre exacto:
+
+    hero-donar.jpg
+
+Recomendado:
+- Horizontal (apaisada), mínimo 1600 px de ancho.
+- .jpg o .webp (renombra a hero-donar.jpg, o cambia la ruta en css/donar.css → --hero-img).
+- Peso ideal < 400 KB (comprime en https://squoosh.app si pesa mucho).
+
+El hero ya lleva un velo oscuro encima para que el texto blanco se lea
+bien sobre cualquier foto. Si el archivo no existe, el hero cae con
+elegancia al degradado de la marca (ámbar → rojo). No se rompe nada.
+
+Nota: usa una foto propia o con permiso de uso. No pongas fotos con
+rostros identificables de víctimas sin consentimiento.
