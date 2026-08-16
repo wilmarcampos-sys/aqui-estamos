@@ -225,6 +225,9 @@
     background:var(--bg2);border-top:1px solid var(--line2);
     margin:8px -14px 0;padding:12px 14px calc(8px + var(--safe));
     font-size:13px;color:var(--dim);box-shadow:0 -6px 18px rgba(2,6,18,.5)}
+  /* barra pegajosa para la acción principal de un paso (ej. Confirmar sitio) */
+  .pasobar{position:sticky;bottom:0;z-index:20;background:var(--bg2);border-top:1px solid var(--line2);
+    margin:10px -14px 0;padding:12px 14px calc(8px + var(--safe));box-shadow:0 -6px 18px rgba(2,6,18,.4)}
   .selbar .btn{margin:0;width:auto;flex:0 0 auto;padding:14px 20px}
   .selbar .grow{color:var(--txt);font-weight:700;font-size:14px}
   .selbar .grow.falta{color:#f5a524}

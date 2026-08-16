@@ -363,8 +363,8 @@ function abrirReporte(zid, pt, refPrev){
           <p class="muted" style="margin:6px 0 0">Esto lo puede leer cualquiera. No escriba datos de una persona.</p>
         </div>
       </details>
-      <button class="btn" id="r-next1">Confirmar este sitio</button>
       <button class="cerrar-txt" data-close-btn>Cancelar</button>
+      <div class="pasobar"><button class="btn" id="r-next1" style="margin:0">Confirmar este sitio</button></div>
     `);
     const body = $('#sheet-body');
     const pintarSug = (la, lo)=>{
