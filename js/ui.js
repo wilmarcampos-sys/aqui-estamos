@@ -281,7 +281,40 @@ function render(){
       : vacio('Todavía nadie ha reportado',
               'Cuando alguien pida ayuda, aquí van a salir los sitios donde no hay quien responda.'));
 
-  // lista de zonas
+  // lista: censo, albergues o zonas según el filtro
+  if(filtro==='censo'){
+    const cs = (S.censo||[]).slice().sort((a,b)=>(b.ts||0)-(a.ts||0));
+    $('#lista-zonas').innerHTML = cs.map((cn,i)=>{
+      const ent = S.entregas.filter(y=>y.lat && dist(cn.lat,cn.lng,y.lat,y.lng)<300).sort((p,q)=>q.ts-p.ts)[0];
+      const at = !!ent && (now()-ent.ts)<7*24*H;
+      const chips = (cn.needs||[]).slice(0,6).map(k=>`<span class="chip">${esc(CENSO_NEED[k]||k)}</span>`).join('');
+      return `<div class="card" data-censo="${i}" style="cursor:pointer">
+        <div class="row"><div class="rank" style="background:${at?'#3f8f5f':'#7c3aed'};color:#fff">${ico(at?'check':'user')}</div>
+          <div class="grow"><div class="row"><h3 class="grow trunc">${esc(cn.barrio||'Vivienda registrada')}</h3>
+            <span class="muted">${at?'Atendido':'Pendiente'}</span></div>
+            <div class="muted">${cn.personas?`${cn.personas} persona${cn.personas>1?'s':''} · `:''}censo</div></div></div>
+        ${chips?`<div style="margin-top:8px">${chips}</div>`:''}</div>`;
+    }).join('') || vacio('Sin censo todavía','Aún no hay viviendas registradas en el censo con ubicación.','');
+    document.querySelectorAll('#lista-zonas .card').forEach(c=>c.onclick=()=>abrirCenso(cs[+c.dataset.censo]));
+    return;
+  }
+  if(filtro==='albergues'){
+    const albs = S.coords.filter(c=>c.lat && (c.rol||'')==='Albergue');
+    $('#lista-zonas').innerHTML = albs.map((a,i)=>{
+      let f=null,bd=1e9; focos(a.z).forEach(x=>{const d=dist(a.lat,a.lng,x.lat,x.lng); if(d<bd){bd=d;f=x;}});
+      const pend = (f && bd<300) ? f.needs.filter(x=>{ const e=S.entregas.filter(y=>y.k===x.k && y.lat && dist(a.lat,a.lng,y.lat,y.lng)<400).sort((p,q)=>q.ts-p.ts)[0]; return !(e && (now()-e.ts)<7*24*H); }) : [];
+      const chips = pend.slice(0,6).map(x=>`<span class="chip ${x.u===3?'u3':x.u===2?'u2':''}">${esc(NEED[x.k]?.n||x.k)}</span>`).join('');
+      const cap = (a.cap!=null) ? `${a.ocup!=null?a.ocup+'/':''}${a.cap} pers.` : '';
+      return `<div class="card" data-alb="${i}" style="cursor:pointer">
+        <div class="row"><div class="rank" style="background:#F2B705;color:#3a1500">${ico('tent')}</div>
+          <div class="grow"><div class="row"><h3 class="grow trunc">${esc(a.micro||a.nom)}</h3>
+            <span class="muted">${a.ver?'Verificado':''}</span></div>
+            <div class="muted">Albergue${cap?` · ${cap}`:''}${pend.length?` · ${pend.length} necesidad${pend.length>1?'es':''}`:''}</div></div></div>
+        ${chips?`<div style="margin-top:8px">${chips}</div>`:''}</div>`;
+    }).join('') || vacio('Sin albergues','No hay albergues registrados todavía.','');
+    document.querySelectorAll('#lista-zonas .card').forEach(c=>c.onclick=()=>abrirAlbergue(albs[+c.dataset.alb]));
+    return;
+  }
   let lz = todos.filter(s=>s.lista.length).sort((a,b)=>b.idx-a.idx);
   if(filtro==='comuna') lz=lz.filter(s=>s.z.t==='comuna');
   if(filtro==='corregimiento') lz=lz.filter(s=>s.z.t==='corregimiento');
