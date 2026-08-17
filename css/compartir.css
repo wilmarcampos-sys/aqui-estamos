@@ -9,7 +9,7 @@
 .cprevwrap{margin:18px 0 6px;display:flex;justify-content:center}
 .cprevwrap[hidden]{display:none}
 #c-canvas{width:100%;max-width:420px;height:auto;border-radius:18px;
-  box-shadow:0 18px 44px -18px rgba(2,8,23,.5);border:1px solid var(--line)}
+  box-shadow:0 12px 30px -14px rgba(2,8,23,.45)}
 
 .cbtns{margin-top:16px}
 .cbtns[hidden]{display:none}
