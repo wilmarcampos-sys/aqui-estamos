@@ -15,8 +15,23 @@
 }
 
 /* franja legible un poco más ancha aquí */
-.view.on .pad > *{max-width:900px}
 .view.on .pad{padding-top:10px}
+.view.on .pad > *{max-width:900px}
+/* Desktop: columna centrada y ancha; catálogo a 3 columnas. Scoped a /donar. */
+@media(min-width:840px){
+  .donar-page .view.on .pad{max-width:1040px;margin-left:auto;margin-right:auto}
+  .donar-page .view.on .pad > *{max-width:none;margin-left:0;margin-right:0}
+  .donar-page .dcat.open .dgrid{grid-template-columns:1fr 1fr 1fr;column-gap:30px}
+  .donar-page .dgrid .ditem:nth-child(3){border-top:0}
+}
+
+/* ---------- menú superior (navegación entre páginas) ---------- */
+.dnav{display:flex;gap:4px;padding:7px 14px;border-bottom:1px solid var(--line);background:var(--bg);
+  overflow-x:auto;-webkit-overflow-scrolling:touch;flex:0 0 auto}
+.dnav a{flex:0 0 auto;padding:9px 14px;border-radius:10px;font:800 13.5px/1 inherit;letter-spacing:-.1px;
+  color:var(--dim);text-decoration:none;white-space:nowrap;transition:background .15s,color .15s}
+.dnav a:hover{color:var(--txt);background:var(--chip)}
+.dnav a.on{color:#fff;background:var(--grad)}
 
 /* ---------- segmentado de idioma (header) ---------- */
 .langtog{display:inline-flex;gap:3px;padding:3px;border-radius:13px;background:var(--chip);flex:0 0 auto}
@@ -309,6 +324,9 @@
 .dw-opt.amazon .dw-opt-ic{background:rgba(19,26,34,.14)}
 .dw-opt-ic .ic{width:22px;height:22px}
 .dw-opt b{display:block;font-size:15.5px;font-weight:800;letter-spacing:-.2px}
+.dw-fast{display:inline-block;vertical-align:middle;margin-left:6px;padding:3px 8px;border-radius:999px;
+  font-size:10.5px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;
+  background:rgba(19,26,34,.16);color:inherit}
 .dw-opt small{display:block;font-size:12.5px;margin-top:3px;opacity:.9;font-weight:600}
 
 /* aviso "se añadió": punto que vuela al carrito + rebote del contador */

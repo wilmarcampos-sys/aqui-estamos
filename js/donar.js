@@ -342,6 +342,8 @@ function pintarTextos(){
   $('#d-centros-sub').textContent = t(DONAR_UI.centros_sub);
   $('#d-vermapa').textContent     = t(DONAR_UI.vermapa);
   const reg=$('#d-registrar'); if(reg) reg.textContent = t(DONAR_UI.registrar);
+  const nv=(id,o)=>{const e=$('#'+id); if(e) e.textContent=t(o);};
+  nv('nav-donar',DONAR_UI.nav_donar); nv('nav-centro',DONAR_UI.nav_centro); nv('nav-mapa',DONAR_UI.nav_mapa);
   document.querySelectorAll('#langtog button').forEach(b=>b.classList.toggle('on', b.dataset.l===LANG));
 }
 function renderTodo(){
@@ -422,15 +424,15 @@ $('#d-amazon-hero').onclick = irAmazon;
 
 /* bienvenida: agradecer y elegir cómo ayudar (una vez por dispositivo) */
 function showBienvenida(){
-  const opt=(k,cls,ico,tt,ss)=>`<button class="dw-opt ${cls}" data-w="${k}">
-    <span class="dw-opt-ic">${ico}</span><span class="grow"><b>${esc(tt)}</b><small>${esc(ss)}</small></span></button>`;
+  const opt=(k,cls,ico,tt,ss,fast)=>`<button class="dw-opt ${cls}" data-w="${k}">
+    <span class="dw-opt-ic">${ico}</span><span class="grow"><b>${esc(tt)}${fast?` <span class="dw-fast">${esc(t(DONAR_UI.rapido))}</span>`:''}</b><small>${esc(ss)}</small></span></button>`;
   $('#d-bienvenida .dwelcome-card').innerHTML =
     `<button class="dw-x" data-w="close" aria-label="Cerrar">&times;</button>
      <span class="dw-mark">${heartIcon()}</span>
      <h2>${esc(t(DONAR_UI.bienv_t))}</h2>
      <p>${esc(t(DONAR_UI.bienv_p))}</p>
-     ${opt('llevar','primary', pinIcon(), t(DONAR_UI.op_llevar_t), t(DONAR_UI.op_llevar_s))}
-     ${opt('amazon','amazon', amzIcon(), t(DONAR_UI.op_amazon_t), t(DONAR_UI.op_amazon_s))}`;
+     ${opt('amazon','amazon', amzIcon(), t(DONAR_UI.op_amazon_t), t(DONAR_UI.op_amazon_s), true)}
+     ${opt('llevar','primary', pinIcon(), t(DONAR_UI.op_llevar_t), t(DONAR_UI.op_llevar_s))}`;
   const w=$('#d-bienvenida'); w.hidden=false; requestAnimationFrame(()=>w.classList.add('on'));
 }
 function closeBienvenida(){ store('ae_donar_bienv','1'); const w=$('#d-bienvenida'); w.classList.remove('on'); setTimeout(()=>w.hidden=true,240); }

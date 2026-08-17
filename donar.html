@@ -36,7 +36,7 @@ document.documentElement.setAttribute('data-eff', window.temaEfectivo());
 </script>
 </head>
 <body>
-<div id="app">
+<div id="app" class="donar-page">
   <header>
     <a class="marcabtn" href="/" aria-label="Aquí Estamos">
       <svg class="mark" viewBox="0 0 24 24" aria-hidden="true"><defs>
@@ -49,6 +49,12 @@ document.documentElement.setAttribute('data-eff', window.temaEfectivo());
       <button data-l="es">ES</button><button data-l="en">EN</button>
     </div>
   </header>
+
+  <nav class="dnav">
+    <a href="/donar" id="nav-donar" class="on"></a>
+    <a href="/centro" id="nav-centro"></a>
+    <a href="/" id="nav-mapa"></a>
+  </nav>
 
   <main><div class="view on"><div class="pad">
     <section class="dhero">

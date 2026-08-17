@@ -13,6 +13,9 @@ if(LANG!=='en' && LANG!=='es') LANG = (navigator.language||'').toLowerCase().sta
 const t = o => (o && (o[LANG]||o.es)) || '';
 
 const CT = {
+  nav_donar: {es:'Cómo donar', en:'How to donate'},
+  nav_centro:{es:'Registrar centro', en:'Register a center'},
+  nav_mapa:  {es:'Mapa de ayuda', en:'Help map'},
   kick:   {es:'Sé parte de la ayuda', en:'Be part of the help'},
   titulo: {es:'Registra tu centro de acopio', en:'Register your drop-off center'},
   sub:    {es:'Recibe donaciones para Pereira en tu ciudad. Al enviar, revisamos y lo publicamos en el mapa de donantes.',
@@ -55,7 +58,7 @@ const CT = {
   ph_coord: {es:'Ej. Ana María Restrepo', en:'e.g. Ana María Restrepo'},
   ph_tel:   {es:'+1 305 000 0000', en:'+1 305 000 0000'},
   ph_dir:   {es:'Calle, ciudad, estado y ZIP', en:'Street, city, state and ZIP'},
-  ph_amz:   {es:'https://www.amazon.com/…', en:'https://www.amazon.com/…'},
+  ph_amz:   {es:'Pega el link de tu Wish List o Registro de Amazon', en:'Paste your Amazon Wish List or Registry link'},
   ph_cond:  {es:'Ej. Clasificada y en cajas pequeñas, rotulada por categoría. Sin agua a granel ni ropa usada.',
              en:'e.g. Sorted and in small boxes, labeled by category. No bulk water or used clothing.'},
   ph_hora:  {es:'Ej. Lun a Sáb, 9am–6pm', en:'e.g. Mon–Sat, 9am–6pm'},
@@ -79,11 +82,12 @@ function pinta(){
   $('#l-tipo').textContent = t(CT.tipo);
   const seg=$('#c-tipo').children;
   seg[0].textContent=t(CT.m_persona); seg[1].textContent=t(CT.m_amazon); seg[2].textContent=t(CT.m_ambos);
-  $('#l-ciudad').textContent=t(CT.ciudad); $('#l-nombre').textContent=t(CT.nombre); $('#h-nombre').textContent=t(CT.h_nombre);
-  $('#l-coord').textContent=t(CT.coord); $('#l-tel').textContent=t(CT.tel); $('#h-tel').textContent=t(CT.h_tel);
+  /* la guía va DENTRO de cada casilla (placeholder), no como texto por fuera */
+  $('#l-ciudad').textContent=t(CT.ciudad); $('#l-nombre').textContent=t(CT.nombre); $('#h-nombre').textContent='';
+  $('#l-coord').textContent=t(CT.coord); $('#l-tel').textContent=t(CT.tel); $('#h-tel').textContent='';
   $('#l-dir').textContent=t(CT.dir);
-  $('#l-amz').textContent=t(CT.amz); $('#h-amz').textContent=t(CT.h_amz);
-  $('#l-recibe').textContent=t(CT.recibe); $('#l-cond').textContent=t(CT.cond); $('#h-cond').textContent=t(CT.h_cond);
+  $('#l-amz').textContent=t(CT.amz); $('#h-amz').textContent='';
+  $('#l-recibe').textContent=t(CT.recibe); $('#l-cond').textContent=t(CT.cond); $('#h-cond').textContent='';
   $('#l-clasif').textContent=t(CT.clasif); $('#l-hora').textContent=t(CT.hora);
   $('#c-enviar').textContent=t(CT.enviar); $('#c-privx').textContent=t(CT.privx);
   $('#ok-t').textContent=t(CT.ok_t); $('#ok-p').textContent=t(CT.ok_p); $('#ok-volver').textContent=t(CT.ok_volver);
@@ -92,6 +96,8 @@ function pinta(){
   ph('c-tel',t(CT.ph_tel)); ph('c-dir',t(CT.ph_dir)); ph('c-amz',t(CT.ph_amz));
   ph('c-cond',t(CT.ph_cond)); ph('c-hora',t(CT.ph_hora));
   $('#c-recibe').innerHTML = CATS.map(c=>`<button type="button" class="cchip" data-k="${c.k}">${esc(LANG==='en'?c.en:c.es)}</button>`).join('');
+  const nv=(id,o)=>{const e=$('#'+id); if(e) e.textContent=t(o);};
+  nv('nav-donar',CT.nav_donar); nv('nav-centro',CT.nav_centro); nv('nav-mapa',CT.nav_mapa);
   document.querySelectorAll('#langtog button').forEach(b=>b.classList.toggle('on', b.dataset.l===LANG));
   aplicaTipo();
 }

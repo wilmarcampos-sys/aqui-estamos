@@ -123,6 +123,9 @@ const DONAR_NO = [
 
 /* textos de la interfaz */
 const DONAR_UI = {
+  nav_donar:   {es:'Cómo donar', en:'How to donate'},
+  nav_centro:  {es:'Registrar centro', en:'Register a center'},
+  nav_mapa:    {es:'Mapa de ayuda', en:'Help map'},
   kick:        {es:'Unidos por Pereira', en:'United for Pereira'},
   art:         {es:'artículos', en:'items'},
   cat:         {es:'categorías', en:'categories'},
@@ -143,12 +146,13 @@ const DONAR_UI = {
   ubicar_sub:  {es:'Ordenar por cercanía a tu casa', en:'Sort by distance to your home'},
   /* bienvenida */
   bienv_t:     {es:'Gracias por tu ayuda', en:'Thank you for your help'},
-  bienv_p:     {es:'Cada donación es una bendición para las familias de Pereira. Que Dios te bendiga. ¿Cómo quieres ayudar?',
-                en:'Every donation is a blessing for the families of Pereira. God bless you. How would you like to help?'},
+  bienv_p:     {es:'Cada donación es una bendición para Pereira. Que Dios te bendiga. Ayuda en un clic:',
+                en:'Every donation is a blessing for Pereira. God bless you. Help in one click:'},
+  rapido:      {es:'Lo más rápido', en:'Fastest'},
+  op_amazon_t: {es:'Ordenar en Amazon', en:'Order on Amazon'},
+  op_amazon_s: {es:'Compras de la lista y llega directo al centro. Sin salir de casa.', en:'Buy from the list, shipped straight to the center. Without leaving home.'},
   op_llevar_t: {es:'Escoger y llevar en persona', en:'Choose & drop off in person'},
   op_llevar_s: {es:'Arma tu lista y llévala a un centro de acopio', en:'Build your list and take it to a drop-off center'},
-  op_amazon_t: {es:'Ordenar por Amazon', en:'Order on Amazon'},
-  op_amazon_s: {es:'Compra de la lista y llega directo al centro', en:'Buy from the list, shipped straight to the center'},
   cercano:     {es:'Más cercano', en:'Nearest'},
   sin_ubi:     {es:'No pudimos ubicarte', en:'Couldn\'t find your location'},
   norecibe:    {es:'NO recibimos', en:'We do NOT accept'},
