@@ -41,6 +41,8 @@ function xIcon(){ return '<svg class="ic" viewBox="0 0 24 24" fill="none" stroke
 /* teléfono internacional */
 function telDig(v){ return String(v||'').replace(/[^0-9]/g,''); }
 function waHref(v){ const d=telDig(v); return d?('https://wa.me/'+d):'#'; }
+/* la lista de Amazon siempre abre ordenada por prioridad (alta primero) */
+function amazonSort(u){ if(!u) return u; if(/[?&]sort=/.test(u)) return u; return u + (u.includes('?')?'&':'?') + 'sort=priority'; }
 function telFmt(v){ const d=telDig(v); if(!d) return '';
   if(d.length===11 && d[0]==='1') return `+1 (${d.slice(1,4)}) ${d.slice(4,7)}-${d.slice(7)}`;
   if(d.startsWith('57') && d.length===12) return `+57 ${d.slice(2,5)} ${d.slice(5,8)} ${d.slice(8)}`;
@@ -388,7 +390,7 @@ function ubicame(cb){
 function irAmazon(){
   const lists = CENTROS.filter(c=>c.amazon_url);
   if(lists.length===0){ irCentros(); return; }
-  if(lists.length===1){ window.open(lists[0].amazon_url, '_blank', 'noopener'); return; }
+  if(lists.length===1){ window.open(amazonSort(lists[0].amazon_url), '_blank', 'noopener'); return; }
   openAmazon();
 }
 function openAmazon(){
@@ -473,7 +475,7 @@ document.addEventListener('keydown', e=>{ if(e.key==='Escape' && !$('#d-share').
 $('#d-amazon').addEventListener('click', e=>{
   if(e.target.closest('[data-loc]')){ ubicame(()=>openAmazon()); return; }
   const row=e.target.closest('[data-url]');
-  if(row){ const u=row.dataset.url; closeAmazon(); window.open(u,'_blank','noopener'); return; }
+  if(row){ const u=row.dataset.url; closeAmazon(); window.open(amazonSort(u),'_blank','noopener'); return; }
   if(e.target.closest('[data-x]')) closeAmazon();
 });
 document.addEventListener('keydown', e=>{ if(e.key==='Escape' && !$('#d-amazon').hidden) closeAmazon(); });
