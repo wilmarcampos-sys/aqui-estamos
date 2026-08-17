@@ -5,7 +5,11 @@ let map, capa, modoSVG = (typeof L === 'undefined');
 if(!modoSVG){
   try{
     map = L.map('map',{zoomControl:false, attributionControl:false}).setView([4.803,-75.735], 11);
-    L.control.zoom({position:'topright'}).addTo(map);
+    // zoom propio (columna de controles arriba a la derecha), no el de Leaflet
+    const zin = document.getElementById('ctl-zin'), zout = document.getElementById('ctl-zout');
+    // sin animación: responde siempre, hasta en teléfonos lentos
+    if(zin) zin.onclick = ()=>map.setZoom(map.getZoom()+1, {animate:false});
+    if(zout) zout.onclick = ()=>map.setZoom(map.getZoom()-1, {animate:false});
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:18, opacity:.72}).addTo(map);
     capa = L.layerGroup().addTo(map);
   }catch(e){ modoSVG = true; }

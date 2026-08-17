@@ -106,8 +106,13 @@ document.documentElement.setAttribute('data-eff', window.temaEfectivo());
           <div class="lhelp">Acérquese para ver los puntos exactos y las micro-zonas de cada coordinador</div>
         </div>
       </div>
+      <div class="mapctl">
+        <div class="ctlgrp" role="group" aria-label="Zoom del mapa">
+          <button class="ctl" id="ctl-zin" type="button" aria-label="Acercar"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button>
+          <button class="ctl" id="ctl-zout" type="button" aria-label="Alejar"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14"/></svg></button>
+        </div>
       <div class="capas" id="capas">
-        <button class="capas-btn" id="capas-btn" type="button" aria-label="Filtrar capas del mapa">
+        <button class="capas-btn ctl solo" id="capas-btn" type="button" aria-label="Filtrar capas del mapa">
           <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
         </button>
         <div class="capas-panel" id="capas-panel" hidden>
@@ -119,11 +124,12 @@ document.documentElement.setAttribute('data-eff', window.temaEfectivo());
           <label class="capas-sep"><input type="checkbox" data-capa="soloaltas"><span>Solo necesidades altas</span></label>
         </div>
       </div>
+        <button class="ctl solo" id="fab-loc" type="button" aria-label="Ubícame: poner el pin donde estoy"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg></button>
+      </div>
       <div class="feed" id="feed" aria-live="polite"></div>
       <div class="pinbar" id="pinbar">Toque el mapa donde está, o arrastre el pin</div>
       <div class="fabs">
         <button class="fab" id="fab-need">Necesito ayuda aquí</button>
-        <button class="fab ghost" id="fab-loc" aria-label="Localízame: poner el pin donde estoy"><svg class="ic lg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg><span class="flab">Ubícame</span></button>
         <a class="fab ghost" id="fab-censo" href="/censo" aria-label="Registrar una vivienda en el censo"><svg class="ic lg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.8V20h14V9.8"/><path d="M10 20v-5h4v5"/></svg><span class="flab">+ Vivienda</span></a>
       </div>
     </section>

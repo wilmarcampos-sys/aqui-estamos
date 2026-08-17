@@ -194,12 +194,23 @@
   .legend.min .lchip{display:inline-flex}
   .legend.min .lcar{transform:rotate(-90deg)}
 
-  /* control de capas del mapa (filtrar qué se ve) */
-  .capas{position:absolute;top:96px;right:12px;z-index:600}
-  .capas-btn{width:42px;height:42px;border-radius:12px;background:var(--panel);border:1px solid var(--line);
-    color:var(--txt);display:grid;place-items:center;cursor:pointer;backdrop-filter:blur(10px);
+  /* columna de controles del mapa (arriba derecha, estilo app móvil):
+     zoom agrupado + capas + ubícame, todos del mismo tamaño y alineados */
+  .mapctl{position:absolute;top:12px;right:12px;z-index:600;
+    display:flex;flex-direction:column;gap:8px;align-items:flex-end}
+  .ctl{width:44px;height:44px;background:var(--panel);border:0;color:var(--txt);
+    display:grid;place-items:center;cursor:pointer;font-family:inherit;padding:0;
+    transition:transform .12s}
+  .ctl .ic{width:20px;height:20px}
+  .ctl:active{transform:scale(.94)}
+  .ctl.solo{border:1px solid var(--line);border-radius:14px;backdrop-filter:blur(10px);
     box-shadow:0 2px 8px rgba(2,8,23,.3)}
-  .capas-btn .ic{width:20px;height:20px}
+  .ctlgrp{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:14px;
+    overflow:hidden;backdrop-filter:blur(10px);box-shadow:0 2px 8px rgba(2,8,23,.3)}
+  .ctlgrp .ctl+.ctl{border-top:1px solid var(--line)}
+
+  /* control de capas del mapa (filtrar qué se ve) */
+  .capas{position:relative;z-index:1} /* el panel abierto tapa el botón de abajo */
   .capas-btn.on,.capas-btn.filtrando{color:var(--acc);border-color:var(--acc)}
   .capas-panel{position:absolute;top:50px;right:0;min-width:212px;background:var(--panel);border:1px solid var(--line);
     border-radius:16px;padding:10px;backdrop-filter:blur(10px);box-shadow:0 4px 12px rgba(2,8,23,.35)}
@@ -545,7 +556,7 @@
 @media (prefers-reduced-motion: reduce){
   .feed{display:none}
   .online .odot{animation:none}
-  .fab,.fab.ghost,nav button{transition:none}
+  .fab,.fab.ghost,nav button,.ctl{transition:none}
   .spin{animation-duration:1.4s}
 }
 
