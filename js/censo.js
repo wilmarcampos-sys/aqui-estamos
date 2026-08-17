@@ -33,17 +33,21 @@ function toast(m){ const e=$('#d-toast'); e.textContent=m; e.hidden=false; e.cla
 $('#q-nec').innerHTML = NECS.map(n=>`<button type="button" class="cchip" data-k="${n.k}">${n.t}</button>`).join('');
 $('#q-nec').addEventListener('click', e=>{ const b=e.target.closest('.cchip'); if(b) b.classList.toggle('on'); });
 
-$('#q-consent-txt').textContent = CONSENT;
-
-/* ubicación para el mapa */
+/* ubicación para el mapa. Es OPCIONAL: toma TU ubicación actual, así que sirve
+   si estás en la vivienda. Si registras a otra persona, déjalo sin ubicación
+   (igual se guarda; solo no sale en el mapa). */
 $('#q-ubic').onclick = ()=>{
-  if(!navigator.geolocation){ toast('Tu dispositivo no permite ubicación'); return; }
-  const b=$('#q-ubic'); b.disabled=true; b.textContent='Tomando ubicación…';
+  const b=$('#q-ubic');
+  if(!navigator.geolocation){ toast('Tu navegador no permite tomar ubicación.'); return; }
+  b.disabled=true; b.classList.remove('ok'); b.textContent='Tomando ubicación…';
   navigator.geolocation.getCurrentPosition(
     p=>{ LAT=p.coords.latitude; LNG=p.coords.longitude; b.classList.add('ok');
-         b.textContent='Ubicación tomada ✓'; b.disabled=false; },
-    ()=>{ b.disabled=false; b.textContent='Tomar mi ubicación para el mapa'; toast('No pudimos tomar la ubicación'); },
-    {enableHighAccuracy:true, timeout:9000, maximumAge:60000}
+         b.textContent='Ubicación tomada ✓'; b.disabled=false; toast('Listo, ubicación tomada.'); },
+    err=>{ b.disabled=false; b.classList.remove('ok'); b.textContent='Tomar mi ubicación para el mapa';
+         toast(err && err.code===1
+           ? 'Permitiste no dar ubicación. Puedes seguir sin ella.'
+           : 'No se pudo tomar la ubicación. Puedes seguir sin ella.'); },
+    {enableHighAccuracy:true, timeout:12000, maximumAge:60000}
   );
 };
 
