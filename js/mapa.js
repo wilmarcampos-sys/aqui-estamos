@@ -215,7 +215,7 @@ function pickerHTML(id, zid){
       <div id="${id}" class="pickmap"></div>
       <div class="pickhint" id="${id}-hint">${ico('tap')} Toque el mapa en el sitio</div>
     </div>
-    <button type="button" class="btn loc" data-gps="${id}">${ico('pin')} Localízame — poner el pin donde estoy</button>
+    <button type="button" class="btn loc" data-gps="${id}">${ico('pin')} Localízame: poner el pin donde estoy</button>
     <div class="pickinfo" id="${id}-info">…</div>
     <select id="${id}-jump" style="margin-top:8px;font-size:14px">
       <option value="">¿No encuentra el sitio? Ir a una zona cercana…</option>
@@ -278,10 +278,10 @@ function pickerGPS(id){
     pickMk.setLatLng([la,lo]);
     pickMk.fire('dragend', {target:pickMk});
     if(btn){ btn.classList.add('ok');
-      btn.innerHTML = ico('check')+` Pin puesto donde está${prec?` (±${prec} m)`:''} — puede corregirlo`; }
+      btn.innerHTML = ico('check')+` Pin puesto donde está${prec?` (±${prec} m)`:''}: puede corregirlo`; }
     toast('Listo. Si el pin quedó corrido, arrástrelo.');
   }, err=>{
-    if(btn) btn.innerHTML = ico('pin')+' Localízame — poner el pin donde estoy';
+    if(btn) btn.innerHTML = ico('pin')+' Localízame: poner el pin donde estoy';
     toast(err && err.code===1
       ? 'El navegador bloqueó la ubicación. Toque el mapa en el sitio.'
       : 'No se pudo obtener la ubicación. Toque el mapa en el sitio.');

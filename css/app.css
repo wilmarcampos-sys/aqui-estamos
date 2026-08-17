@@ -33,7 +33,7 @@
   /* cifras que no "bailan" */
   .capnums b,.cappct,.rank,.fbadge,.kpi b,.online b{font-variant-numeric:tabular-nums}
   body{
-    font:16px/1.45 system-ui,-apple-system,"Segoe UI",Helvetica,Arial,sans-serif;
+    font:16px/1.45 system-ui,-apple-system,sans-serif;
     background:var(--bg);color:var(--txt);
   }
   /* Altura dinámica: en el celular la barra del navegador cambia de tamaño;
@@ -523,8 +523,7 @@
   padding:2px 4px;min-width:46px;line-height:1.1}
 .online b{font-size:16px;font-weight:800;color:var(--txt)}
 .online .olbl{font-size:11px;color:var(--dim);letter-spacing:.2px}
-.online .odot{width:7px;height:7px;border-radius:50%;background:#3f8f5f;
-  box-shadow:0 0 0 0 rgba(63,143,95,.6);animation:pulso 2.2s ease-out infinite;margin-bottom:2px}
+.online .odot{width:7px;height:7px;border-radius:50%;background:#3f8f5f;margin-bottom:2px}
 
 /* avatar del coordinador logueado, junto al "en línea": entra a su cuenta
    y el punto verde le dice que está en línea */

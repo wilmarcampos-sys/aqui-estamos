@@ -58,7 +58,7 @@
 .dkick{display:inline-flex;align-items:center;gap:8px;font-size:11.5px;font-weight:800;letter-spacing:1.4px;
   text-transform:uppercase;color:#ffdc8f;padding:6px 12px 6px 11px;border-radius:999px;background:rgba(242,183,5,.14)}
 .dkick::before{content:"";width:6px;height:6px;border-radius:50%;background:#F2B705;box-shadow:0 0 0 4px rgba(242,183,5,.22)}
-.dhero h2{margin:15px 0 9px;font-size:clamp(27px,7.2vw,38px);font-weight:850;letter-spacing:-1.1px;line-height:1.03;color:#fff}
+.dhero h2{margin:15px 0 9px;font-size:clamp(27px,7.2vw,38px);font-weight:850;letter-spacing:-0.6px;line-height:1.04;color:#fff}
 .dhero p{margin:0;font-size:15.5px;line-height:1.5;color:rgba(244,247,253,.82);max-width:42ch}
 
 /* buscador de vidrio (sin marco duro) */

@@ -235,7 +235,7 @@ function render(){
       <b>${orf.length} punto${orf.length===1?'':'s'} sin coordinador</b>
       <div class="muted">${persTxt} personas sin cubrir</div></div></div>`;
   } else {
-    zAlert = `<div class="zalert ok">${ico('check')}<div class="grow"><b>Todo cubierto por ahora</b> — sin zonas críticas.</div></div>`;
+    zAlert = `<div class="zalert ok">${ico('check')}<div class="grow"><b>Todo cubierto por ahora</b>: sin zonas críticas.</div></div>`;
   }
   $('#kpis').innerHTML = zAlert;
   $('#kpis').style.display = 'block';
@@ -442,7 +442,7 @@ function abrirSoporte(){
     const extra = $('#s-txt').value.trim();
     const ctx = `\n\n---\nZona del pin: ${mainPt ? (ZONAS.find(z=>z.id===mainPt.z)?.n || '-') : '-'}`;
     $('#s-send').href = waLink(SOPORTE_WA,
-      `Aquí Estamos — reporte de la app\nTipo: ${tipo}` + (extra ? `\nDetalle: ${extra}` : '') + ctx);
+      `Aquí Estamos · reporte de la app\nTipo: ${tipo}` + (extra ? `\nDetalle: ${extra}` : '') + ctx);
   };
   $('#s-tipos').onclick = e=>{
     const b = e.target.closest('.opt'); if(!b) return;
@@ -461,7 +461,7 @@ const bShare = document.getElementById('btn-share');
 if(bShare) bShare.onclick = async ()=>{
   const datos = {
     title: 'Aquí Estamos',
-    text: 'Aquí Estamos — mapa abierto para la emergencia. Reporte lo que hace falta y vea dónde no ha llegado ayuda:',
+    text: 'Aquí Estamos · mapa abierto para la emergencia. Reporte lo que hace falta y vea dónde no ha llegado ayuda:',
     url: 'https://aquiestamos.co',
   };
   try{
