@@ -341,6 +341,7 @@ function pintarTextos(){
   $('#d-centros-h').textContent   = t(DONAR_UI.centros);
   $('#d-centros-sub').textContent = t(DONAR_UI.centros_sub);
   $('#d-vermapa').textContent     = t(DONAR_UI.vermapa);
+  const reg=$('#d-registrar'); if(reg) reg.textContent = t(DONAR_UI.registrar);
   document.querySelectorAll('#langtog button').forEach(b=>b.classList.toggle('on', b.dataset.l===LANG));
 }
 function renderTodo(){

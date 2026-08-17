@@ -1,0 +1,40 @@
+/* ============================================================
+   Formulario para registrar un centro de acopio. Reusa tokens y
+   estilos de donar.css (dhero, dseg, dcta, langtog, toast).
+   ============================================================ */
+
+#cform{max-width:560px}
+.clab{display:block;font-size:13px;font-weight:800;letter-spacing:.2px;margin:22px 0 9px;color:var(--txt)}
+.cseg{display:flex;gap:3px;width:100%}
+.cseg button{flex:1;height:44px;padding:0 6px}
+
+.field{margin:0 0 16px}
+.field label{display:block;font-size:13px;font-weight:800;letter-spacing:.2px;margin:0 0 7px;color:var(--txt)}
+.field input, .field textarea{width:100%;height:52px;border-radius:14px;border:1px solid var(--line2);
+  background:var(--inp);color:var(--txt);font:500 16px/1.35 inherit;padding:0 15px;outline:none;
+  transition:border-color .15s, box-shadow .15s}
+.field textarea{height:auto;min-height:96px;padding:13px 15px;resize:vertical}
+.field input:focus, .field textarea:focus{border-color:var(--acc);box-shadow:0 0 0 3px rgba(79,156,249,.18)}
+.field .hint{font-size:12.5px;line-height:1.4;color:var(--dim);margin-top:7px;text-wrap:pretty}
+
+.cchips{display:flex;flex-wrap:wrap;gap:8px}
+.cchip{display:inline-flex;align-items:center;gap:7px;padding:10px 14px;border-radius:999px;background:var(--chip);
+  color:var(--txt);font:600 14px/1 inherit;cursor:pointer;border:1.5px solid transparent;
+  transition:border-color .12s, background .12s}
+.cchip.on{border-color:var(--acc);background:color-mix(in srgb, var(--acc) 15%, var(--chip))}
+
+.cgroup[hidden]{display:none}
+
+.ccheck{display:flex;align-items:flex-start;gap:11px;margin:4px 0 20px;cursor:pointer;
+  font-size:14.5px;line-height:1.4;color:var(--txt)}
+.ccheck input{width:22px;height:22px;flex:0 0 auto;margin-top:1px;accent-color:var(--acc)}
+
+#c-enviar.dcta{margin-top:8px}
+.cprivx{margin:12px 2px 0;font-size:12.5px;line-height:1.45;color:var(--dim);text-align:center;text-wrap:pretty}
+
+.cok{text-align:center;padding:34px 10px 20px;max-width:480px;margin:0 auto}
+.cok .dw-mark{width:66px;height:66px;margin:0 auto 16px;border-radius:20px;display:grid;place-items:center;
+  color:#fff;background:var(--grad)}
+.cok .dw-mark .ic{width:33px;height:33px}
+.cok h2{margin:0 0 10px;font-size:24px;font-weight:850;letter-spacing:-.5px}
+.cok p{margin:0 0 22px;font-size:15.5px;line-height:1.55;color:var(--dim);text-wrap:pretty}

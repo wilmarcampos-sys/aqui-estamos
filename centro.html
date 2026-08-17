@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0f172a">
+<link rel="icon" type="image/svg+xml" href="logo/marca.svg">
+<title>Registrar centro de acopio · Aquí Estamos</title>
+<meta name="description" content="Registra tu centro de acopio para ayudar a Pereira: recibe donaciones en persona o por una lista de Amazon.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Aquí Estamos">
+<meta property="og:title" content="Registra tu centro de acopio · Aquí Estamos">
+<meta property="og:description" content="Recibe donaciones para Pereira en tu ciudad — en persona o por una lista de Amazon.">
+<meta property="og:url" content="https://aquiestamos.co/centro">
+<meta property="og:image" content="https://aquiestamos.co/img/hero-donar.jpg">
+<meta property="og:image:width" content="1360">
+<meta property="og:image:height" content="907">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://aquiestamos.co/img/hero-donar.jpg">
+<link rel="stylesheet" href="css/app.css">
+<link rel="stylesheet" href="css/donar.css">
+<link rel="stylesheet" href="css/centro.css">
+<script>
+window.temaEfectivo = function(){
+  try{ var p = localStorage.getItem('ae_tema');
+    if(p==='claro') return 'light'; if(p==='oscuro') return 'dark';
+    return matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+  }catch(e){ return 'dark'; }
+};
+document.documentElement.setAttribute('data-eff', window.temaEfectivo());
+</script>
+</head>
+<body>
+<div id="app">
+  <header>
+    <a class="marcabtn" href="/donar" aria-label="Aquí Estamos">
+      <svg class="mark" viewBox="0 0 24 24" aria-hidden="true"><defs>
+      <clipPath id="ae-pin"><path d="M12 1.6c-4.6 0-8.3 3.7-8.3 8.3 0 5.9 8.3 12.5 8.3 12.5s8.3-6.6 8.3-12.5c0-4.6-3.7-8.3-8.3-8.3z"/></clipPath></defs>
+      <g clip-path="url(#ae-pin)"><rect x="0" y="0" width="12" height="24" fill="#F2B705"/><rect x="12" y="0" width="12" height="24" fill="#D62828"/></g>
+      <path d="M5.9 9.1h6.4a1.35 1.35 0 0 1 0 2.7H5.9z" fill="#fff"/><path d="M18.1 12.2h-6.4a1.35 1.35 0 0 0 0 2.7h6.4z" fill="#fff"/></svg>
+      <div class="grow" style="text-align:left"><h1>Aquí<span>&nbsp;Estamos</span></h1><p class="estado">aquiestamos.co</p></div>
+    </a>
+    <div class="langtog" id="langtog" role="group" aria-label="Idioma">
+      <button data-l="es">ES</button><button data-l="en">EN</button>
+    </div>
+  </header>
+
+  <main><div class="view on"><div class="pad">
+    <section class="dhero">
+      <div class="dhero-in">
+        <span class="dkick" id="c-kick"></span>
+        <h2 id="c-titulo"></h2>
+        <p id="c-sub"></p>
+      </div>
+    </section>
+
+    <form id="cform" novalidate>
+      <label class="clab" id="l-tipo"></label>
+      <div class="dseg cseg" id="c-tipo">
+        <button type="button" data-m="persona" class="on"></button>
+        <button type="button" data-m="amazon"></button>
+        <button type="button" data-m="ambos"></button>
+      </div>
+
+      <div class="field"><label id="l-ciudad"></label><input id="c-ciudad" autocomplete="off"></div>
+      <div class="field"><label id="l-nombre"></label><input id="c-nombre" autocomplete="off"><div class="hint" id="h-nombre"></div></div>
+      <div class="field"><label id="l-coord"></label><input id="c-coord" autocomplete="name"></div>
+      <div class="field"><label id="l-tel"></label><input id="c-tel" inputmode="tel" autocomplete="tel"><div class="hint" id="h-tel"></div></div>
+
+      <div class="cgroup" id="g-dir">
+        <div class="field"><label id="l-dir"></label><input id="c-dir" autocomplete="street-address"></div>
+      </div>
+      <div class="cgroup" id="g-amz" hidden>
+        <div class="field"><label id="l-amz"></label><input id="c-amz" inputmode="url" placeholder="https://www.amazon.com/..."><div class="hint" id="h-amz"></div></div>
+      </div>
+
+      <label class="clab" id="l-recibe"></label>
+      <div class="cchips" id="c-recibe"></div>
+
+      <div class="field" style="margin-top:16px"><label id="l-cond"></label><textarea id="c-cond"></textarea><div class="hint" id="h-cond"></div></div>
+
+      <label class="ccheck"><input type="checkbox" id="c-clasif"><span id="l-clasif"></span></label>
+
+      <div class="field"><label id="l-hora"></label><input id="c-hora" autocomplete="off"></div>
+
+      <button type="submit" class="dcta" id="c-enviar"></button>
+      <p class="cprivx" id="c-privx"></p>
+    </form>
+
+    <div class="cok" id="c-ok" hidden>
+      <span class="dw-mark"></span>
+      <h2 id="ok-t"></h2>
+      <p id="ok-p"></p>
+      <a class="dcta" id="ok-volver" href="/donar"></a>
+    </div>
+  </div></div></main>
+
+  <footer><div class="version" id="version"></div></footer>
+  <div id="d-toast" class="dtoast" hidden></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="js/config.js"></script>
+<script src="js/version.js"></script>
+<script src="js/centro.js"></script>
+</body>
+</html>
