@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0f172a">
+<link rel="icon" type="image/svg+xml" href="logo/marca.svg">
+<title>Censo de necesidades · Aquí Estamos</title>
+<meta name="description" content="Registro de personas y familias afectadas por el terremoto de Pereira, para coordinar y verificar la entrega de ayudas.">
+<link rel="stylesheet" href="css/app.css">
+<link rel="stylesheet" href="css/donar.css">
+<link rel="stylesheet" href="css/centro.css">
+<script>
+window.temaEfectivo = function(){
+  try{ var p = localStorage.getItem('ae_tema');
+    if(p==='claro') return 'light'; if(p==='oscuro') return 'dark';
+    return matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+  }catch(e){ return 'dark'; }
+};
+document.documentElement.setAttribute('data-eff', window.temaEfectivo());
+</script>
+</head>
+<body>
+<div id="app">
+  <header>
+    <a class="marcabtn" href="/" aria-label="Aquí Estamos">
+      <svg class="mark" viewBox="0 0 24 24" aria-hidden="true"><defs>
+      <clipPath id="ae-pin"><path d="M12 1.6c-4.6 0-8.3 3.7-8.3 8.3 0 5.9 8.3 12.5 8.3 12.5s8.3-6.6 8.3-12.5c0-4.6-3.7-8.3-8.3-8.3z"/></clipPath></defs>
+      <g clip-path="url(#ae-pin)"><rect x="0" y="0" width="12" height="24" fill="#F2B705"/><rect x="12" y="0" width="12" height="24" fill="#D62828"/></g>
+      <path d="M5.9 9.1h6.4a1.35 1.35 0 0 1 0 2.7H5.9z" fill="#fff"/><path d="M18.1 12.2h-6.4a1.35 1.35 0 0 0 0 2.7h6.4z" fill="#fff"/></svg>
+      <div class="grow" style="text-align:left"><h1>Aquí<span>&nbsp;Estamos</span></h1><p class="pais">Ayuda del terremoto · <b>Pereira</b></p></div>
+    </a>
+  </header>
+
+  <nav class="dnav">
+    <a href="/">Mapa de ayuda</a>
+    <a href="/censo" class="on">Censo de necesidades</a>
+  </nav>
+
+  <main><div class="view on"><div class="pad">
+    <section class="dhero">
+      <div class="dhero-in">
+        <span class="dkick">Censo oficial</span>
+        <h2>Censo de necesidades</h2>
+        <p>Registra a una persona o familia afectada. Estos datos son privados y sirven para <b>verificar que la ayuda llegue</b> y reportar a las autoridades. No se muestran en el mapa con tu nombre.</p>
+      </div>
+    </section>
+
+    <form id="cform" novalidate>
+      <div class="field"><label>Nombre completo</label><input id="q-nombre" autocomplete="name" placeholder="Nombre y apellidos"></div>
+      <div class="field"><label>Cédula</label><input id="q-cedula" inputmode="numeric" autocomplete="off" placeholder="Número de cédula"></div>
+      <div class="field"><label>Teléfono / WhatsApp</label><input id="q-tel" inputmode="tel" autocomplete="tel" placeholder="Ej. 300 000 0000"></div>
+      <div class="field"><label>Dirección</label><input id="q-dir" autocomplete="street-address" placeholder="Dirección donde vive"></div>
+      <div class="field"><label>Barrio o zona</label><input id="q-barrio" placeholder="Ej. Cuba · El Oso · Centro"></div>
+
+      <button type="button" id="q-ubic" class="qubi">Tomar mi ubicación para el mapa</button>
+
+      <div class="field"><label>¿Cuántas personas en el hogar?</label><input id="q-personas" inputmode="numeric" placeholder="Ej. 4"></div>
+
+      <label class="clab">¿Qué necesitan?</label>
+      <div class="cchips" id="q-nec"></div>
+
+      <div class="field" style="margin-top:16px"><label>Detalle (opcional)</label><textarea id="q-detalle" placeholder="Cuéntanos con más detalle qué necesitan"></textarea></div>
+
+      <div class="field"><label>Registrado por (si eres coordinador o brigada)</label><input id="q-por" placeholder="Tu nombre, si registras a otra persona"></div>
+
+      <label class="ccheck"><input type="checkbox" id="q-consent"><span id="q-consent-txt"></span></label>
+
+      <button type="submit" class="dcta" id="q-enviar">Registrar en el censo</button>
+      <p class="cprivx">Tus datos personales quedan <b>privados</b>. En el mapa solo se muestra la necesidad y la zona, nunca tu nombre ni tu cédula.</p>
+    </form>
+
+    <div class="cok" id="c-ok" hidden>
+      <span class="dw-mark"></span>
+      <h2>Registrado. Gracias</h2>
+      <p>Quedaste en el censo. Con esto podemos coordinar y verificar que la ayuda llegue. Que Dios te acompañe.</p>
+      <a class="dcta" id="ok-otro" href="/censo">Registrar a otra persona</a>
+      <a class="dregistrar" href="/" style="margin-top:10px">Volver al mapa</a>
+    </div>
+  </div></div></main>
+
+  <footer><div class="version" id="version"></div></footer>
+  <div id="d-toast" class="dtoast" hidden></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="js/config.js"></script>
+<script src="js/version.js"></script>
+<script src="js/censo.js"></script>
+</body>
+</html>
