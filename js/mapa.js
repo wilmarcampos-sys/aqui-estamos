@@ -81,11 +81,17 @@ function pintarMapa(){
   if(CAPAS.censo) (S.censo||[]).forEach(cn=>{
     if(!cn.lat || !cn.lng) return;
     const necTxt = (cn.needs||[]).map(k=>CENSO_NEED[k]||k).slice(0,3).join(', ');
-    L.marker([cn.lat,cn.lng],{zIndexOffset:600,icon:L.divIcon({className:'',iconSize:[22,22],iconAnchor:[11,11],
-      html:`<div style="width:20px;height:20px;border-radius:50%;background:#7c3aed;border:2px solid #fff;
-        display:grid;place-items:center;color:#fff;box-shadow:0 2px 8px rgba(0,0,0,.5)">${ico('user')}</div>`})}).addTo(capa)
+    // "Atendido" automático: si hay una entrega reciente cerca (≤300 m, ≤7 días).
+    const ent = S.entregas.filter(y=>y.lat && dist(cn.lat,cn.lng,y.lat,y.lng)<300).sort((p,q)=>q.ts-p.ts)[0];
+    const atendido = !!ent && (now()-ent.ts) < 7*24*H;
+    const badge = atendido ? `<span style="position:absolute;bottom:-4px;right:-4px;width:14px;height:14px;border-radius:50%;
+      background:#3f8f5f;border:2px solid #fff;display:grid;place-items:center;color:#fff">${ico('check')}</span>` : '';
+    L.marker([cn.lat,cn.lng],{zIndexOffset:atendido?590:600,icon:L.divIcon({className:'',iconSize:[24,24],iconAnchor:[12,12],
+      html:`<div style="position:relative;width:20px;height:20px;border-radius:50%;background:#7c3aed;
+        border:2px solid ${atendido?'#3f8f5f':'#fff'};display:grid;place-items:center;color:#fff;box-shadow:0 2px 8px rgba(0,0,0,.5)">${ico('user')}${badge}</div>`})}).addTo(capa)
       .bindTooltip(`<b>Censo</b>${cn.personas?` · ${cn.personas} persona${cn.personas>1?'s':''}`:''}`
-        +`${necTxt?`<br>${esc(necTxt)}`:''}${cn.barrio?`<br>${esc(cn.barrio)}`:''}`,{direction:'top'});
+        +`${atendido?'<br><b style="color:#86efac">Atendido</b>':(necTxt?`<br>${esc(necTxt)}`:'')}${cn.barrio?`<br>${esc(cn.barrio)}`:''}<br><i>Toque para ver</i>`,{direction:'top'})
+      .on('click',()=>abrirCenso(cn));
   });
 
   if(z >= 14){

@@ -27,6 +27,30 @@ function cerrarSheet(){ $('#sheet').classList.remove('on'); }
 $('#sheet').addEventListener('click', e=>{ if(e.target.hasAttribute('data-close')) cerrarSheet(); });
 
 /* ---------- ficha de zona ---------- */
+/* Hoja del censo: cualquiera puede ver la NECESIDAD (anónima) de una vivienda
+   registrada. Nunca muestra identidad — eso queda privado en la base. */
+function abrirCenso(cn){
+  const ent = S.entregas.filter(y=>y.lat && dist(cn.lat,cn.lng,y.lat,y.lng)<300).sort((p,q)=>q.ts-p.ts)[0];
+  const atendido = !!ent && (now()-ent.ts) < 7*24*H;
+  const chips = (cn.needs||[]).map(k=>`<span class="chip">${esc(CENSO_NEED[k]||k)}</span>`).join('') || '<span class="muted">Sin especificar</span>';
+  abrirSheet(`
+    <div class="row" style="align-items:center;gap:12px;margin:2px 0 8px">
+      <div class="rank" style="background:${atendido?'#3f8f5f':'#7c3aed'};color:#fff">${ico(atendido?'check':'user')}</div>
+      <div class="grow">
+        <h3 style="margin:0">Necesidad del censo${cn.barrio?` · ${esc(cn.barrio)}`:''}</h3>
+        <div class="muted">${cn.personas?`${cn.personas} persona${cn.personas>1?'s':''} en el hogar`:'Vivienda registrada'}</div>
+      </div>
+    </div>
+    ${atendido
+      ? `<div class="zalert ok">${ico('check')}<div class="grow"><b>Atendido</b><div class="muted">Se registró una entrega cerca de este punto ${hace(ent.ts)}.</div></div></div>`
+      : `<div class="zalert warn">${ico('alert')}<div class="grow"><b>Pendiente</b><div class="muted">Aún no hay una entrega registrada cerca.</div></div></div>`}
+    <div class="sec">Qué necesitan</div>
+    <div class="opts">${chips}</div>
+    <p class="muted" style="margin-top:14px;font-size:12.5px;line-height:1.5">Los datos personales (nombre, cédula, teléfono) de esta persona son <b>privados</b> y no se muestran aquí. Solo la coordinación y las autoridades pueden verlos, para verificar que la ayuda llegue.</p>
+    <button class="cerrar-txt" data-close type="button">Cerrar</button>
+  `);
+}
+
 function abrirZona(zid){
   const st = estadoZona(ZONAS.find(z=>z.id===zid));
   const coords = S.coords.filter(c=>c.z===zid);
