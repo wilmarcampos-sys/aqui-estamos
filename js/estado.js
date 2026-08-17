@@ -2,7 +2,7 @@
    3. ESTADO
    ============================================================ */
 const H = 3600e3;
-let S = {reportes:[], entregas:[], coords:[]};
+let S = {reportes:[], entregas:[], coords:[], censo:[]};
 const uid = () => Math.random().toString(36).slice(2,9);
 const now = () => Date.now();
 
@@ -82,6 +82,10 @@ const deCoo  = c=>({id:c.id, z:c.zona, micro:c.micro||'', radio:c.radio||500, la
                     foto:c.foto||null, ver:!!c.verificado, codigo:c.codigo||'',
                     cap:(c.capacidad!=null?+c.capacidad:null), ocup:(c.ocupacion!=null?+c.ocupacion:null),
                     device:c.device||'', anulado:!!c.anulado});
+// Censo: SOLO la vista anónima (necesidad + ubicación + nº personas). Nunca
+// nombre/cédula/teléfono/dirección — eso no sale de la base con la clave pública.
+const deCenso = c=>({id:c.id, needs:c.necesidades||[], barrio:c.barrio||'', lat:+c.lat, lng:+c.lng,
+                     personas:c.personas||0, estado:c.estado||'nuevo', ts:+new Date(c.creado)});
 
 /* Modo ejemplo: carga los datos de demostración SOLO en este teléfono, para
    poder mostrar la app sin inventar necesidades falsas en el mapa real.
@@ -110,6 +114,10 @@ async function dbCargar(){
   S.reportes = (r.data||[]).map(deRep);
   S.entregas = (e.data||[]).map(deEnt);
   S.coords   = (c.data||[]).map(deCoo).filter(c=>!c.anulado);
+  // Censo (vista pública anónima). No bloquea el resto si falla.
+  try{ const cs = await recientes(db.from('censo_publico').select('*'));
+       S.censo = cs.error ? [] : (cs.data||[]).map(deCenso); }
+  catch(_){ S.censo = []; }
   render();
 }
 
@@ -189,7 +197,7 @@ async function iniciarDatos(){
       realtime:{params:{eventsPerSecond:3}},
     });
     EN_LINEA = true;
-    if(!MODO_EJEMPLO) S = {reportes:[], entregas:[], coords:[]};   // en modo ejemplo, conservar los datos de muestra
+    if(!MODO_EJEMPLO) S = {reportes:[], entregas:[], coords:[], censo:[]};   // en modo ejemplo, conservar los datos de muestra
     await dbCargar();
     dbSuscribir();
     presenciaIniciar();
@@ -216,7 +224,7 @@ function demo(){
     for(let i=0;i<cnt;i++) S.reportes.push({id:uid(),z,k,u,ts:t-(h-i*0.4)*H,personas:p,nota:'',ref,
       lat:b.lat+(Math.random()-.5)*0.0007, lng:b.lng+(Math.random()-.5)*0.0007});
     return b; };
-  S = {reportes:[],entregas:[],coords:[]};
+  S = {reportes:[],entregas:[],coords:[],censo:[]};
 
   // Centro / Universidad / Cuba: golpeadas pero ya con presencia institucional
   R('centro','agua',3,26,400,'Plaza de Bolívar'); R('centro','carpas',3,25,120,'Parque Olaya Herrera');

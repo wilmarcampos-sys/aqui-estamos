@@ -46,6 +46,9 @@ function pintarSVG(){
 }
 
 const UCOL = {3:'#dc2626', 2:'#d97706', 1:'#c9a227'};
+const CENSO_NEED = {agua:'Agua', alimentos:'Alimentos', medicamentos:'Medicamentos',
+  albergue:'Albergue', aseo:'Aseo e higiene', ropa:'Ropa y cobijas', bebes:'Bebés y pañales', otra:'Otra'};
+
 function pintarMapa(){
   if(modoSVG) return pintarSVG();
   if(!capa) return;
@@ -68,6 +71,18 @@ function pintarMapa(){
         display:grid;place-items:center;color:#3a1500;box-shadow:0 2px 8px rgba(0,0,0,.55)">${ico('tent')}${badge}</div>`})}).addTo(capa)
       .bindTooltip(`<b>${esc(a.micro||a.nom)}</b><br>Albergue${a.ver?' · verificado':''}${nnec?` · <b>${nnec} necesidad${nnec>1?'es':''}</b>`:''}<br><i>Toque para ver</i>`,{direction:'top'})
       .on('click',()=>abrirAlbergue(a));
+  });
+
+  // Censo de necesidades: puntos anónimos (necesidad + nº personas), visibles a
+  // cualquier zoom. Nunca traen identidad — vienen de la vista pública anónima.
+  (S.censo||[]).forEach(cn=>{
+    if(!cn.lat || !cn.lng) return;
+    const necTxt = (cn.needs||[]).map(k=>CENSO_NEED[k]||k).slice(0,3).join(', ');
+    L.marker([cn.lat,cn.lng],{zIndexOffset:600,icon:L.divIcon({className:'',iconSize:[22,22],iconAnchor:[11,11],
+      html:`<div style="width:20px;height:20px;border-radius:50%;background:#7c3aed;border:2px solid #fff;
+        display:grid;place-items:center;color:#fff;box-shadow:0 2px 8px rgba(0,0,0,.5)">${ico('user')}</div>`})}).addTo(capa)
+      .bindTooltip(`<b>Censo</b>${cn.personas?` · ${cn.personas} persona${cn.personas>1?'s':''}`:''}`
+        +`${necTxt?`<br>${esc(necTxt)}`:''}${cn.barrio?`<br>${esc(cn.barrio)}`:''}`,{direction:'top'});
   });
 
   if(z >= 14){
