@@ -105,7 +105,7 @@ async function cargarCentros(){
   $('#d-centros').innerHTML = `<p class="muted">${esc(t(DONAR_UI.cargando))}</p>`;
   try{
     const db = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
-    const {data,error} = await db.from('centros_acopio').select('*').eq('activo',true).order('orden').order('creado');
+    const {data,error} = await db.from('centros_publico').select('*').order('orden').order('creado');
     if(error) throw error;
     CENTROS = data||[];
   }catch(e){ CENTROS=[]; }

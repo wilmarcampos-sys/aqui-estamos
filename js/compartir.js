@@ -15,7 +15,7 @@ function toast(m){ const e=$('#d-toast'); e.textContent=m; e.hidden=false; e.cla
 async function cargar(){
   try{
     const db = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
-    const { data, error } = await db.from('centros_acopio').select('*').eq('activo',true).order('orden').order('creado');
+    const { data, error } = await db.from('centros_publico').select('*').order('orden').order('creado');
     if(error) throw error;
     LISTA = (data||[]).filter(c=>c.amazon_url);
   }catch(e){ LISTA=[]; }
@@ -63,8 +63,9 @@ function dibujar(c){
   x.fillStyle='#0e1729'; x.font=`800 58px ${F}`; x.fillText('Centro: '+c.nombre, 70, 296);
   x.fillStyle='#334155'; x.font=`400 28px ${F}`; let ay=340;
   if(c.ciudad){ x.fillText(c.ciudad+(c.pais?' · '+c.pais:''), 70, ay); ay+=42; }
-  if(c.coordinador){ x.fillStyle='#7c3aed'; x.font=`800 32px ${F}`; x.fillText('Coordina: '+c.coordinador, 70, ay); ay+=44; x.fillStyle='#334155'; x.font=`400 28px ${F}`; }
-  if(c.direccion){ ay = wrap(x, c.direccion, 70, ay, W-140, 36)+8; }
+  if(c.coordinador){ x.fillStyle='#7c3aed'; x.font=`800 32px ${F}`; x.fillText('Coordina: '+c.coordinador, 70, ay); ay+=48; x.fillStyle='#334155'; x.font=`400 28px ${F}`; }
+  // La dirección NO va en la imagen: protege la identidad. Al comprar por Amazon
+  // el envío usa la dirección de la lista, sin que el donante la vea.
   const qs=600, qx=(W-qs)/2, qy=Math.max(470, ay+30);
   drawQR(x, c.amazon_url, qx, qy, qs);
   x.textAlign='center';

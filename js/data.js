@@ -174,6 +174,7 @@ const CATALOGO = [
     {k:'ropa-bebe',  n:'Ropa de bebé',                 s:'body enterizo'},
     {k:'coche',      n:'Coche o cargador de bebé',     s:'canguro'},
     {k:'gestantes',  n:'Bebés y gestantes',            s:'embarazadas lactancia'},
+    {k:'mesas-ninos',n:'Mesas y sillas para niños',    s:'mueble mobiliario pupitre comedor infantil'},
   ]},
   {cat:'Dónde dormir', ic:'tent', items:[
     {k:'carpas',     n:'Carpas',                       s:'toldos casa de campana'},
