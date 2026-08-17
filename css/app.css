@@ -115,9 +115,11 @@
   nav{display:flex;background:var(--bg);border-bottom:1px solid var(--line);flex:0 0 auto}
   nav button{
     flex:1;background:none;border:0;border-bottom:2.5px solid transparent;color:var(--dim);
-    padding:11px 4px;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer
+    padding:14px 4px;font-size:13.5px;font-weight:700;letter-spacing:-.1px;font-family:inherit;cursor:pointer;
+    transition:color .15s,border-color .15s
   }
   nav button.on{color:var(--txt);border-bottom-color:var(--acc)}
+  nav button:active{opacity:.65}
 
   main{flex:1;position:relative;overflow:hidden}
   .view{position:absolute;inset:0;display:none;overflow-y:auto;-webkit-overflow-scrolling:touch}
@@ -155,12 +157,16 @@
     display:flex;gap:8px;pointer-events:none}
   .fabs>*{pointer-events:auto}
   .fab{
-    flex:1;background:#dc2626;color:#fff;border:0;border-radius:14px;padding:15px 10px;
-    font-size:16px;font-weight:700;font-family:inherit;cursor:pointer;
-    box-shadow:0 8px 26px rgba(0,0,0,.5)
+    flex:1;background:#dc2626;color:#fff;border:0;border-radius:16px;padding:16px 12px;
+    font-size:16px;font-weight:800;letter-spacing:-.2px;font-family:inherit;cursor:pointer;
+    box-shadow:0 12px 30px -10px rgba(2,8,23,.55);transition:transform .12s,filter .15s
   }
+  .fab:hover{filter:brightness(1.05)}
+  .fab:active{transform:translateY(1px)}
   .fab.ghost{flex:0 0 auto;background:var(--chip);color:var(--txt);border:1px solid var(--line);
-    padding:9px 15px;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:11px;font-weight:700;line-height:1}
+    padding:9px 15px;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:11px;font-weight:700;line-height:1;
+    box-shadow:none;transition:background .15s}
+  .fab.ghost:active{transform:translateY(1px)}
   .fab.ghost .ic.lg{width:22px;height:22px}
   .fab.ghost .flab{font-size:11px}
 
@@ -492,6 +498,15 @@
   0%  {box-shadow:0 0 0 0 rgba(63,143,95,.55)}
   70% {box-shadow:0 0 0 7px rgba(63,143,95,0)}
   100%{box-shadow:0 0 0 0 rgba(63,143,95,0)}
+}
+
+/* Menos movimiento para quien lo pide: el feed decorativo y el punto pulsante
+   se calman; el mapa y los datos reales siguen igual. */
+@media (prefers-reduced-motion: reduce){
+  .feed{display:none}
+  .online .odot{animation:none}
+  .fab,.fab.ghost,nav button{transition:none}
+  .spin{animation-duration:1.4s}
 }
 
 /* mis inscripciones: que nadie pierda su registro */
