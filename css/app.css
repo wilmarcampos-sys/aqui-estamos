@@ -192,7 +192,11 @@
   /* tras tocar el mapa, la pista de la barra sobra */
   .mapa-tocado .pinbar .muted{display:none}
 
-  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:13px;margin-bottom:10px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px;margin-bottom:10px;
+    box-shadow:0 1px 2px rgba(0,0,0,.18), 0 12px 28px -20px rgba(0,0,0,.5)}
+  .card[style*="cursor"]{transition:transform .1s,box-shadow .15s}
+  .card[style*="cursor"]:hover{box-shadow:0 1px 2px rgba(0,0,0,.2), 0 16px 34px -20px rgba(0,0,0,.6)}
+  .card[style*="cursor"]:active{transform:scale(.995)}
   /* cada sección de Coordinación en su bloque, claramente separada */
   .bloque{background:var(--surf);border:1px solid var(--line);border-radius:15px;
     padding:10px 13px 13px;margin-bottom:13px}
@@ -480,7 +484,9 @@
   a{color:var(--acc)}
   .tabsub{display:flex;gap:7px;margin-bottom:12px;overflow-x:auto;padding-bottom:2px}
   .tabsub button{flex:0 0 auto;background:var(--surf);border:1px solid var(--line);color:var(--dim);
-    border-radius:999px;padding:7px 13px;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer}
+    border-radius:999px;padding:9px 15px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer;
+    transition:background .12s,color .12s,border-color .12s}
+  .tabsub button:hover{color:var(--txt)}
   .tabsub button.on{background:var(--chip);color:var(--txt);border-color:var(--line2)}
 
 /* ---- cuántas personas están usando la app ahora mismo ---- */
@@ -602,7 +608,7 @@ input.pin{letter-spacing:9px;font-size:20px;text-align:center;font-weight:700}
 :root[data-eff="light"] .avisoej{background:#FDF2E2;border-color:#F0CE97;color:#8A4708}
 :root[data-eff="light"] .toast{background:#0E1729;color:#fff}
 :root[data-eff="light"] .scrim{background:rgba(15,23,41,.34)}
-:root[data-eff="light"] .card{box-shadow:0 1px 2px rgba(15,23,41,.05)}
+:root[data-eff="light"] .card{box-shadow:0 1px 2px rgba(15,23,41,.05), 0 12px 30px -18px rgba(15,23,41,.22)}
 :root[data-eff="light"] .sheet .panel{box-shadow:0 -10px 34px rgba(15,23,41,.14)}
 :root[data-eff="light"] .legend,:root[data-eff="light"] .pinbar{color:#3D4C64;box-shadow:0 6px 20px rgba(15,23,41,.10)}
 :root[data-eff="light"] .legend b{color:var(--txt)}
