@@ -50,6 +50,15 @@ const CT = {
   ok_p:   {es:'Revisamos tu centro y lo publicamos en el mapa muy pronto. Que Dios te bendiga.',
            en:'We will review your center and publish it on the map very soon. God bless you.'},
   ok_volver:{es:'Volver a donar', en:'Back to donate'},
+  ph_ciudad:{es:'Ej. Miami, FL', en:'e.g. Miami, FL'},
+  ph_nombre:{es:'Ej. Casa de Ana · Iglesia El Redentor', en:'e.g. Ana\'s house · Redeemer Church'},
+  ph_coord: {es:'Ej. Ana María Restrepo', en:'e.g. Ana María Restrepo'},
+  ph_tel:   {es:'+1 305 000 0000', en:'+1 305 000 0000'},
+  ph_dir:   {es:'Calle, ciudad, estado y ZIP', en:'Street, city, state and ZIP'},
+  ph_amz:   {es:'https://www.amazon.com/…', en:'https://www.amazon.com/…'},
+  ph_cond:  {es:'Ej. Clasificada y en cajas pequeñas, rotulada por categoría. Sin agua a granel ni ropa usada.',
+             en:'e.g. Sorted and in small boxes, labeled by category. No bulk water or used clothing.'},
+  ph_hora:  {es:'Ej. Lun a Sáb, 9am–6pm', en:'e.g. Mon–Sat, 9am–6pm'},
 };
 const CATS = [
   {k:'medicamentos', es:'Medicamentos y primeros auxilios', en:'Medications & first aid'},
@@ -78,6 +87,10 @@ function pinta(){
   $('#l-clasif').textContent=t(CT.clasif); $('#l-hora').textContent=t(CT.hora);
   $('#c-enviar').textContent=t(CT.enviar); $('#c-privx').textContent=t(CT.privx);
   $('#ok-t').textContent=t(CT.ok_t); $('#ok-p').textContent=t(CT.ok_p); $('#ok-volver').textContent=t(CT.ok_volver);
+  const ph=(id,txt)=>{const e=$('#'+id); if(e) e.placeholder=txt;};
+  ph('c-ciudad',t(CT.ph_ciudad)); ph('c-nombre',t(CT.ph_nombre)); ph('c-coord',t(CT.ph_coord));
+  ph('c-tel',t(CT.ph_tel)); ph('c-dir',t(CT.ph_dir)); ph('c-amz',t(CT.ph_amz));
+  ph('c-cond',t(CT.ph_cond)); ph('c-hora',t(CT.ph_hora));
   $('#c-recibe').innerHTML = CATS.map(c=>`<button type="button" class="cchip" data-k="${c.k}">${esc(LANG==='en'?c.en:c.es)}</button>`).join('');
   document.querySelectorAll('#langtog button').forEach(b=>b.classList.toggle('on', b.dataset.l===LANG));
   aplicaTipo();
