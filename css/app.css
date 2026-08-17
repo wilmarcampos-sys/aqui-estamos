@@ -224,8 +224,9 @@
   .sheet .scrim{position:absolute;inset:0;background:rgba(2,6,18,.68);z-index:0}
   .sheet .panel{
     position:absolute;left:0;right:0;bottom:0;max-height:92%;overflow-y:auto;z-index:1;
-    background:var(--bg2);border-radius:20px 20px 0 0;border-top:1px solid var(--line);
-    padding:8px 14px calc(20px + var(--safe));-webkit-overflow-scrolling:touch
+    background:var(--bg2);border-radius:22px 22px 0 0;border-top:1px solid var(--line);
+    padding:8px 14px calc(20px + var(--safe));-webkit-overflow-scrolling:touch;
+    box-shadow:0 -14px 44px -12px rgba(0,0,0,.6)
   }
   .grab{width:40px;height:4px;border-radius:2px;background:var(--line2);margin:6px auto 12px}
 
@@ -233,10 +234,13 @@
     margin:16px 0 7px;font-weight:700}
   .opts{display:flex;flex-wrap:wrap;gap:7px}
   .opt{
-    background:var(--surf);border:1.5px solid var(--line);border-radius:11px;padding:10px 12px;min-height:44px;
+    background:var(--surf);border:1.5px solid var(--line);border-radius:13px;padding:10px 13px;min-height:44px;
     display:inline-flex;align-items:center;
-    font-size:13px;color:var(--txt);cursor:pointer;font-family:inherit;text-align:left;line-height:1.25
+    font-size:13px;color:var(--txt);cursor:pointer;font-family:inherit;text-align:left;line-height:1.25;
+    transition:border-color .12s,background .12s,transform .08s
   }
+  .opt:hover{border-color:var(--line2)}
+  .opt:active{transform:scale(.98)}
   .opt.sel{background:rgba(79,156,249,.18);border-color:var(--acc)}
   .opt.pend-o{border-color:#7f1d1d;background:rgba(220,38,38,.09)}
 
