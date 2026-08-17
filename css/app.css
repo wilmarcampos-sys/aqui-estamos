@@ -146,13 +146,59 @@
   #map{position:absolute;inset:0;background:var(--map-bg)}
   .leaflet-container{background:var(--map-bg);font-family:inherit}
 
-  .pinbar{position:absolute;left:12px;right:12px;bottom:calc(74px + var(--safe));z-index:600;
-    background:var(--panel);color:var(--txt);border:1px solid var(--line);border-radius:14px;
-    padding:11px 14px;font-size:13px;text-align:center;backdrop-filter:blur(10px);
-    box-shadow:0 3px 10px rgba(2,8,23,.26)}
+  /* hoja inferior del mapa: zona + acciones + reportes cercanos */
+  .msheet{position:absolute;left:0;right:0;bottom:0;z-index:620;background:var(--card);
+    border-radius:24px 24px 0 0;border-top:1px solid var(--line);
+    box-shadow:0 -6px 24px rgba(2,8,23,.30);
+    transform:translateY(var(--sheet-y,0));transition:transform .42s var(--ease);
+    padding-bottom:calc(8px + var(--safe));max-height:76%;
+    display:flex;flex-direction:column;touch-action:none}
+  .msheet::after{content:"";position:absolute;left:0;right:0;top:100%;height:40vh;background:var(--card)}
+  .msheet.dragging{transition:none}
+  .handle-zone{padding:9px 0 4px;display:grid;place-items:center;cursor:grab}
+  .handle{width:38px;height:5px;border-radius:99px;background:var(--line2)}
+  .msheet-head{padding:2px 14px 10px;display:flex;align-items:center;gap:9px}
+  .loc-chip{flex:1;min-width:0;display:flex;align-items:center;gap:6px;height:38px;padding:0 13px;
+    border-radius:999px;background:var(--chip);border:1px solid var(--line);
+    font-size:13.5px;font-weight:700;color:var(--txt);white-space:nowrap;overflow:hidden}
+  .loc-chip .ic{color:#dc2626;flex:0 0 auto}
+  .loc-chip .muted{font-weight:500;color:var(--dim);overflow:hidden;text-overflow:ellipsis}
+  .count-chip{display:flex;align-items:center;gap:5px;height:38px;padding:0 12px;flex:0 0 auto;
+    border-radius:999px;background:rgba(220,38,38,.12);color:#dc2626;font-size:13px;font-weight:800}
+  .count-chip .ic{width:13px;height:13px}
+  :root[data-eff="light"] .count-chip{color:#C11B1B}
+  .actions{display:grid;grid-template-columns:1fr auto;gap:9px;padding:0 14px 6px}
+  .sbtn{border:0;font-family:inherit;cursor:pointer;color:#fff;border-radius:18px;height:60px;
+    display:flex;align-items:center;justify-content:center;gap:9px;letter-spacing:-.2px;
+    position:relative;overflow:hidden;text-decoration:none;
+    transition:transform .16s var(--ease),filter .2s}
+  .sbtn:active{transform:scale(.955);filter:brightness(.94)}
+  .sbtn::before{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(255,255,255,.16),transparent 60%)}
+  .sbtn .ic{width:19px;height:19px;position:relative}
+  .sbtn span{position:relative;font-weight:800;font-size:15px;line-height:1.1}
+  .sbtn-need{background:linear-gradient(160deg,#EF4444,#C81E1E);box-shadow:0 6px 18px rgba(226,58,58,.35);padding:0 14px;min-width:0}
+  .sbtn-need span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .sbtn-censo{flex-direction:column;gap:4px;width:74px;background:linear-gradient(160deg,#8B5CF6,#6D28D9);
+    box-shadow:0 6px 16px rgba(124,58,237,.32)}
+  .sbtn-censo span{font-size:11.5px;font-weight:700}
+  .msheet-body{flex:1 1 auto;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;
+    padding:4px 14px 8px;opacity:.35;transition:opacity .35s var(--ease)}
+  .msheet.open .msheet-body{opacity:1}
+  .sec-title{margin:10px 2px 8px;font-size:11.5px;font-weight:800;color:var(--dim);
+    text-transform:uppercase;letter-spacing:.7px}
+  .scard{display:flex;align-items:center;gap:11px;padding:11px 12px;margin-bottom:8px;
+    background:var(--surf);border:1px solid var(--line);border-radius:14px}
+  .scard .sic{width:38px;height:38px;border-radius:12px;flex:0 0 auto;display:grid;place-items:center;color:#fff}
+  .scard .sic .ic{width:18px;height:18px}
+  .scard .stx{flex:1;min-width:0}
+  .scard .stx h4{margin:0;font-size:13.5px;font-weight:700;letter-spacing:-.2px;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--txt)}
+  .scard .stx p{margin:2px 0 0;font-size:12px;color:var(--dim);
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .scard .smeta{font-size:11px;color:var(--dim);flex:0 0 auto;text-align:right}
   /* feed vivo estilo "reacciones en vivo": las actividades suben desde
      abajo-derecha, transparentes, y se disuelven. Siempre hay movimiento. */
-  .feed{position:absolute;right:12px;bottom:calc(120px + var(--safe));z-index:590;
+  .feed{position:absolute;right:12px;bottom:calc(178px + var(--safe));z-index:590;
     width:min(74%,300px);height:0;pointer-events:none}
   .feeditem{position:absolute;right:0;bottom:0;max-width:100%;
     background:rgba(15,23,42,.7);backdrop-filter:blur(5px);color:#fff;
@@ -167,25 +213,6 @@
     65%{opacity:.9;transform:translateY(-34px)}
     100%{opacity:0;transform:translateY(-74px) scale(.97)}
   }
-  .fabs{position:absolute;left:12px;right:12px;bottom:calc(14px + var(--safe));z-index:600;
-    display:flex;gap:8px;pointer-events:none}
-  .fabs>*{pointer-events:auto}
-  .fab{
-    flex:1;background:#dc2626;color:#fff;border:0;border-radius:16px;padding:16px 12px;
-    font-size:16px;font-weight:800;letter-spacing:-.2px;font-family:inherit;cursor:pointer;
-    box-shadow:0 12px 30px -10px rgba(2,8,23,.55);transition:transform .12s,filter .15s
-  }
-  .fab:hover{filter:brightness(1.05)}
-  .fab:active{transform:translateY(1px)}
-  .fab.ghost{flex:0 0 auto;background:var(--chip);color:var(--txt);border:1px solid var(--line);
-    padding:9px 15px;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:11px;font-weight:700;line-height:1;
-    box-shadow:none;transition:background .15s}
-  .fab.ghost:active{transform:translateY(1px)}
-  /* acceso al censo: color del censo (violeta), distinto de la ayuda (rojo) */
-  #fab-censo{background:#7c3aed;border-color:#7c3aed;color:#fff;text-decoration:none}
-  #fab-censo:active{transform:translateY(1px);filter:brightness(1.05)}
-  .fab.ghost .ic.lg{width:22px;height:22px}
-  .fab.ghost .flab{font-size:11px}
 
   .legend{position:absolute;top:12px;left:12px;z-index:600;background:var(--panel);
     border:1px solid var(--line);border-radius:16px;padding:12px 14px;font-size:13px;color:var(--dim);
@@ -238,7 +265,7 @@
   .capas-sep{margin-top:5px;border-top:1px solid var(--line);padding-top:9px}
 
   /* tras tocar el mapa, la pista de la barra sobra */
-  .mapa-tocado .pinbar .muted{display:none}
+  .mapa-tocado .loc-chip .muted{display:none}
 
   .card{background:var(--card);border-radius:16px;padding:14px;margin-bottom:10px;
     box-shadow:0 1px 2px rgba(0,0,0,.2), 0 10px 24px -16px rgba(0,0,0,.55)}
@@ -570,7 +597,7 @@
 @media (prefers-reduced-motion: reduce){
   .feed{display:none}
   .online .odot{animation:none}
-  .fab,.fab.ghost,nav button,.ctl{transition:none}
+  nav button,.ctl,.sbtn,.hbtn,.usbar{transition:none}
   .spin{animation-duration:1.4s}
 }
 
@@ -624,7 +651,7 @@ input.pin{letter-spacing:9px;font-size:20px;text-align:center;font-weight:700}
 :root[data-eff="light"] .btn{color:#fff}
 :root[data-eff="light"] .btn.flat{color:var(--txt)}
 :root[data-eff="light"] .btn.loc{color:var(--acc)}
-:root[data-eff="light"] .btn.red,:root[data-eff="light"] .fab{background:#C81E1E;color:#fff}
+:root[data-eff="light"] .btn.red{background:#C81E1E;color:#fff}
 :root[data-eff="light"] .btn.green{background:#2E7D4F;color:#fff}
 :root[data-eff="light"] .cats button.on{color:#fff}
 :root[data-eff="light"] .urg button.sel{color:#fff}
@@ -662,7 +689,7 @@ input.pin{letter-spacing:9px;font-size:20px;text-align:center;font-weight:700}
 :root[data-eff="light"] .scrim{background:rgba(15,23,41,.34)}
 :root[data-eff="light"] .card{box-shadow:0 1px 2px rgba(15,23,41,.05), 0 12px 30px -18px rgba(15,23,41,.22)}
 :root[data-eff="light"] .sheet .panel{box-shadow:0 -10px 34px rgba(15,23,41,.14)}
-:root[data-eff="light"] .legend,:root[data-eff="light"] .pinbar{color:#3D4C64;box-shadow:0 6px 20px rgba(15,23,41,.10)}
+:root[data-eff="light"] .legend{color:#3D4C64;box-shadow:0 6px 20px rgba(15,23,41,.10)}
 :root[data-eff="light"] .legend b{color:var(--txt)}
 :root[data-eff="light"] .online{color:#41506A}
 :root[data-eff="light"] .tabsub button.on{background:#0E1729;border-color:#0E1729;color:#fff}

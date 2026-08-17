@@ -23,7 +23,7 @@
 <meta name="twitter:description" content="Coordinación abierta de ayuda para el terremoto de Pereira.">
 <meta name="twitter:image" content="https://aquiestamos.co/img/hero-donar.jpg">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
-<link rel="stylesheet" href="css/app.css">
+<link rel="stylesheet" href="css/app.css?v=1.28.0">
 <script>
 /* URL sin ".html" en el sitio publicado (en localhost la extensión hace falta). */
 (function(){ var h=location.hostname; if(h==='localhost'||h==='127.0.0.1'||h==='') return;
@@ -127,10 +127,30 @@ document.documentElement.setAttribute('data-eff', window.temaEfectivo());
         <button class="ctl solo" id="fab-loc" type="button" aria-label="Ubícame: poner el pin donde estoy"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg></button>
       </div>
       <div class="feed" id="feed" aria-live="polite"></div>
-      <div class="pinbar" id="pinbar">Toque el mapa donde está, o arrastre el pin</div>
-      <div class="fabs">
-        <button class="fab" id="fab-need">Necesito ayuda aquí</button>
-        <a class="fab ghost" id="fab-censo" href="/censo" aria-label="Registrar una vivienda en el censo"><svg class="ic lg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.8V20h14V9.8"/><path d="M10 20v-5h4v5"/></svg><span class="flab">+ Vivienda</span></a>
+      <!-- hoja inferior: zona actual + acciones + reportes cercanos (arrastre el asa) -->
+      <div class="msheet" id="msheet">
+        <div class="handle-zone" id="msheet-handle" role="button" aria-label="Mostrar u ocultar reportes cercanos"><div class="handle"></div></div>
+        <div class="msheet-head">
+          <div class="loc-chip" id="pinbar">Toque el mapa donde está, o arrastre el pin</div>
+          <div class="count-chip" id="msheet-count" hidden>
+            <svg class="ic" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2 1 21h22L12 2Zm0 6.5 6.5 11h-13L12 8.5Z"/></svg>
+            <b id="msheet-count-n">0</b>
+          </div>
+        </div>
+        <div class="actions">
+          <button class="sbtn sbtn-need" id="fab-need">
+            <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 9v4.5M12 17h.01"/><path d="M10.3 3.9 1.8 18.4A2 2 0 0 0 3.5 21.4h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/></svg>
+            <span id="fab-need-lbl">Necesito ayuda</span>
+          </button>
+          <a class="sbtn sbtn-censo" id="fab-censo" href="/censo" aria-label="Registrar una vivienda en el censo">
+            <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.8V20h14V9.8"/><path d="M12 21v-5M9.5 18.5h5"/></svg>
+            <span>Vivienda</span>
+          </a>
+        </div>
+        <div class="msheet-body">
+          <div class="sec-title">Reportes cercanos</div>
+          <div id="msheet-list"></div>
+        </div>
       </div>
     </section>
 
@@ -228,14 +248,14 @@ document.documentElement.setAttribute('data-eff', window.temaEfectivo());
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="js/config.js"></script>
-<script src="js/version.js"></script>
-<script src="js/data.js"></script>
-<script src="js/estado.js"></script>
-<script src="js/calc.js"></script>
-<script src="js/mapa.js"></script>
-<script src="js/hojas.js"></script>
-<script src="js/cuenta.js"></script>
-<script src="js/ui.js"></script>
+<script src="js/config.js?v=1.28.0"></script>
+<script src="js/version.js?v=1.28.0"></script>
+<script src="js/data.js?v=1.28.0"></script>
+<script src="js/estado.js?v=1.28.0"></script>
+<script src="js/calc.js?v=1.28.0"></script>
+<script src="js/mapa.js?v=1.28.0"></script>
+<script src="js/hojas.js?v=1.28.0"></script>
+<script src="js/cuenta.js?v=1.28.0"></script>
+<script src="js/ui.js?v=1.28.0"></script>
 </body>
 </html>

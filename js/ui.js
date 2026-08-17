@@ -197,6 +197,7 @@ document.querySelectorAll('#filtros button').forEach(b=>b.onclick=()=>{
 function render(){
   pintarMapa();
   if(typeof feedRefrescar==='function') feedRefrescar();   // feed vivo de actividad
+  if(typeof window.sheetPintar==='function') window.sheetPintar();   // hoja inferior del mapa
   // acceso de usuario en el encabezado: con sesión, su avatar + punto verde
   // (en línea) y entra a su cuenta; sin sesión, un ícono para entrar.
   // Solo se re-pinta cuando cambia de verdad (entrar/salir/foto), no en cada
@@ -492,6 +493,65 @@ if(bTema) bTema.onclick = ()=>{
   render();
 };
 pintarTema();
+
+/* ---------- hoja inferior del mapa: arrastre + reportes cercanos ----------
+   Colapsada muestra zona + acciones; arrastrando el asa (o tocándola) sube y
+   deja ver los reportes recientes. Sin librerías: transform + un translateY. */
+(function(){
+  const sheet=document.getElementById('msheet'), handle=document.getElementById('msheet-handle');
+  if(!sheet||!handle) return;
+  let collapsed=0, current=0, dragging=false, startY=0, startVal=0;
+  function setY(v){ current=v; sheet.style.setProperty('--sheet-y', v+'px');
+    sheet.classList.toggle('open', v < collapsed/2); }
+  function medir(){
+    const acts=sheet.querySelector('.actions'); if(!acts) return;
+    const colH=acts.offsetTop+acts.offsetHeight+14;
+    collapsed=Math.max(0, sheet.offsetHeight-colH);
+    setY(sheet.classList.contains('open')?0:collapsed);
+  }
+  function down(e){ dragging=true; sheet.classList.add('dragging');
+    startY=(e.touches?e.touches[0].clientY:e.clientY); startVal=current; }
+  function move(e){ if(!dragging) return;
+    const y=(e.touches?e.touches[0].clientY:e.clientY);
+    setY(Math.max(-16, Math.min(collapsed+24, startVal+(y-startY))));
+    e.preventDefault(); }
+  function up(){ if(!dragging) return; dragging=false; sheet.classList.remove('dragging');
+    setY(current<collapsed/2?0:collapsed); }
+  handle.addEventListener('mousedown',down);
+  handle.addEventListener('touchstart',down,{passive:true});
+  window.addEventListener('mousemove',move);
+  window.addEventListener('touchmove',move,{passive:false});
+  window.addEventListener('mouseup',up);
+  window.addEventListener('touchend',up);
+  handle.addEventListener('click',()=>setY(current<collapsed/2?collapsed:0));
+  window.addEventListener('resize',medir);
+  window.sheetMedir=medir;
+  window.addEventListener('load',()=>setTimeout(medir,120));
+  setTimeout(medir,300);
+})();
+/* Reportes cercanos dentro de la hoja: primero los de la zona del pin,
+   luego el resto, siempre lo más nuevo arriba. Datos anónimos que ya son
+   públicos en el mapa — aquí solo se leen más fácil. */
+window.sheetPintar=function(){
+  const lista=document.getElementById('msheet-list'); if(!lista) return;
+  const reps=(S.reportes||[]).slice().sort((a,b)=>{
+    const za=(typeof mainPt!=='undefined'&&mainPt)?mainPt.z:null;
+    if(za && a.z!==b.z){ if(a.z===za) return -1; if(b.z===za) return 1; }
+    return b.ts-a.ts;
+  });
+  const chip=document.getElementById('msheet-count'), n=document.getElementById('msheet-count-n');
+  if(n) n.textContent=reps.length;
+  if(chip) chip.hidden=!reps.length;
+  const zN=z=>(ZONAS.find(x=>x.id===z)||{}).n||'';
+  const hace=ts=>{const m=Math.max(1,Math.round((Date.now()-ts)/60000));
+    return m<60?`hace ${m} m`:(m<1440?`hace ${Math.round(m/60)} h`:`hace ${Math.round(m/1440)} d`)};
+  lista.innerHTML = reps.slice(0,8).map(r=>{
+    const col=UCOL[r.u]||'#d97706';
+    return `<div class="scard"><div class="sic" style="background:${col}">${ico('alert')}</div>
+      <div class="stx"><h4>${esc(NEED[r.k]?.n||r.k)}${r.personas?` · ${r.personas} personas`:''}</h4>
+      <p>${esc(r.ref||zN(r.z))}</p></div><div class="smeta">${hace(r.ts)}</div></div>`;
+  }).join('') || `<p class="muted" style="font-size:13px;margin:4px 2px">Sin reportes por ahora. Si necesita algo, use el botón rojo.</p>`;
+};
 
 /* ---------- acciones globales ---------- */
 $('#fab-need').onclick = ()=>{

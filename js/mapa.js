@@ -176,8 +176,9 @@ function setMainPt(la, lo){
   const bar = document.getElementById('pinbar');
   if(bar) bar.innerHTML = `${ico('pin')} <b>${esc(z.n)}</b>${z.t==='corregimiento'?' (rural)':''}
     <span class="muted">· toque el mapa o arrastre el pin para corregir</span>`;
-  const fb = document.getElementById('fab-need');
+  const fb = document.getElementById('fab-need-lbl');
   if(fb) fb.textContent = 'Necesito ayuda en ' + z.n;
+  if(typeof window.sheetPintar === 'function') window.sheetPintar();
 }
 function initMainPin(){          // se llama al final: PIN y esc ya existen
   if(!map) return;
