@@ -48,8 +48,12 @@ function abrirCenso(cn){
     <div class="opts">${chips}</div>
     ${cn.tel
       ? `<div class="sec">Contacto de esta vivienda</div>
-         <a class="btn wa" href="${waLink(cn.tel)}" target="_blank" rel="noopener">Escribir por WhatsApp · ${esc(telBonito(cn.tel))}</a>
-         <p class="muted" style="margin-top:8px;font-size:12.5px;line-height:1.5">El <b>nombre y la cédula</b> siguen privados. Esta persona autorizó publicar su teléfono para que la contacten.</p>`
+         ${cn.apellido?`<div style="font-weight:800;font-size:15px">Familia ${esc(cn.apellido)}</div>`:''}
+         <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
+           <button type="button" class="mini" data-copiar-tel="+${esc(telDigitos(cn.tel))}">Copiar teléfono</button>
+           <a class="mini wa" href="${waLink(cn.tel)}" target="_blank" rel="noopener">${icoWA()} WhatsApp</a>
+         </div>
+         <p class="muted" style="margin-top:10px;font-size:12.5px;line-height:1.5">El <b>número no se muestra</b> por protección: solo se puede copiar o abrir en WhatsApp. El nombre de pila y la cédula siguen privados.</p>`
       : `<p class="muted" style="margin-top:14px;font-size:12.5px;line-height:1.5">Los datos personales (nombre, cédula, teléfono) de esta persona son <b>privados</b> y no se muestran aquí. Solo la coordinación y las autoridades pueden verlos, para verificar que la ayuda llegue.</p>`}
     <button class="cerrar-txt" data-close type="button">Cerrar</button>
   `);

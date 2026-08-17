@@ -86,7 +86,7 @@ const deCoo  = c=>({id:c.id, z:c.zona, micro:c.micro||'', radio:c.radio||500, la
 // nombre/cédula/teléfono/dirección — eso no sale de la base con la clave pública.
 const deCenso = c=>({id:c.id, needs:c.necesidades||[], barrio:c.barrio||'', lat:+c.lat, lng:+c.lng,
                      personas:c.personas||0, estado:c.estado||'nuevo', tel:c.contacto_tel||'',
-                     ts:+new Date(c.creado)});
+                     apellido:c.apellido||'', ts:+new Date(c.creado)});
 
 /* Modo ejemplo: carga los datos de demostración SOLO en este teléfono, para
    poder mostrar la app sin inventar necesidades falsas en el mapa real.

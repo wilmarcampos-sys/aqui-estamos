@@ -50,19 +50,19 @@ $('#q-ubic').onclick = ()=>{
 /* enviar */
 $('#cform').addEventListener('submit', async e=>{
   e.preventDefault();
-  const nombre=val('q-nombre'), cedula=val('q-cedula'), telRaw=val('q-tel'), dir=val('q-dir');
+  const nombre=val('q-nombre'), apellido=val('q-apellido'), cedula=val('q-cedula'), telRaw=val('q-tel'), dir=val('q-dir');
   const barrio=val('q-barrio'), detalle=val('q-detalle'), por=val('q-por');
   const personas=parseInt(val('q-personas'),10);
   const nec=[...document.querySelectorAll('#q-nec .cchip.on')].map(c=>c.dataset.k);
   const consent=$('#q-consent').checked;
 
-  if(!nombre || !cedula || !telRaw || !dir){ toast('Completa nombre, cédula, teléfono y dirección.'); return; }
+  if(!nombre || !apellido || !cedula || !telRaw || !dir){ toast('Completa nombres, apellidos, cédula, teléfono y dirección.'); return; }
   if(!consent){ toast('Necesitamos tu autorización para registrar los datos.'); return; }
 
   const tel=telRaw.replace(/[^0-9]/g,'');
   const tel_e164 = (tel.length===10) ? '57'+tel : tel;
   const payload = {
-    nombre, cedula, tel_e164, direccion:dir, barrio,
+    nombre, apellido, cedula, tel_e164, direccion:dir, barrio,
     personas: isNaN(personas)?null:personas,
     necesidades: nec, detalle,
     lat:LAT, lng:LNG,
