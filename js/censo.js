@@ -67,6 +67,7 @@ $('#cform').addEventListener('submit', async e=>{
     necesidades: nec, detalle,
     lat:LAT, lng:LNG,
     consentimiento:true,
+    publicar_tel: $('#q-pubtel').checked,
     registrado_por: por || 'persona',
   };
 
