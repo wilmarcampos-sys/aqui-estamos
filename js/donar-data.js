@@ -159,7 +159,7 @@ const DONAR_UI = {
   centros:     {es:'Centros de acopio', en:'Drop-off centers'},
   centros_sub: {es:'Dónde llevar las donaciones. Cada centro tiene sus propias reglas — respétalas.', en:'Where to take donations. Each center has its own rules — please follow them.'},
   registrar:   {es:'¿Quieres ser centro de acopio? Regístralo', en:'Want to be a drop-off center? Register it'},
-  amazon:      {es:'Comprar en Amazon', en:'Buy on Amazon'},
+  amazon:      {es:'Ayuda vía Amazon', en:'Help via Amazon'},
   acepta:      {es:'Recibe', en:'Accepts'},
   condiciones: {es:'Condiciones', en:'Conditions'},
   clasificar:  {es:'Debe llegar clasificado y en cajas pequeñas', en:'Must arrive sorted and in small boxes'},
