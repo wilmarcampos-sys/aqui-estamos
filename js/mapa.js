@@ -49,6 +49,9 @@ const UCOL = {3:'#dc2626', 2:'#d97706', 1:'#c9a227'};
 const CENSO_NEED = {agua:'Agua', alimentos:'Alimentos', medicamentos:'Medicamentos',
   albergue:'Albergue', aseo:'Aseo e higiene', ropa:'Ropa y cobijas', bebes:'Bebés y pañales', otra:'Otra'};
 
+/* Capas visibles del mapa (control de filtros). soloaltas = solo urgencia alta. */
+const CAPAS = {zonas:true, albergues:true, censo:true, entregas:true, soloaltas:false};
+
 function pintarMapa(){
   if(modoSVG) return pintarSVG();
   if(!capa) return;
@@ -57,7 +60,7 @@ function pintarMapa(){
 
   // Albergues: puntos fijos, visibles a cualquier zoom, con carpa dorada y un
   // badge rojo con cuántas necesidades tiene, para identificarlos bien.
-  S.coords.filter(c=>c.lat && (c.rol||'')==='Albergue').forEach(a=>{
+  if(CAPAS.albergues) S.coords.filter(c=>c.lat && (c.rol||'')==='Albergue').forEach(a=>{
     let f=null,bd=1e9; focos(a.z).forEach(x=>{const d=dist(a.lat,a.lng,x.lat,x.lng); if(d<bd){bd=d;f=x;}});
     // solo las PENDIENTES (sin entrega reciente de esa necesidad), no las ya cubiertas
     const nnec = (f && bd<300) ? f.needs.filter(x=>{
@@ -75,7 +78,7 @@ function pintarMapa(){
 
   // Censo de necesidades: puntos anónimos (necesidad + nº personas), visibles a
   // cualquier zoom. Nunca traen identidad — vienen de la vista pública anónima.
-  (S.censo||[]).forEach(cn=>{
+  if(CAPAS.censo) (S.censo||[]).forEach(cn=>{
     if(!cn.lat || !cn.lng) return;
     const necTxt = (cn.needs||[]).map(k=>CENSO_NEED[k]||k).slice(0,3).join(', ');
     L.marker([cn.lat,cn.lng],{zIndexOffset:600,icon:L.divIcon({className:'',iconSize:[22,22],iconAnchor:[11,11],
@@ -87,7 +90,8 @@ function pintarMapa(){
 
   if(z >= 14){
     /* ---- ACERCADO: focos exactos dentro de la comuna, con número de reportes ---- */
-    ZONAS.forEach(zz=>focos(zz.id).forEach(f=>{
+    if(CAPAS.zonas) ZONAS.forEach(zz=>focos(zz.id).forEach(f=>{
+      if(CAPAS.soloaltas && f.u!==3) return;
       const rad = 14 + Math.min(14, f.n*2.2);
       L.marker([f.lat,f.lng],{icon:L.divIcon({className:'', iconSize:[rad*2,rad*2], iconAnchor:[rad,rad],
         html:`<div style="width:${rad*2}px;height:${rad*2}px;border-radius:50%;
@@ -97,7 +101,7 @@ function pintarMapa(){
         .bindTooltip(`<b>${esc(f.ref||'Punto sin nombre')}</b><br>${f.n} reporte${f.n>1?'s':''} · ${f.needs.slice(0,3).map(x=>esc(NEED[x.k]?.n||x.k)).join(', ')}${f.subio?'<br><b>Urgencia elevada por corroboración</b>':''}<br><i>Toque para ver y reportar</i>`,{direction:'top'})
         .on('click',()=>abrirFoco(zz.id, f.lat, f.lng));
     }));
-    S.entregas.forEach(e=>{
+    if(CAPAS.entregas) S.entregas.forEach(e=>{
       if(!e.lat) return;
       L.marker([e.lat,e.lng],{icon:L.divIcon({className:'',iconSize:[20,20],iconAnchor:[10,10],
         html:`<div style="width:18px;height:18px;border-radius:5px;background:#3f8f5f;border:2px solid #0f172a;
@@ -105,7 +109,7 @@ function pintarMapa(){
         .bindTooltip(`Entregado: ${NEED[e.k]?.n||e.k} · ${e.quien}`,{direction:'top'});
     });
     /* micro-zonas de los coordinadores (los albergues ya van con su carpa) */
-    S.coords.filter(c=>c.lat && (c.rol||'')!=='Albergue').forEach(c=>{
+    if(CAPAS.zonas) S.coords.filter(c=>c.lat && (c.rol||'')!=='Albergue').forEach(c=>{
       L.circle([c.lat,c.lng],{radius:c.radio||500, color:c.ver?'#4f9cf9':'#7c4a10', weight:1.5,
         dashArray:'5 5', fillColor:'#4f9cf9', fillOpacity:.07, interactive:false}).addTo(capa);
       L.marker([c.lat,c.lng],{icon:L.divIcon({className:'',iconSize:[150,14],iconAnchor:[75,-6],
@@ -113,7 +117,7 @@ function pintarMapa(){
           text-shadow:0 0 5px #0f172a">${ico('user')} ${esc(c.micro||c.nom)}</div>`})}).addTo(capa)
         .bindTooltip(`<b>${esc(c.nom)}</b><br>${esc(c.micro||'')} · ${c.radio||500} m${c.ver?'':'<br>sin verificar'}`,{direction:'bottom'});
     });
-    ZONAS.forEach(zz=>L.marker([zz.lat,zz.lng],{interactive:false,icon:L.divIcon({className:'',
+    if(CAPAS.zonas) ZONAS.forEach(zz=>L.marker([zz.lat,zz.lng],{interactive:false,icon:L.divIcon({className:'',
       iconSize:[140,16],iconAnchor:[70,8],
       html:`<div style="text-align:center;font:700 11px/1.1 system-ui;color:#cfe0fa;opacity:.5;
         text-shadow:0 0 5px #0f172a">${zz.n}</div>`})}).addTo(capa));
@@ -121,7 +125,8 @@ function pintarMapa(){
   }
 
   /* ---- ALEJADO: burbuja por zona ---- */
-  ZONAS.map(estadoZona).forEach(st=>{
+  if(CAPAS.zonas) ZONAS.map(estadoZona).forEach(st=>{
+    if(CAPAS.soloaltas && st.idx<60) return;
     const r = 260 + Math.sqrt(st.z.pob) * 4.5;
     const c = L.circle([st.z.lat, st.z.lng], {
       radius: r, color: color(st.idx), weight: st.idx>=60?2.5:1.5,
@@ -276,3 +281,26 @@ function pickerGPS(id){
       : 'No se pudo obtener la ubicación. Toque el mapa en el sitio.');
   }, {enableHighAccuracy:true, timeout:9000, maximumAge:0});
 }
+
+/* Control de capas del mapa: botón + panel para mostrar/ocultar
+   albergues, censo, entregas, zonas y filtrar solo necesidades altas. */
+(function(){
+  const btn = document.getElementById('capas-btn');
+  const panel = document.getElementById('capas-panel');
+  if(!btn || !panel) return;
+  btn.addEventListener('click', e=>{
+    e.stopPropagation();
+    const abrir = panel.hidden;
+    panel.hidden = !abrir;
+    btn.classList.toggle('on', abrir);
+  });
+  panel.addEventListener('change', e=>{
+    const c = e.target.closest('input[data-capa]'); if(!c) return;
+    CAPAS[c.dataset.capa] = c.checked;
+    btn.classList.toggle('filtrando', !CAPAS.zonas || !CAPAS.albergues || !CAPAS.censo || !CAPAS.entregas || CAPAS.soloaltas);
+    if(typeof pintarMapa === 'function') pintarMapa();
+  });
+  // cerrar el panel al tocar el mapa
+  const m = document.getElementById('map');
+  if(m) m.addEventListener('click', ()=>{ if(!panel.hidden){ panel.hidden=true; btn.classList.remove('on'); } }, true);
+})();

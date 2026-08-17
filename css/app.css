@@ -190,6 +190,26 @@
   .legend.min .lfull,.legend.min .legbody{display:none}
   .legend.min .lchip{display:inline-flex}
   .legend.min .lcar{transform:rotate(-90deg)}
+
+  /* control de capas del mapa (filtrar qué se ve) */
+  .capas{position:absolute;top:96px;right:12px;z-index:600}
+  .capas-btn{width:42px;height:42px;border-radius:12px;background:var(--panel);border:1px solid var(--line);
+    color:var(--txt);display:grid;place-items:center;cursor:pointer;backdrop-filter:blur(10px);
+    box-shadow:0 8px 22px -10px rgba(2,8,23,.45)}
+  .capas-btn .ic{width:20px;height:20px}
+  .capas-btn.on,.capas-btn.filtrando{color:var(--acc);border-color:var(--acc)}
+  .capas-panel{position:absolute;top:50px;right:0;min-width:212px;background:var(--panel);border:1px solid var(--line);
+    border-radius:16px;padding:10px;backdrop-filter:blur(10px);box-shadow:0 16px 38px -16px rgba(2,8,23,.55)}
+  .capas-panel[hidden]{display:none}
+  .capas-h{font-size:11px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:var(--dim);padding:2px 6px 9px}
+  .capas-panel label{display:flex;align-items:center;gap:10px;padding:9px 7px;border-radius:10px;cursor:pointer;
+    font-size:13.5px;font-weight:600;color:var(--txt)}
+  .capas-panel label:hover{background:var(--chip)}
+  .capas-panel input{width:19px;height:19px;accent-color:var(--acc);flex:0 0 auto;margin:0}
+  .capas-panel span{display:flex;align-items:center;gap:9px}
+  .capas-panel span i{width:11px;height:11px;border-radius:50%;display:inline-block;flex:0 0 auto}
+  .capas-sep{margin-top:5px;border-top:1px solid var(--line);padding-top:9px}
+
   /* tras tocar el mapa, la pista de la barra sobra */
   .mapa-tocado .pinbar .muted{display:none}
 
