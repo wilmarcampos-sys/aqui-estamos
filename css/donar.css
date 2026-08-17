@@ -371,6 +371,10 @@
 /* fila de acciones del centro: WhatsApp + Amazon, grandes y visibles */
 .cacts{display:flex;flex-wrap:wrap;gap:10px;margin-top:18px}
 .cacts .wa,.cacts .amz{flex:1 1 140px;justify-content:center;height:50px;margin-top:0}
+.cacts .cshare{flex:1 1 100%;display:inline-flex;align-items:center;justify-content:center;gap:8px;height:46px;
+  border-radius:12px;background:var(--chip);color:var(--txt);border:0;font:800 14px/1 inherit;cursor:pointer;text-decoration:none}
+.cacts .cshare .ic{width:17px;height:17px}
+.cacts .cshare:hover{background:var(--line)}
 
 /* toast */
 .dtoast{position:fixed;left:50%;bottom:calc(88px + var(--safe));z-index:90;

@@ -140,10 +140,11 @@ function renderCentros(){
       ${acepta?`<div class="clab">${esc(t(DONAR_UI.acepta))}</div><div class="opts">${acepta}</div>`:''}
       ${c.clasificar?`<div class="cclasif">${boxIcon()} ${esc(t(DONAR_UI.clasificar))}</div>`:''}
       ${cond?`<div class="clab">${esc(t(DONAR_UI.condiciones))}</div><p class="ccond">${esc(cond)}</p>`:''}
-      ${(tel||c.amazon_url)?`<div class="cacts">
+      <div class="cacts">
         ${tel?`<a class="wa" href="${waHref(tel)}" target="_blank" rel="noopener">${waIcon()} ${esc(t(DONAR_UI.wa))}</a>`:''}
-        ${c.amazon_url?`<a class="amz" href="${esc(c.amazon_url)}" target="_blank" rel="noopener">${amzIcon()} ${esc(t(DONAR_UI.amazon))}</a>`:''}
-      </div>`:''}
+        ${c.amazon_url?`<a class="amz" href="${esc(amazonSort(c.amazon_url))}" target="_blank" rel="noopener">${amzIcon()} ${esc(t(DONAR_UI.amazon))}</a>`:''}
+        ${c.amazon_url?`<a class="cshare" href="/compartir?c=${esc(c.id)}">${shareIcon()} ${esc(t(DONAR_UI.compartir))}</a>`:''}
+      </div>
     </div>`;
   }).join('');
 }

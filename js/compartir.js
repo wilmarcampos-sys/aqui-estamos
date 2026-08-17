@@ -23,7 +23,12 @@ async function cargar(){
   if(!LISTA.length){ sel.innerHTML='<option>No hay centros con lista de Amazon</option>'; $('#c-noamz').hidden=false; return; }
   sel.innerHTML = LISTA.map((c,i)=>`<option value="${i}">${esc(c.nombre)}${c.ciudad?' · '+esc(c.ciudad):''}</option>`).join('');
   sel.onchange = ()=>elegir(LISTA[+sel.value]);
-  elegir(LISTA[0]);
+  // centro pre-seleccionado desde el link (?c=<id>)
+  let start = 0;
+  try{ const pre = new URLSearchParams(location.search).get('c');
+       if(pre){ const i = LISTA.findIndex(c=>c.id===pre); if(i>=0) start=i; } }catch(e){}
+  sel.value = start;
+  elegir(LISTA[start]);
 }
 function elegir(c){ SEL=c; dibujar(c); $('#c-prevwrap').hidden=false; $('#c-btns').hidden=false; $('#c-noamz').hidden=true; }
 
