@@ -294,7 +294,9 @@ function render(){
             <span class="muted">${at?'Atendido':'Pendiente'}</span></div>
             <div class="muted">${cn.personas?`${cn.personas} persona${cn.personas>1?'s':''} · `:''}censo</div></div></div>
         ${chips?`<div style="margin-top:8px">${chips}</div>`:''}</div>`;
-    }).join('') || vacio('Sin censo todavía','Aún no hay viviendas registradas en el censo con ubicación.','');
+    }).join('');
+    const regBtn = `<a class="btn" href="/censo" style="display:flex;align-items:center;justify-content:center;gap:8px;margin:0 0 14px;text-decoration:none;background:#7c3aed;color:#fff">${ico('plus')} Registrar una vivienda</a>`;
+    $('#lista-zonas').innerHTML = regBtn + ($('#lista-zonas').innerHTML || vacio('Sin censo todavía','Aún no hay viviendas registradas en el censo con ubicación.',''));
     document.querySelectorAll('#lista-zonas .card').forEach(c=>c.onclick=()=>abrirCenso(cs[+c.dataset.censo]));
     return;
   }
