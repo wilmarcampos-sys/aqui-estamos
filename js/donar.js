@@ -132,7 +132,7 @@ function renderCentros(){
         <div class="grow">
           <h3>${esc(c.nombre)}</h3>
           ${donde?`<div class="cloc">${esc(donde)}</div>`:''}
-          ${c.coordinador?`<div class="muted">${esc(c.coordinador)}${tel?` · ${esc(telFmt(tel))}`:''}</div>`:''}
+          ${c.coordinador?`<div class="ccoord"><span class="muted">Coordina:</span> <b>${esc(c.coordinador)}</b>${tel?` · <span class="muted">${esc(telFmt(tel))}</span>`:''}</div>`:''}
           ${dist}
         </div>
       </div>
@@ -404,9 +404,9 @@ function openAmazon(){
     const donde = [c.ciudad, c.pais].filter(Boolean).join(' · ');
     const near = USERLOC && i===0 && isFinite(c._d);
     const bits = [];
-    if(donde) bits.push(esc(donde));
+    if(c.ciudad) bits.push(esc(c.ciudad));
+    if(c.coordinador) bits.push(esc(c.coordinador));
     if(USERLOC && isFinite(c._d)) bits.push(esc(kmTxt(c._d))+(near?' · '+esc(t(DONAR_UI.cercano)):''));
-    else if(c.coordinador) bits.push(esc(c.coordinador));
     return `<button class="amzrow${near?' near':''}" data-url="${esc(c.amazon_url)}">
       <span class="amzrow-ic" style="background:${mk}">${pinIcon()}</span>
       <span class="amzrow-txt"><b>${esc(c.nombre)}</b>${bits.length?`<small>${bits.join(' · ')}</small>`:''}</span>

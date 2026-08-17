@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0f172a">
+<link rel="icon" type="image/svg+xml" href="logo/marca.svg">
+<title>Compartir mi centro · Aquí Estamos</title>
+<meta name="description" content="Genera una imagen con QR y link de tu centro de acopio para compartir por mensaje.">
+<meta property="og:title" content="Comparte tu centro de acopio · Aquí Estamos">
+<meta property="og:image" content="https://aquiestamos.co/img/hero-donar.jpg">
+<link rel="stylesheet" href="css/app.css">
+<link rel="stylesheet" href="css/donar.css">
+<link rel="stylesheet" href="css/centro.css">
+<link rel="stylesheet" href="css/compartir.css">
+<script>
+window.temaEfectivo = function(){
+  try{ var p = localStorage.getItem('ae_tema');
+    if(p==='claro') return 'light'; if(p==='oscuro') return 'dark';
+    return matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+  }catch(e){ return 'dark'; }
+};
+document.documentElement.setAttribute('data-eff', window.temaEfectivo());
+</script>
+</head>
+<body>
+<div id="app">
+  <header>
+    <a class="marcabtn" href="/donar" aria-label="Aquí Estamos">
+      <svg class="mark" viewBox="0 0 24 24" aria-hidden="true"><defs>
+      <clipPath id="ae-pin"><path d="M12 1.6c-4.6 0-8.3 3.7-8.3 8.3 0 5.9 8.3 12.5 8.3 12.5s8.3-6.6 8.3-12.5c0-4.6-3.7-8.3-8.3-8.3z"/></clipPath></defs>
+      <g clip-path="url(#ae-pin)"><rect x="0" y="0" width="12" height="24" fill="#F2B705"/><rect x="12" y="0" width="12" height="24" fill="#D62828"/></g>
+      <path d="M5.9 9.1h6.4a1.35 1.35 0 0 1 0 2.7H5.9z" fill="#fff"/><path d="M18.1 12.2h-6.4a1.35 1.35 0 0 0 0 2.7h6.4z" fill="#fff"/></svg>
+      <div class="grow" style="text-align:left"><h1>Aquí<span>&nbsp;Estamos</span></h1><p class="estado">aquiestamos.co</p></div>
+    </a>
+  </header>
+
+  <nav class="dnav">
+    <a href="/donar">Cómo donar</a>
+    <a href="/centro">Registrar centro</a>
+    <a href="/compartir" class="on">Compartir mi centro</a>
+  </nav>
+
+  <main><div class="view on"><div class="pad">
+    <section class="dhero">
+      <div class="dhero-in">
+        <span class="dkick">Para centros de acopio</span>
+        <h2>Comparte tu centro con QR</h2>
+        <p>Genera una imagen con el <b>código QR</b> y el link de tu lista de Amazon. Mándala por WhatsApp o mensaje: quien la reciba escanea y dona, y llega directo a tu centro.</p>
+      </div>
+    </section>
+
+    <div class="field">
+      <label>Elige tu centro</label>
+      <select id="c-sel"><option>Cargando…</option></select>
+    </div>
+
+    <div id="c-prevwrap" class="cprevwrap" hidden>
+      <canvas id="c-canvas" width="1080" height="1350"></canvas>
+    </div>
+    <p id="c-noamz" class="muted" hidden style="margin:6px 2px">Este centro no tiene lista de Amazon, así que no hay QR para compartir.</p>
+
+    <div class="cbtns" id="c-btns" hidden>
+      <button type="button" class="dcta" id="c-share">Compartir imagen</button>
+      <button type="button" class="btn flat" id="c-dl" style="margin-top:10px">Descargar imagen</button>
+      <button type="button" class="btn flat" id="c-copy" style="margin-top:10px">Copiar link de la tienda</button>
+    </div>
+  </div></div></main>
+
+  <footer><div class="version" id="version"></div></footer>
+  <div id="d-toast" class="dtoast" hidden></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="js/config.js"></script>
+<script src="js/version.js"></script>
+<script src="js/compartir.js"></script>
+</body>
+</html>

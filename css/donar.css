@@ -204,6 +204,8 @@
 .ccard h3{margin:0;font-size:19px;font-weight:800;letter-spacing:-.3px;line-height:1.2}
 .cloc{font-size:13px;font-weight:600;color:var(--dim);margin-top:3px}
 .ccard .muted{font-size:13.5px;margin-top:5px;font-variant-numeric:tabular-nums;color:var(--dim)}
+.ccoord{font-size:14px;margin-top:5px}
+.ccoord b{font-weight:800;color:var(--txt)}
 .cdir{display:flex;align-items:center;gap:8px;margin-top:12px;font-size:14.5px;color:var(--txt)}
 .cdir .ic{color:var(--acc);width:18px;height:18px;flex:0 0 auto}
 .clab{margin:16px 0 8px;font-size:11px;font-weight:800;letter-spacing:.7px;text-transform:uppercase;color:var(--dim)}
@@ -312,7 +314,7 @@
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .amzrow-txt .muted{font-weight:600;color:var(--dim)}
 .amzrow-txt small{display:block;font-size:12.5px;color:var(--dim);margin-top:2px;font-variant-numeric:tabular-nums;
-  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  line-height:1.35;text-wrap:pretty}
 .amzcta{flex:0 0 auto;display:inline-flex;align-items:center;gap:5px;padding:9px 12px;border-radius:999px;
   background:#FF9900;color:#131A22;font:800 13px/1 inherit;white-space:nowrap}
 .amzcta .amzlogo{width:18px;height:16px}
