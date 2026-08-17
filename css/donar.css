@@ -290,11 +290,33 @@
   color:var(--txt);font:800 15px/1 inherit;cursor:pointer}
 .dsheet-x:active{transform:scale(.99)}
 
-/* selector de centro para Amazon */
-.amz-sub{margin:0 8px 12px;font-size:13.5px;line-height:1.45;color:var(--dim);text-wrap:pretty}
-.amzrow small{display:block;font-size:12.5px;color:var(--dim);margin-top:3px;font-variant-numeric:tabular-nums}
-.amzrow .amzgo{flex:0 0 auto;display:grid;place-items:center;color:#FF9900}
-.amzrow .amzgo .ic{width:22px;height:22px}
+/* ---- selector de centro para Amazon (rediseñado) ---- */
+.amz-sub{margin:0 6px 14px;font-size:14px;line-height:1.5;color:var(--dim);text-wrap:pretty}
+.amzloc{display:flex;align-items:center;gap:9px;width:100%;padding:12px 14px;margin:0 0 14px;border:0;border-radius:14px;
+  background:color-mix(in srgb, var(--acc) 12%, transparent);color:var(--acc);font:800 14px/1 inherit;
+  cursor:pointer;text-align:left;transition:background .12s}
+.amzloc:hover{background:color-mix(in srgb, var(--acc) 18%, transparent)}
+.amzloc:active{transform:scale(.99)}
+.amzloc .ic{width:20px;height:20px;flex:0 0 auto}
+.amz-hint{margin:0 6px 9px;font-size:11.5px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--dim)}
+.amzrow{display:flex;align-items:center;gap:12px;width:100%;text-align:left;border:0;cursor:pointer;
+  padding:11px 12px;border-radius:16px;margin:0 0 9px;background:var(--chip);
+  transition:background .12s,transform .08s}
+.amzrow:hover{background:var(--line)}
+.amzrow:active{transform:scale(.995)}
+.amzrow.near{box-shadow:inset 0 0 0 2px color-mix(in srgb, var(--c0) 55%, transparent)}
+.amzrow-ic{width:44px;height:44px;flex:0 0 auto;border-radius:50%;display:grid;place-items:center;color:#fff}
+.amzrow-ic .ic{width:22px;height:22px}
+.amzrow-txt{flex:1;min-width:0}
+.amzrow-txt b{display:block;font-size:15.5px;font-weight:800;letter-spacing:-.2px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.amzrow-txt .muted{font-weight:600;color:var(--dim)}
+.amzrow-txt small{display:block;font-size:12.5px;color:var(--dim);margin-top:2px;font-variant-numeric:tabular-nums;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.amzcta{flex:0 0 auto;display:inline-flex;align-items:center;gap:5px;padding:9px 12px;border-radius:999px;
+  background:#FF9900;color:#131A22;font:800 13px/1 inherit;white-space:nowrap}
+.amzcta .amzlogo{width:18px;height:16px}
+.amzcta .ic:last-child{width:15px;height:15px}
 
 /* ---------- bienvenida (agradecer + elegir) ---------- */
 .dwelcome{position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;padding:18px}

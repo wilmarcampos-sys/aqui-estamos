@@ -35,6 +35,7 @@ function boxIcon(){ return '<svg class="ic" viewBox="0 0 24 24" fill="none" stro
 /* logo de Amazon (la "sonrisa"/flecha a→z) */
 function amzIcon(){ return '<svg class="ic amzlogo" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.5 11c3.3 3 7.6 4.5 11.5 4.5 3.2 0 6.3-.9 9-2.7"/><path d="M18.6 14.6c1.8-1.1 3.7-1.3 4-.9.4.4-.2 2.5-1.4 3.6"/></svg>'; }
 function heartIcon(){ return '<svg class="ic" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 21s-7.5-4.6-10-9.3C.7 8.9 2 5.5 5.2 5c1.9-.3 3.7.7 4.8 2.2C11.1 5.7 12.9 4.7 14.8 5 18 5.5 19.3 8.9 22 11.7 19.5 16.4 12 21 12 21z"/></svg>'; }
+function arrowRight(){ return '<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>'; }
 function xIcon(){ return '<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m8.5 8.5 7 7M15.5 8.5l-7 7"/></svg>'; }
 
 /* teléfono internacional */
@@ -400,21 +401,24 @@ function openAmazon(){
     const mk = CMK[CENTROS.indexOf(c) % CMK.length];
     const donde = [c.ciudad, c.pais].filter(Boolean).join(' · ');
     const near = USERLOC && i===0 && isFinite(c._d);
-    const sub = (USERLOC && isFinite(c._d))
-      ? `<small>${esc(kmTxt(c._d))}${near?' · '+esc(t(DONAR_UI.cercano)):''}</small>`
-      : (c.coordinador?`<small>${esc(c.coordinador)}</small>`:'');
-    return `<button class="dsopt amzrow" data-url="${esc(c.amazon_url)}">
-      <span class="dsopt-ic" style="color:${mk};background:${mk}22">${pinIcon()}</span>
-      <span class="grow"><b>${esc(c.nombre)}${donde?` · <span class="muted" style="font-weight:600">${esc(donde)}</span>`:''}</b>${sub}</span>
-      <span class="amzgo">${amzIcon()}</span></button>`;
+    const bits = [];
+    if(donde) bits.push(esc(donde));
+    if(USERLOC && isFinite(c._d)) bits.push(esc(kmTxt(c._d))+(near?' · '+esc(t(DONAR_UI.cercano)):''));
+    else if(c.coordinador) bits.push(esc(c.coordinador));
+    return `<button class="amzrow${near?' near':''}" data-url="${esc(c.amazon_url)}">
+      <span class="amzrow-ic" style="background:${mk}">${pinIcon()}</span>
+      <span class="amzrow-txt"><b>${esc(c.nombre)}</b>${bits.length?`<small>${bits.join(' · ')}</small>`:''}</span>
+      <span class="amzcta">${amzIcon()}<span>Amazon</span>${arrowRight()}</span></button>`;
   }).join('');
-  const locRow = !USERLOC ? `<button class="dsopt amzloc" data-loc="1">
-      <span class="dsopt-ic" style="color:var(--acc);background:color-mix(in srgb, var(--acc) 14%, transparent)">${locIcon()}</span>
-      <span class="grow"><b>${esc(t(DONAR_UI.ubicame))}</b><small>${esc(t(DONAR_UI.ubicar_sub))}</small></span></button>` : '';
+  const locRow = !USERLOC
+    ? `<button class="amzloc" data-loc="1">${locIcon()}<span>${esc(t(DONAR_UI.ubicame))}</span></button>`
+    : '';
   $('#d-amazon .dsheet-card').innerHTML =
     `<div class="dsheet-h">${esc(t(DONAR_UI.amz_t))}</div>
      <p class="amz-sub">${esc(t(DONAR_UI.amz_p))}</p>
-     ${locRow}${rows}
+     ${locRow}
+     <div class="amz-hint">${esc(t(DONAR_UI.amz_paso))}</div>
+     ${rows}
      <button class="dsheet-x" data-x="1">${esc(t(DONAR_UI.cancelar))}</button>`;
   const sh=$('#d-amazon'); sh.hidden=false; requestAnimationFrame(()=>sh.classList.add('on'));
 }

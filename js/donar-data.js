@@ -181,9 +181,10 @@ const DONAR_UI = {
   opt_pdf:     {es:'PDF', en:'PDF'},
   opt_pdf_s:   {es:'Documento para imprimir o enviar', en:'Document to print or send'},
   cancelar:    {es:'Cancelar', en:'Cancel'},
-  amz_t:       {es:'¿A qué centro llevas la ayuda?', en:'Which center will it ship to?'},
-  amz_p:       {es:'Elige el centro más cercano a tu casa. Tu ayuda, vía su lista de Amazon, llega directo ahí.',
-                en:'Choose the center closest to your home. Your help, via its Amazon list, ships straight there.'},
+  amz_t:       {es:'¿A qué centro enviar tu ayuda?', en:'Where should your help ship?'},
+  amz_p:       {es:'Elige el más cercano a tu casa. Se abre su lista de Amazon: ordenas en 1 clic y llega directo al centro.',
+                en:'Choose the one closest to home. Its Amazon list opens — order in 1 click and it ships straight to the center.'},
+  amz_paso:    {es:'Toca un centro para abrir su lista de Amazon', en:'Tap a center to open its Amazon list'},
   list_title:  {es:'Mi lista para donar · Pereira', en:'My donation list · Pereira'},
   list_foot:   {es:'aquiestamos.co/donar — Aquí Estamos', en:'aquiestamos.co/donar — Aquí Estamos'},
 };
