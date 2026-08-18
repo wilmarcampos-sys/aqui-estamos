@@ -265,11 +265,8 @@ function render(){
          </div>
        </div>
        <button type="button" class="btn" data-inscribir>${ico('plus')} Cubrir otro sector</button>`
-    : `<div class="card">
-         <p class="muted" style="margin:0 0 11px">¿Vas a ayudar a coordinar un sector? Con tu celular y un PIN, sin correo ni contraseñas largas.</p>
-         <button type="button" class="btn guide" data-coord-intro style="margin-top:0">Inscribirme como coordinador</button>
-         <button type="button" class="btn flat" data-cuenta>Ya me inscribí, quiero entrar</button>
-       </div>`);
+    : `<button type="button" class="btn flat" data-cuenta style="margin-top:0">Ya me inscribí, quiero entrar</button>
+       <p class="muted" style="margin:8px 2px 0;font-size:12.5px">El registro es con tu celular y un PIN — sin correo ni contraseñas largas.</p>`);
 
   const secO=$('#sec-orf'), secS=$('#sec-solo');
   if(secO) secO.innerHTML = ico('alert')+' Puntos sin nadie a cargo';
@@ -388,7 +385,7 @@ function render(){
   verBloque('b-solo', !!htmlSolo);
   verBloque('b-personas', !!htmlPers);
   verBloque('b-coord', !!htmlPers);
-  verBloque('b-entregas', S.entregas.length > 0);
+  verBloque('b-salud', !!htmlSolo || !!htmlPers);   // el plegable entero, si no hay nada
 
   // coordinadores
   const byZone = {};
@@ -406,13 +403,6 @@ function render(){
       </div>`).join('')}</div>`;
   }).join('') || '';
 
-  // entregas
-  $('#lista-entregas').innerHTML = S.entregas.slice().sort((a,b)=>b.ts-a.ts).slice(0,15).map(e=>`
-    <div class="need-line">
-      <span class="dot" style="background:#3f8f5f"></span>
-      <div class="grow"><div style="font-size:13px">${esc(NEED[e.k]?.n||e.k)} → ${esc(ZONAS.find(z=>z.id===e.z)?.n||e.z)}</div>
-      <div class="cnt">${esc(e.quien)}${e.cant?' · '+esc(e.cant):''} · ${hace(e.ts)}</div></div>
-    </div>`).join('');
 }
 
 /* ---------- soporte de la app por WhatsApp ---------- */

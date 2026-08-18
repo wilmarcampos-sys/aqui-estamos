@@ -23,7 +23,7 @@
 <meta name="twitter:description" content="Coordinación abierta de ayuda para el terremoto de Pereira.">
 <meta name="twitter:image" content="https://aquiestamos.co/img/hero-donar.jpg">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
-<link rel="stylesheet" href="css/app.css?v=1.35.0">
+<link rel="stylesheet" href="css/app.css?v=1.35.2">
 <script>
 /* URL sin ".html" en el sitio publicado (en localhost la extensión hace falta). */
 (function(){ var h=location.hostname; if(h==='localhost'||h==='127.0.0.1'||h==='') return;
@@ -253,24 +253,26 @@ document.documentElement.setAttribute('data-eff', window.temaEfectivo());
         <div class="sec" id="sec-orf"></div>
         <div id="lista-orf"></div>
       </div>
-      <div class="bloque" id="b-solo">
-        <div class="sec" id="sec-solo"></div>
-        <p class="muted" style="margin:-2px 0 9px">Si esa persona falla, el sector queda ciego.</p>
-        <div id="lista-solo"></div>
-      </div>
-      <div class="bloque" id="b-personas">
-        <div class="sec">Reparto de la coordinación</div>
-        <p class="muted" style="margin:-2px 0 9px">Muchos sectores en una sola persona = falta gente.</p>
-        <div id="lista-personas"></div>
-      </div>
       <div class="bloque" id="b-coord">
         <div class="sec">Coordinadores por zona</div>
         <div id="lista-coord"></div>
       </div>
-      <div class="bloque" id="b-entregas">
-        <div class="sec">Últimas entregas registradas</div>
-        <div id="lista-entregas"></div>
-      </div>
+      <!-- lo analítico va plegado: importa a quien organiza, no al vecino -->
+      <details class="fold" id="b-salud">
+        <summary>Salud de la coordinación</summary>
+        <div class="foldbody">
+          <div class="bloque" id="b-solo">
+            <div class="sec" id="sec-solo"></div>
+            <p class="muted" style="margin:-2px 0 9px">Si esa persona falla, el sector queda ciego.</p>
+            <div id="lista-solo"></div>
+          </div>
+          <div class="bloque" id="b-personas">
+            <div class="sec">Reparto de la coordinación</div>
+            <p class="muted" style="margin:-2px 0 9px">Muchos sectores en una sola persona = falta gente.</p>
+            <div id="lista-personas"></div>
+          </div>
+        </div>
+      </details>
     </div></section>
   </main>
 
@@ -293,15 +295,15 @@ document.documentElement.setAttribute('data-eff', window.temaEfectivo());
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="js/config.js?v=1.35.0"></script>
-<script src="js/version.js?v=1.35.0"></script>
-<script src="js/data.js?v=1.35.0"></script>
-<script src="js/estado.js?v=1.35.0"></script>
-<script src="js/calc.js?v=1.35.0"></script>
-<script src="js/mapa.js?v=1.35.0"></script>
-<script src="js/hojas.js?v=1.35.0"></script>
-<script src="js/cuenta.js?v=1.35.0"></script>
-<script src="js/ui.js?v=1.35.0"></script>
-<script src="js/dar.js?v=1.35.0"></script>
+<script src="js/config.js?v=1.35.2"></script>
+<script src="js/version.js?v=1.35.2"></script>
+<script src="js/data.js?v=1.35.2"></script>
+<script src="js/estado.js?v=1.35.2"></script>
+<script src="js/calc.js?v=1.35.2"></script>
+<script src="js/mapa.js?v=1.35.2"></script>
+<script src="js/hojas.js?v=1.35.2"></script>
+<script src="js/cuenta.js?v=1.35.2"></script>
+<script src="js/ui.js?v=1.35.2"></script>
+<script src="js/dar.js?v=1.35.2"></script>
 </body>
 </html>
