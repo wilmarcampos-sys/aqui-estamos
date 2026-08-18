@@ -185,9 +185,9 @@ function setMainPt(la, lo){
 function initMainPin(){          // se llama al final: PIN y esc ya existen
   if(!map) return;
   mainMk = L.marker([4.8133,-75.6961],{draggable:true, autoPan:true, icon:PIN, zIndexOffset:1000}).addTo(map);
-  mainMk.on('drag dragend', e=>setMainPt(e.target.getLatLng().lat, e.target.getLatLng().lng));
-  map.on('click', e=>setMainPt(e.latlng.lat, e.latlng.lng));
-  setMainPt(4.8133, -75.6961);
+  mainMk.on('drag dragend', e=>{ window.__pinPuesto=true; setMainPt(e.target.getLatLng().lat, e.target.getLatLng().lng); });
+  map.on('click', e=>{ window.__pinPuesto=true; setMainPt(e.latlng.lat, e.latlng.lng); });
+  setMainPt(4.8133, -75.6961);   // punto por defecto: NO cuenta como "puesto por la persona"
 }
 /* punto por defecto para una zona: el pin principal si cae dentro, si no el centro de la zona */
 function ptDe(zid){

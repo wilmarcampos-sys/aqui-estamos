@@ -634,6 +634,7 @@ pintarTema();
     const z=ZONAS.find(x=>x.id===b.dataset.z); if(!z) return;
     menu.hidden=true;
     if(map && !modoSVG){ map.flyTo([z.lat,z.lng], 14.6, {duration:.7}); }
+    window.__pinPuesto=true;
     if(typeof setMainPt==='function') setMainPt(z.lat, z.lng);
     toast('Zona: '+z.n);
   });
@@ -670,6 +671,13 @@ window.sheetPintar=function(){
 
 /* ---------- acciones globales ---------- */
 $('#fab-need').onclick = ()=>{
+  // el pin se pide en el momento: si aun no ha tocado el mapa, pista pulsante
+  if(!window.__pinPuesto){
+    const h=document.getElementById('map-hint');
+    if(h){ h.classList.remove('off'); clearTimeout(h._t); h._t=setTimeout(()=>h.classList.add('off'), 4200); }
+    toast('Primero toca el mapa donde estás');
+    return;
+  }
   const pt = mainPt || ptDe('centro');
   abrirReporte(pt.z, pt);
 };
@@ -678,7 +686,7 @@ $('#fab-loc').onclick = ()=>{
   toast('Buscando su ubicación...');
   navigator.geolocation.getCurrentPosition(p=>{
     const {latitude:la, longitude:lo} = p.coords;
-    if(map){ map.setView([la,lo], 16); setMainPt(la,lo); toast('Pin puesto donde está'); }
+    if(map){ window.__pinPuesto=true; map.setView([la,lo], 16); setMainPt(la,lo); toast('Pin puesto donde está'); }
     else abrirReporte(zonaDe(la,lo).id);
   }, ()=>toast('No se pudo obtener la ubicación'), {enableHighAccuracy:true, timeout:9000});
 };

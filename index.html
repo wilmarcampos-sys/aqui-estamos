@@ -23,7 +23,7 @@
 <meta name="twitter:description" content="Coordinación abierta de ayuda para el terremoto de Pereira.">
 <meta name="twitter:image" content="https://aquiestamos.co/img/hero-donar.jpg">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
-<link rel="stylesheet" href="css/app.css?v=1.39.0">
+<link rel="stylesheet" href="css/app.css?v=1.40.0">
 <script>
 /* URL sin ".html" en el sitio publicado (en localhost la extensión hace falta). */
 (function(){ var h=location.hostname; if(h==='localhost'||h==='127.0.0.1'||h==='') return;
@@ -90,6 +90,7 @@ document.documentElement.setAttribute('data-eff', window.temaEfectivo());
     <!-- MAPA -->
     <section class="view on" id="v-map">
       <div id="map"></div>
+      <div class="pickhint off" id="map-hint" aria-live="polite">Toca el mapa donde estás, o arrastra el pin</div>
       <div class="legend min" id="legend">
         <button class="legtog" id="legtog" type="button" aria-label="Mostrar u ocultar niveles">
           <span class="lchip"><i style="background:#dc2626"></i>Niveles</span>
@@ -138,20 +139,20 @@ document.documentElement.setAttribute('data-eff', window.temaEfectivo());
             <b id="msheet-count-n">0</b><span class="clab">abiertos</span>
           </div>
         </div>
-        <div class="actions">
-          <button class="sbtn sbtn-need" id="fab-need">
-            <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 9v4.5M12 17h.01"/><path d="M10.3 3.9 1.8 18.4A2 2 0 0 0 3.5 21.4h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/></svg>
-            <span id="fab-need-lbl">Necesito ayuda</span>
+        <div class="actions dos">
+          <button class="sbtn sbtn-need sbtn2" id="fab-need">
+            <span class="s2t"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 9v4.5M12 17h.01"/><path d="M10.3 3.9 1.8 18.4A2 2 0 0 0 3.5 21.4h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/></svg><span id="fab-need-lbl">Necesito ayuda</span></span>
+            <small>Cuéntanos qué te falta</small>
           </button>
-          <button type="button" class="sbtn sbtn-dar" id="fab-dar" aria-label="Tengo algo para dar">
-            <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13"/><path d="M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7"/><path d="M7.5 8a2.5 2.5 0 0 1 0-5C11 3 12 8 12 8s1-5 4.5-5a2.5 2.5 0 0 1 0 5"/></svg>
-            <span>Dar</span>
+          <button type="button" class="sbtn sbtn-dar sbtn2" id="fab-dar" aria-label="Tengo algo para dar">
+            <span class="s2t"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13"/><path d="M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7"/><path d="M7.5 8a2.5 2.5 0 0 1 0-5C11 3 12 8 12 8s1-5 4.5-5a2.5 2.5 0 0 1 0 5"/></svg><span>Tengo para dar</span></span>
+            <small>Aquí o desde lejos</small>
           </button>
-          <a class="sbtn sbtn-censo" id="fab-censo" href="/censo" aria-label="Registrar una vivienda en el censo">
-            <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.8V20h14V9.8"/><path d="M12 21v-5M9.5 18.5h5"/></svg>
-            <span>Censar</span>
-          </a>
         </div>
+        <a class="censar-link" id="fab-censo" href="/censo">
+          <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.8V20h14V9.8"/></svg>
+          Registrar una vivienda en el censo
+        </a>
         <div class="msheet-body">
           <div class="sec-title st-row">Reportes cercanos <a href="#" id="ver-todos">Ver todos</a></div>
           <div id="msheet-list"></div>
@@ -168,7 +169,18 @@ document.documentElement.setAttribute('data-eff', window.temaEfectivo());
           </button>
         </div>
         <div class="gs-body">
-          <div class="gstep active" data-g="1">
+          <div class="gstep" data-g="0">
+            <p class="gs-sub">Para decirte el mejor destino, primero dinos dónde estás.</p>
+            <button type="button" class="gopt gopt-aqui" id="gs-local">
+              <span class="goi"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="2.6"/></svg></span>
+              <span class="got"><b>Estoy en Pereira o cerca</b><small>Lo llevas tú — te decimos a dónde</small></span>
+            </button>
+            <a class="gopt" id="gs-usa" href="/donar?usa=1">
+              <span class="goi goi-usa"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a15 15 0 0 1 0 18M12 3a15 15 0 0 0 0 18"/></svg></span>
+              <span class="got"><b>Estoy lejos (USA u otra ciudad)</b><small>Compras por la lista de Amazon de un centro</small></span>
+            </a>
+          </div>
+          <div class="gstep" data-g="1">
             <p class="gs-sub">Marca lo que tienes. Buscamos solo dónde falta <b>eso</b>.</p>
             <div class="chips3" id="gs-cats"></div>
             <div class="qty-row">
@@ -185,7 +197,6 @@ document.documentElement.setAttribute('data-eff', window.temaEfectivo());
               <button type="button" data-km="5" aria-checked="true"><b>En moto</b><small>5 km</small></button>
               <button type="button" data-km="20" aria-checked="false"><b>En carro</b><small>20 km</small></button>
             </div>
-            <a class="alt-link" href="/donar?usa=1" style="margin-top:12px;display:block;text-align:center;text-decoration:none">¿Estás fuera de Pereira? Dona desde USA ›</a>
           </div>
           <div class="gstep" data-g="2">
             <div class="searching">
@@ -225,6 +236,18 @@ document.documentElement.setAttribute('data-eff', window.temaEfectivo());
     <section class="view" id="v-coord"><div class="pad">
       <div id="coord-entrada"></div>
       <div class="stat-row" id="coord-stats"></div>
+      <a class="card" href="/censo" style="text-decoration:none;color:inherit;display:block">
+        <div class="row" style="align-items:center;gap:12px">
+          <div class="rank" style="background:#7c3aed;color:#fff">
+            <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.9M16 3.1a4 4 0 0 1 0 7.8"/></svg>
+          </div>
+          <div class="grow">
+            <b style="font-size:15px">Censo de necesidades</b>
+            <div class="muted" style="margin-top:2px;font-size:13px">Registra a una persona o familia para verificar que la ayuda llegue.</div>
+          </div>
+          <span style="color:var(--acc);font-weight:800;font-size:20px">→</span>
+        </div>
+      </a>
       <details class="fold">
         <summary>Cómo funciona la coordinación</summary>
         <div class="foldbody muted" style="font-size:13px;line-height:1.5">
@@ -285,15 +308,15 @@ document.documentElement.setAttribute('data-eff', window.temaEfectivo());
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="js/config.js?v=1.39.0"></script>
-<script src="js/version.js?v=1.39.0"></script>
-<script src="js/data.js?v=1.39.0"></script>
-<script src="js/estado.js?v=1.39.0"></script>
-<script src="js/calc.js?v=1.39.0"></script>
-<script src="js/mapa.js?v=1.39.0"></script>
-<script src="js/hojas.js?v=1.39.0"></script>
-<script src="js/cuenta.js?v=1.39.0"></script>
-<script src="js/ui.js?v=1.39.0"></script>
-<script src="js/dar.js?v=1.39.0"></script>
+<script src="js/config.js?v=1.40.0"></script>
+<script src="js/version.js?v=1.40.0"></script>
+<script src="js/data.js?v=1.40.0"></script>
+<script src="js/estado.js?v=1.40.0"></script>
+<script src="js/calc.js?v=1.40.0"></script>
+<script src="js/mapa.js?v=1.40.0"></script>
+<script src="js/hojas.js?v=1.40.0"></script>
+<script src="js/cuenta.js?v=1.40.0"></script>
+<script src="js/ui.js?v=1.40.0"></script>
+<script src="js/dar.js?v=1.40.0"></script>
 </body>
 </html>

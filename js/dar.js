@@ -42,7 +42,7 @@ const DAR_CATS = [
 let gSel = new Set(), gQty = 1, gKm = 5, gStep = 1, gCand = [], gIdx = 0, gTimer = null;
 let gRuta = null, gMk = null;
 
-const G_TITLES = {1:'¿Qué traes?', 2:'Buscando…', 3:'Llévalo aquí'};
+const G_TITLES = {0:'¿Dónde estás?', 1:'¿Qué traes?', 2:'Buscando…', 3:'Llévalo aquí'};
 
 /* ---- candidatos con el puntaje transparente ---- */
 function darCandidatos(){
@@ -79,6 +79,7 @@ function gGo(n){
   gs.querySelectorAll('.gstep').forEach(x=>x.classList.toggle('active', +x.dataset.g===n));
   document.getElementById('gs-title').textContent = G_TITLES[n]||'';
   const cta = document.getElementById('gs-next');
+  cta.hidden = (n===0);
   if(n===1){ cta.textContent='Buscar dónde falta'; cta.className='cta green'; }
   if(n===2){ cta.textContent='Cancelar'; cta.className='cta soft'; }
   if(n===3){ cta.textContent='Cómo llegar'; cta.className='cta blue'; }
@@ -99,7 +100,7 @@ function gAbrir(){
   gSel = new Set(); gIdx = 0;
   gs.querySelectorAll('.mini-chip').forEach(c=>c.setAttribute('aria-pressed','false'));
   document.querySelector('.msheet')?.classList.add('tucked');
-  gGo(1);
+  gGo(0);
   requestAnimationFrame(()=>gs.classList.add('open'));
 }
 function gCerrar(){
@@ -213,6 +214,7 @@ window.darQuitar = gRutaQuitar;   // limpieza también al cerrar otros modales
     b.setAttribute('aria-checked','true'); gKm=+b.dataset.km;
   });
   document.getElementById('gs-close').onclick = gCerrar;
+  const gl=document.getElementById('gs-local'); if(gl) gl.onclick=()=>gGo(1);
   document.getElementById('gs-next').onclick = ()=>{
     if(gStep===1){
       if(!gSel.size) return toast('Marca al menos una cosa que traes.');

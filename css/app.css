@@ -951,3 +951,30 @@ input.pin{letter-spacing:9px;font-size:20px;text-align:center;font-weight:700}
 :root[data-eff="light"] .u-alta{color:#C11B1B}
 :root[data-eff="light"] .u-media{color:#8A4708}
 :root[data-eff="light"] .u-ok{color:#1B5C39}
+
+/* dos caminos gemelos + censo como enlace */
+.actions.dos{grid-template-columns:1fr 1fr}
+.sbtn2{flex-direction:column;align-items:flex-start;gap:3px;height:64px;padding:0 15px;text-align:left}
+.sbtn2 .s2t{display:flex;align-items:center;gap:7px;font-weight:800;font-size:15px;line-height:1.1;position:relative}
+.sbtn2 .s2t .ic{width:17px;height:17px}
+.sbtn2 small{position:relative;font-size:11px;font-weight:600;opacity:.85}
+.sbtn-dar.sbtn2{width:auto;box-shadow:0 8px 18px rgba(0,0,0,.38)}
+.censar-link{display:flex;align-items:center;justify-content:center;gap:6px;margin:0 14px 6px;padding:7px 10px;
+  color:#b7a8e8;font-size:12.5px;font-weight:700;text-decoration:none}
+.censar-link .ic{width:14px;height:14px}
+:root[data-eff="light"] .censar-link{color:#6D28D9}
+/* paso 0 de Dar: ¿donde estas? */
+.gopt{display:flex;align-items:center;gap:13px;width:100%;text-align:left;margin-bottom:9px;
+  border:1.5px solid var(--line);background:var(--surf);border-radius:16px;padding:14px 15px;
+  font:inherit;color:var(--txt);cursor:pointer;text-decoration:none;transition:transform .16s var(--ease)}
+.gopt:active{transform:scale(.98)}
+.gopt-aqui{border-color:#2f9e5f;background:rgba(47,158,95,.09)}
+.gopt .goi{width:40px;height:40px;border-radius:12px;flex:0 0 auto;display:grid;place-items:center;
+  color:#fff;background:linear-gradient(160deg,#22C55E,#15803D)}
+.gopt .goi-usa{background:linear-gradient(96deg,#F59E0B,#DC2626)}
+.gopt .goi .ic{width:19px;height:19px}
+.gopt .got b{display:block;font-size:15.5px;font-weight:800;letter-spacing:-.2px}
+.gopt .got small{display:block;font-size:12.3px;color:var(--dim);margin-top:2px}
+/* pista del pin en el momento */
+#map-hint{position:absolute;top:44%;bottom:auto;z-index:640;transition:opacity .3s var(--ease)}
+#map-hint.off{opacity:0;pointer-events:none}
