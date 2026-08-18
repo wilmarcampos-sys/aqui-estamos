@@ -1013,3 +1013,10 @@ input.pin{letter-spacing:9px;font-size:20px;text-align:center;font-weight:700}
 
 .btn.violeta{background:linear-gradient(160deg,#8B5CF6,#6D28D9);color:#fff;box-shadow:0 8px 18px rgba(0,0,0,.35)}
 :root[data-eff="light"] .btn.violeta{box-shadow:0 6px 14px rgba(15,23,41,.18)}
+
+/* centros aliados (alluda.online) */
+.mpin-aco{background:linear-gradient(160deg,#14B8A6,#0F766E)}
+.mpin-aco .ic{width:15px;height:15px}
+.acodir{display:flex;gap:8px;align-items:flex-start;font-size:13px;color:var(--dim);
+  line-height:1.45;margin:2px 0 4px}
+.acodir .ic{flex:0 0 auto;margin-top:2px}

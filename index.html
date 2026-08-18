@@ -23,7 +23,7 @@
 <meta name="twitter:description" content="Coordinación abierta de ayuda para el terremoto de Pereira.">
 <meta name="twitter:image" content="https://aquiestamos.co/img/hero-donar.jpg">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
-<link rel="stylesheet" href="css/app.css?v=1.42.1">
+<link rel="stylesheet" href="css/app.css?v=1.43.2">
 <script>
 /* URL sin ".html" en el sitio publicado (en localhost la extensión hace falta). */
 (function(){ var h=location.hostname; if(h==='localhost'||h==='127.0.0.1'||h==='') return;
@@ -104,6 +104,7 @@ document.documentElement.setAttribute('data-eff', window.temaEfectivo());
           <div><i style="background:var(--c3)"></i>Crítica</div>
           <div><i style="background:var(--c4)"></i>Sin ayuda</div>
           <div style="margin-top:7px"><i style="background:#7c3aed"></i>Censo (necesidad registrada)</div>
+          <div><i style="background:#0d9488"></i>Centro de acopio (alluda.online)</div>
           <div class="lhelp">Acérquese para ver los puntos exactos y las micro-zonas de cada coordinador</div>
         </div>
       </div>
@@ -122,6 +123,7 @@ document.documentElement.setAttribute('data-eff', window.temaEfectivo());
           <label><input type="checkbox" data-capa="albergues" checked><span><i style="background:#F2B705"></i>Albergues</span></label>
           <label><input type="checkbox" data-capa="censo" checked><span><i style="background:#7c3aed"></i>Censo (viviendas)</span></label>
           <label><input type="checkbox" data-capa="entregas" checked><span><i style="background:#3f8f5f"></i>Entregas</span></label>
+          <label><input type="checkbox" data-capa="acopios" checked><span><i style="background:#0d9488"></i>Acopios (alluda.online)</span></label>
           <label class="capas-sep"><input type="checkbox" data-capa="soloaltas"><span>Solo necesidades altas</span></label>
         </div>
       </div>
@@ -227,9 +229,17 @@ document.documentElement.setAttribute('data-eff', window.temaEfectivo());
       <div id="lista-zonas"></div>
       <div class="bloque" id="b-orf">
         <div class="sec" id="sec-orf"></div>
+        <div id="lista-orf"></div>
+      </div>
       <div class="bloque" id="b-pedidas">
         <div class="sec">Necesidades más pedidas</div>
-
+        <div id="lista-pedidas"></div>
+      </div>
+      <div class="bloque" id="b-acopios" style="display:none">
+        <div class="sec">Acopios que piden ayuda</div>
+        <p class="muted secsub">Centros de acopio de la red <b>alluda.online</b> y lo que les falta, en vivo.</p>
+        <div id="lista-acopios"></div>
+      </div>
     </div></section>
 
     <!-- COORDINACIÓN -->
@@ -262,13 +272,9 @@ document.documentElement.setAttribute('data-eff', window.temaEfectivo());
         </div>
       </details>
 
-        <div id="lista-orf"></div>
-      </div>
       <div class="bloque" id="b-coord">
         <div class="sec">Coordinadores por zona</div>
         <div id="lista-coord"></div>
-      </div>
-        <div id="lista-pedidas"></div>
       </div>
       <!-- lo analítico va plegado: importa a quien organiza, no al vecino -->
       <details class="fold" id="b-salud">
@@ -313,15 +319,16 @@ document.documentElement.setAttribute('data-eff', window.temaEfectivo());
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="js/config.js?v=1.42.1"></script>
-<script src="js/version.js?v=1.42.1"></script>
-<script src="js/data.js?v=1.42.1"></script>
-<script src="js/estado.js?v=1.42.1"></script>
-<script src="js/calc.js?v=1.42.1"></script>
-<script src="js/mapa.js?v=1.42.1"></script>
-<script src="js/hojas.js?v=1.42.1"></script>
-<script src="js/cuenta.js?v=1.42.1"></script>
-<script src="js/ui.js?v=1.42.1"></script>
-<script src="js/dar.js?v=1.42.1"></script>
+<script src="js/config.js?v=1.43.2"></script>
+<script src="js/version.js?v=1.43.2"></script>
+<script src="js/data.js?v=1.43.2"></script>
+<script src="js/estado.js?v=1.43.2"></script>
+<script src="js/calc.js?v=1.43.2"></script>
+<script src="js/mapa.js?v=1.43.2"></script>
+<script src="js/hojas.js?v=1.43.2"></script>
+<script src="js/cuenta.js?v=1.43.2"></script>
+<script src="js/ui.js?v=1.43.2"></script>
+<script src="js/dar.js?v=1.43.2"></script>
+<script src="js/aliados.js?v=1.43.2"></script>
 </body>
 </html>

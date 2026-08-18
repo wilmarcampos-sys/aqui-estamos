@@ -27,7 +27,7 @@ function abrirSheet(html){
 }
 function cerrarSheet(){ $('#sheet').classList.remove('on','peek');
   if(typeof window.darQuitar==='function') window.darQuitar(); }
-$('#sheet').addEventListener('click', e=>{ if(e.target.hasAttribute('data-close')) cerrarSheet(); });
+$('#sheet').addEventListener('click', e=>{ if(e.target.closest('[data-close]')) cerrarSheet(); });
 
 /* ---------- ficha de zona ---------- */
 /* Hoja del censo: cualquiera puede ver la NECESIDAD (anónima) de una vivienda

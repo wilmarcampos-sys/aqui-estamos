@@ -44,6 +44,12 @@ function estadoZona(z){
     idx = Math.round(100 * (0.45*gravedad + 0.40*abandono + 0.15*escala));
     if (!ents.length && pendCrit.length) idx = Math.max(idx, 78);
   }
+  // aporte ACOTADO de los acopios aliados (alluda.online): sus necesidades
+  // urgentes también son desatención del área, pero con tope para que
+  // nunca ahoguen los reportes de los vecinos.
+  const urgAco = (window.ACOPIOS||[]).filter(a=>a.zid===z.id)
+    .reduce((n,a)=>n + a.needs.filter(x=>/urgente/i.test(x.prio||'')).length, 0);
+  if(urgAco) idx = Math.min(100, idx + Math.min(20, urgAco*2));
   return {z, lista, pend, pendCrit, personas, ultEnt, horasSinAyuda, idx,
           nCoord: S.coords.filter(c=>c.z===z.id && c.ver).length};
 }
