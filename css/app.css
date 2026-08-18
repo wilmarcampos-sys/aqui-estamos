@@ -1029,3 +1029,11 @@ input.pin{letter-spacing:9px;font-size:20px;text-align:center;font-weight:700}
 .acotel b{font-size:13.5px}
 .acotel .telacts{margin-top:8px}
 .acotel .mini.wa{background:#25D366;color:#fff}
+
+/* X de minimizar la hoja del mapa: solo cuando esta expandida */
+.msheet-min{position:absolute;top:10px;right:12px;z-index:6;width:30px;height:30px;
+  border:0;border-radius:999px;background:var(--chip);color:var(--dim);
+  display:none;place-items:center;cursor:pointer;transition:transform .18s var(--ease)}
+.msheet-min:active{transform:scale(.88)}
+.msheet-min svg{width:14px;height:14px}
+.msheet.open .msheet-min{display:grid}

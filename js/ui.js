@@ -611,6 +611,8 @@ pintarTema();
   window.addEventListener('mouseup',up);
   window.addEventListener('touchend',up);
   handle.addEventListener('click',()=>setY(current<collapsed/2?collapsed:0));
+  const minBtn=document.getElementById('msheet-min');
+  if(minBtn) minBtn.onclick=()=>setY(collapsed);
   // al rotar o cambiar de tamaño, medir cuando el layout ya esté quieto
   let mT; window.addEventListener('resize',()=>{ clearTimeout(mT); mT=setTimeout(medir,180); });
   window.sheetMedir=medir;
