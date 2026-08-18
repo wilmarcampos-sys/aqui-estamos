@@ -23,7 +23,7 @@
 <meta name="twitter:description" content="Coordinación abierta de ayuda para el terremoto de Pereira.">
 <meta name="twitter:image" content="https://aquiestamos.co/img/hero-donar.jpg">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
-<link rel="stylesheet" href="css/app.css?v=1.37.3">
+<link rel="stylesheet" href="css/app.css?v=1.38.0">
 <script>
 /* URL sin ".html" en el sitio publicado (en localhost la extensión hace falta). */
 (function(){ var h=location.hostname; if(h==='localhost'||h==='127.0.0.1'||h==='') return;
@@ -74,7 +74,7 @@ document.documentElement.setAttribute('data-eff', window.temaEfectivo());
     <button id="yo-avatar" class="yoav" data-cuenta type="button" aria-label="Mi cuenta" hidden></button>
   </header>
 
-  <a id="donar-usa" class="usbar" href="/donar" aria-label="Donar desde USA">
+  <a id="donar-usa" class="usbar" href="/donar?usa=1" aria-label="Donar desde USA">
     <svg class="ic" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 21s-7.5-4.6-10-9.3C.7 8.9 2 5.5 5.2 5c1.9-.3 3.7.7 4.8 2.2C11.1 5.7 12.9 4.7 14.8 5 18 5.5 19.3 8.9 22 11.7 19.5 16.4 12 21 12 21z"/></svg>
     <span>Donar desde USA</span>
     <svg class="ic arw" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
@@ -90,7 +90,7 @@ document.documentElement.setAttribute('data-eff', window.temaEfectivo());
     <!-- MAPA -->
     <section class="view on" id="v-map">
       <div id="map"></div>
-      <div class="legend" id="legend">
+      <div class="legend min" id="legend">
         <button class="legtog" id="legtog" type="button" aria-label="Mostrar u ocultar niveles">
           <span class="lchip"><i style="background:#dc2626"></i>Niveles</span>
           <b class="lfull">Nivel de desatención</b>
@@ -131,7 +131,7 @@ document.documentElement.setAttribute('data-eff', window.temaEfectivo());
       <div class="msheet" id="msheet">
         <div class="handle-zone" id="msheet-handle" role="button" aria-label="Mostrar u ocultar reportes cercanos"><div class="handle"></div></div>
         <div class="msheet-head">
-          <button type="button" class="loc-chip" id="pinbar" aria-haspopup="true">Toque el mapa donde está, o arrastre el pin</button>
+          <button type="button" class="loc-chip" id="pinbar" aria-haspopup="true">Elige tu zona</button>
           <div class="zmenu" id="zmenu" hidden></div>
           <div class="count-chip" id="msheet-count" hidden>
             <svg class="ic" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2 1 21h22L12 2Zm0 6.5 6.5 11h-13L12 8.5Z"/></svg>
@@ -185,6 +185,7 @@ document.documentElement.setAttribute('data-eff', window.temaEfectivo());
               <button type="button" data-km="5" aria-checked="true"><b>En moto</b><small>5 km</small></button>
               <button type="button" data-km="20" aria-checked="false"><b>En carro</b><small>20 km</small></button>
             </div>
+            <a class="alt-link" href="/donar?usa=1" style="margin-top:12px;display:block;text-align:center;text-decoration:none">¿Estás fuera de Pereira? Dona desde USA ›</a>
           </div>
           <div class="gstep" data-g="2">
             <div class="searching">
@@ -232,19 +233,6 @@ document.documentElement.setAttribute('data-eff', window.temaEfectivo());
           No hay que esperar ningún SMS.
         </div>
       </details>
-
-      <a class="card" href="/censo" style="text-decoration:none;color:inherit;display:block">
-        <div class="row" style="align-items:center;gap:12px">
-          <div class="rank" style="background:#7c3aed;color:#fff">
-            <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.9M16 3.1a4 4 0 0 1 0 7.8"/></svg>
-          </div>
-          <div class="grow">
-            <b style="font-size:15px">Censo de necesidades</b>
-            <div class="muted" style="margin-top:2px;font-size:13px">Registra a una persona o familia (nombre, cédula) para verificar que la ayuda llegue.</div>
-          </div>
-          <span style="color:var(--acc);font-weight:800;font-size:20px">→</span>
-        </div>
-      </a>
 
       <div class="bloque" id="b-orf">
         <div class="sec" id="sec-orf"></div>
@@ -296,15 +284,15 @@ document.documentElement.setAttribute('data-eff', window.temaEfectivo());
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="js/config.js?v=1.37.3"></script>
-<script src="js/version.js?v=1.37.3"></script>
-<script src="js/data.js?v=1.37.3"></script>
-<script src="js/estado.js?v=1.37.3"></script>
-<script src="js/calc.js?v=1.37.3"></script>
-<script src="js/mapa.js?v=1.37.3"></script>
-<script src="js/hojas.js?v=1.37.3"></script>
-<script src="js/cuenta.js?v=1.37.3"></script>
-<script src="js/ui.js?v=1.37.3"></script>
-<script src="js/dar.js?v=1.37.3"></script>
+<script src="js/config.js?v=1.38.0"></script>
+<script src="js/version.js?v=1.38.0"></script>
+<script src="js/data.js?v=1.38.0"></script>
+<script src="js/estado.js?v=1.38.0"></script>
+<script src="js/calc.js?v=1.38.0"></script>
+<script src="js/mapa.js?v=1.38.0"></script>
+<script src="js/hojas.js?v=1.38.0"></script>
+<script src="js/cuenta.js?v=1.38.0"></script>
+<script src="js/ui.js?v=1.38.0"></script>
+<script src="js/dar.js?v=1.38.0"></script>
 </body>
 </html>

@@ -486,3 +486,9 @@
 /* CTA del mapa siempre a mano, como en el diseño */
 #d-vermapa{position:sticky;bottom:10px;z-index:40;box-shadow:0 10px 26px rgba(0,0,0,.4)}
 :root[data-eff="light"] #d-vermapa{box-shadow:0 10px 24px rgba(15,23,41,.28)}
+
+/* volver al mapa: explicito, no solo el logo */
+.hback{display:inline-flex;align-items:center;gap:4px;flex:0 0 auto;height:34px;padding:0 12px 0 8px;
+  border-radius:999px;background:var(--chip);color:var(--dim);text-decoration:none;
+  font:750 12.5px/1 inherit;transition:transform .18s var(--ease)}
+.hback:active{transform:scale(.94)}

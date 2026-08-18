@@ -52,6 +52,7 @@ function telFmt(v){ const d=telDig(v); if(!d) return '';
 /* ---- selector de modo ---- */
 /* ---- pestañas del hub: Amazon / En persona ---- */
 let DTAB = (function(){ try{ return localStorage.getItem('ae_donar_tab')||'amazon'; }catch(e){ return 'amazon'; } })();
+if(/[?&]usa=1/.test(location.search)) DTAB='amazon';
 function renderTabs(){
   $('#d-tabs').innerHTML = `
     <button data-t="amazon" aria-selected="${DTAB==='amazon'}">${amzIcon()}<span>${esc(t(DONAR_UI.tab_amazon))}</span></button>
@@ -542,3 +543,9 @@ if(typeof pintarVersion==='function') pintarVersion();
 renderTodo();
 cargarCentros();
 if(!load('ae_donar_bienv')) showBienvenida();
+
+/* llegar desde "Donar desde USA": el CTA de Amazon a la vista, sin buscarlo */
+if(/[?&]usa=1/.test(location.search)){
+  setTimeout(()=>{ const b=document.getElementById('d-guia-amz');
+    if(b) b.scrollIntoView({block:'center', behavior:'smooth'}); }, 600);
+}

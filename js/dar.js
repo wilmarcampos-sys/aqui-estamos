@@ -127,6 +127,11 @@ function gMatch(){
       </div>
       <div class="match-line"><span class="ml-k">Piden</span><span class="ml-v">${esc(piden)}${c.personas?` · ${c.personas} personas`:''}</span></div>
       <div class="match-line"><span class="ml-k">Tú traes</span><span class="ml-v ok">${esc(traes)} · ${gQty} unidad${gQty>1?'es':''}</span></div>
+      <div class="match-line"><span class="ml-k">Por qué</span><span class="ml-v">${[
+        c.u===3?'urgencia alta':c.u===2?'urgente':null,
+        c.personas?`${c.personas} persona${c.personas>1?'s':''} esperando`:null,
+        c.km<=gKm?'te queda a tu alcance':'es lo más cercano pendiente',
+      ].filter(Boolean).join(' · ')}</span></div>
       ${c.nadie ? `<div class="match-line warn"><span class="ml-k">Ojo</span><span class="ml-v">${c.diasSin!=null?`Nadie ha llegado en ${c.diasSin} día${c.diasSin===1?'':'s'}`:'Aquí no ha llegado nadie todavía'}</span></div>` : ''}
       ${cb ? `<div class="coord-mini">
         <span class="av2">${esc((cb.nom||'?').trim().split(/\s+/).slice(0,2).map(x=>x[0]||'').join('').toUpperCase())}</span>
