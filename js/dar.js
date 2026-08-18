@@ -170,6 +170,8 @@ function gRutaPintar(c){
   if(!map || modoSVG) return;
   try{
     gRutaQuitar();
+    window.__darFoco = true;           // apaga las demás capas: solo origen y destino
+    if(typeof pintarMapa==='function') pintarMapa();
     gRuta = L.polyline([[c.org.lat,c.org.lng],[c.f.lat,c.f.lng]],
       {color:'#16A34A', weight:3.5, dashArray:'7 8', opacity:.9}).addTo(map);
     gMk = L.marker([c.f.lat,c.f.lng],{zIndexOffset:1500, icon:L.divIcon({className:'',iconSize:[38,38],iconAnchor:[19,19],
@@ -182,6 +184,8 @@ function gRutaPintar(c){
 function gRutaQuitar(){
   try{ if(gRuta){ map.removeLayer(gRuta); gRuta=null; }
        if(gMk){ map.removeLayer(gMk); gMk=null; } }catch(e){}
+  if(window.__darFoco){ window.__darFoco=false;
+    try{ if(typeof pintarMapa==='function') pintarMapa(); }catch(e){} }
 }
 window.darQuitar = gRutaQuitar;   // limpieza también al cerrar otros modales
 

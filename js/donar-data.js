@@ -187,4 +187,17 @@ const DONAR_UI = {
   amz_paso:    {es:'Toca un centro para abrir su lista de Amazon', en:'Tap a center to open its Amazon list'},
   list_title:  {es:'Mi lista para donar · Pereira', en:'My donation list · Pereira'},
   list_foot:   {es:'aquiestamos.co/donar · Aquí Estamos', en:'aquiestamos.co/donar · Aquí Estamos'},
+  /* hub */
+  tab_amazon:  {es:'Comprar en Amazon', en:'Buy on Amazon'},
+  tab_persona: {es:'Llevar en persona', en:'Drop off in person'},
+  guia_hint:   {es:'Es la forma más rápida. Compras desde la lista y Amazon lo envía directo al centro de acopio. No tienes que salir de casa.',
+                en:'It\'s the fastest way. You buy from the list and Amazon ships it straight to the drop-off center. No need to leave home.'},
+  guia_t:      {es:'Cómo funciona', en:'How it works'},
+  paso1:       {es:'Abre la <b>lista de Amazon</b> del centro más cercano a ti.', en:'Open the <b>Amazon list</b> of the center closest to you.'},
+  paso2:       {es:'Agrega lo que puedas al carrito — cualquier cantidad ayuda.', en:'Add what you can to the cart — any amount helps.'},
+  paso3:       {es:'En el checkout elige <b>enviar a la dirección de la lista</b>. Ya está puesta, no tienes que escribirla.', en:'At checkout choose <b>ship to the list\'s address</b>. It\'s already set, no typing needed.'},
+  paso4:       {es:'Listo. El centro recibe, clasifica y lo manda a Pereira.', en:'Done. The center receives, sorts and sends it to Pereira.'},
+  abrir_lista: {es:'Abrir la lista en Amazon', en:'Open the Amazon list'},
+  ser_t:       {es:'¿Puedes ser centro de acopio?', en:'Can you host a drop-off center?'},
+  ser_s:       {es:'Regístralo y aparece en esta lista', en:'Register it and it shows up in this list'},
 };

@@ -50,6 +50,35 @@ function telFmt(v){ const d=telDig(v); if(!d) return '';
 }
 
 /* ---- selector de modo ---- */
+/* ---- pestañas del hub: Amazon / En persona ---- */
+let DTAB = (function(){ try{ return localStorage.getItem('ae_donar_tab')||'amazon'; }catch(e){ return 'amazon'; } })();
+function renderTabs(){
+  $('#d-tabs').innerHTML = `
+    <button data-t="amazon" aria-selected="${DTAB==='amazon'}">${amzIcon()}<span>${esc(t(DONAR_UI.tab_amazon))}</span></button>
+    <button data-t="persona" aria-selected="${DTAB==='persona'}">${pinIcon()}<span>${esc(t(DONAR_UI.tab_persona))}</span></button>`;
+}
+function renderGuia(){
+  $('#d-guia').innerHTML = `
+    <p class="dhint">${arrowRight()} <b>${esc(t(DONAR_UI.guia_hint))}</b></p>
+    <div class="sec">${esc(t(DONAR_UI.guia_t))}</div>
+    <ol class="dhow">
+      <li>${t(DONAR_UI.paso1)}</li><li>${t(DONAR_UI.paso2)}</li>
+      <li>${t(DONAR_UI.paso3)}</li><li>${t(DONAR_UI.paso4)}</li>
+    </ol>
+    <button type="button" class="damz-big" id="d-guia-amz">${amzIcon()} ${esc(t(DONAR_UI.abrir_lista))}</button>`;
+  const b=$('#d-guia-amz'); if(b) b.onclick=()=>irAmazon();
+}
+function aplicarTab(){
+  const amz = DTAB==='amazon';
+  const show=(id,v)=>{ const e=$(id); if(e) e.hidden=!v; };
+  show('#d-guia', amz); show('#d-modo', amz); show('#d-cats', amz);
+  show('#d-ubicame', !amz); show('#d-centros-h', !amz); show('#d-centros', !amz);
+  const sub=$('#d-centros-sub'); if(sub) sub.hidden=amz;
+  const reg=$('#d-registrar'); if(reg) reg.hidden=amz;
+}
+function setTab(x){ DTAB=x; try{ localStorage.setItem('ae_donar_tab',x); }catch(e){}
+  renderTabs(); aplicarTab(); }
+
 function renderModo(){
   $('#d-modo').innerHTML =
     `<div class="dseg" role="group">
@@ -81,7 +110,9 @@ function renderCats(q){
         <span class="dcat-t">${esc(t(c))}</span>
         <span class="dcat-n">${its.length}</span>${chev()}
       </button>
-      <div class="dgrid">${rows}</div>
+      <div class="dgrid">${rows}
+        <button type="button" class="amzcat" data-amzcat>${amzIcon()} ${esc(t(DONAR_UI.abrir_lista))}</button>
+      </div>
     </section>`;
   });
   $('#d-cats').innerHTML = html || `<p class="muted dnores">${esc(t(DONAR_UI.sinres))}</p>`;
@@ -346,13 +377,16 @@ function pintarTextos(){
   $('#d-centros-h').textContent   = t(DONAR_UI.centros);
   $('#d-centros-sub').textContent = t(DONAR_UI.centros_sub);
   $('#d-vermapa').textContent     = t(DONAR_UI.vermapa);
-  const reg=$('#d-registrar'); if(reg) reg.textContent = t(DONAR_UI.registrar);
+  const reg=$('#d-registrar'); if(reg) reg.innerHTML = `
+    <span class="rpi">${boxIcon()}</span>
+    <span class="rpt"><b>${esc(t(DONAR_UI.ser_t))}</b><small>${esc(t(DONAR_UI.ser_s))}</small></span>
+    <span class="rpa">${arrowRight()}</span>`;
   const nv=(id,o)=>{const e=$('#'+id); if(e) e.textContent=t(o);};
   nv('nav-donar',DONAR_UI.nav_donar); nv('nav-centro',DONAR_UI.nav_centro); nv('nav-mapa',DONAR_UI.nav_mapa);
   document.querySelectorAll('#langtog button').forEach(b=>b.classList.toggle('on', b.dataset.l===LANG));
 }
 function renderTodo(){
-  pintarTextos(); renderModo(); renderCats($('#d-busca').value); renderNo(); renderCentros(); renderStat(); renderLista();
+  pintarTextos(); renderTabs(); renderGuia(); renderModo(); renderCats($('#d-busca').value); renderNo(); renderCentros(); renderStat(); renderLista(); aplicarTab();
 }
 function setLang(l){ LANG=l; store('ae_lang',l); renderTodo(); }
 function setModo(m){ MODE=m; store('ae_donar_modo',m); renderModo(); renderCats($('#d-busca').value); }
@@ -368,12 +402,15 @@ function modoBusqueda(q){
   if(on && !_buscando){ const v=$('.view.on'); if(v) v.scrollTop=0; }   // sube al empezar
   _buscando = on;
 }
-$('#d-busca').oninput = ()=>{ const q=$('#d-busca').value; modoBusqueda(q); renderCats(q); };
+$('#d-busca').oninput = ()=>{ const q=$('#d-busca').value; if(q && DTAB!=='amazon') setTab('amazon'); modoBusqueda(q); renderCats(q); };
 
 $('#d-modo').addEventListener('click', e=>{ const b=e.target.closest('button[data-m]'); if(b) setModo(b.dataset.m); });
+$('#d-tabs').addEventListener('click', e=>{ const b=e.target.closest('button[data-t]'); if(b) setTab(b.dataset.t); });
+$('#d-cats').addEventListener('click', e=>{ if(e.target.closest('[data-amzcat]')) irAmazon(); });
 
 /* acceso rápido a centros + ubícame (el más cercano) */
 function irCentros(){
+  setTab('persona');
   const i=$('#d-busca'); if(i.value){ i.value=''; modoBusqueda(''); renderCats(''); }
   const h=$('#d-centros-h'); if(h) h.scrollIntoView({behavior:'smooth', block:'start'});
 }

@@ -393,3 +393,60 @@
   .dl-info b.bump{animation:none}
   .amz{transition:none}
 }
+
+/* ============================================================
+   HUB de donar: pestañas Amazon / En persona, guía y promo
+   ============================================================ */
+.dtabs{display:flex;gap:9px;margin:14px 0 4px}
+.dtabs button{flex:1;height:52px;border-radius:16px;border:1.6px solid var(--line);background:var(--surf);
+  font:730 13.5px/1.15 inherit;color:var(--dim);cursor:pointer;font-family:inherit;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
+  transition:transform .16s var(--ease),border-color .2s,background .2s,color .2s}
+.dtabs button:active{transform:scale(.97)}
+.dtabs button .ic{width:18px;height:18px}
+.dtabs button[aria-selected="true"]{border-color:#dc2626;background:rgba(220,38,38,.07);color:#F87171}
+:root[data-eff="light"] .dtabs button[aria-selected="true"]{color:#C11B1B}
+.dguia[hidden],.dmodo[hidden],#d-cats[hidden],#d-centros[hidden],#d-centros-h[hidden],
+#d-centros-sub[hidden],#d-ubicame[hidden],#d-registrar[hidden]{display:none}
+.dguia .dhint{display:flex;gap:9px;align-items:flex-start;margin:12px 0 2px;padding:11px 13px;
+  border-radius:14px;background:rgba(79,156,249,.12);color:var(--link);font-size:12.5px;line-height:1.45}
+.dguia .dhint .ic{flex:0 0 auto;margin-top:1px}
+.dguia .dhint b{font-weight:650}
+.dhow{counter-reset:s;margin:4px 0 6px;padding:0;list-style:none}
+.dhow li{position:relative;padding:0 0 14px 38px;font-size:13.5px;color:var(--dim);line-height:1.5;font-weight:550}
+.dhow li b{color:var(--txt);font-weight:730}
+.dhow li::before{counter-increment:s;content:counter(s);position:absolute;left:0;top:-1px;
+  width:26px;height:26px;border-radius:50%;display:grid;place-items:center;
+  background:#dc2626;color:#fff;font-size:12.5px;font-weight:800}
+.dhow li::after{content:"";position:absolute;left:12.5px;top:27px;bottom:2px;width:1.5px;background:var(--line)}
+.dhow li:last-child{padding-bottom:0}
+.dhow li:last-child::after{display:none}
+.damz-big{display:flex;align-items:center;justify-content:center;gap:9px;width:100%;height:48px;
+  border:0;border-radius:15px;font:780 14.5px/1 inherit;font-family:inherit;cursor:pointer;
+  background:linear-gradient(160deg,#FFB84D,#F59E0B);color:#3B2500;
+  box-shadow:0 5px 14px rgba(0,0,0,.3);margin:4px 0 6px;
+  transition:transform .16s var(--ease),filter .2s}
+.damz-big:active{transform:scale(.975);filter:brightness(.95)}
+:root[data-eff="light"] .damz-big{box-shadow:0 5px 14px rgba(15,23,41,.18)}
+.amzcat{grid-column:1 / -1;display:flex;align-items:center;justify-content:center;gap:8px;
+  margin-top:6px;height:44px;border:0;border-radius:13px;font:750 13.5px/1 inherit;font-family:inherit;
+  cursor:pointer;background:linear-gradient(160deg,#FFB84D,#F59E0B);color:#3B2500;
+  transition:transform .16s var(--ease)}
+.amzcat:active{transform:scale(.975)}
+/* promo "ser centro de acopio" */
+.dregistrar{display:flex!important;align-items:center;gap:12px;text-align:left;
+  padding:15px!important;border-radius:20px!important;border:0!important;margin-top:10px;
+  background:linear-gradient(140deg,#0EA5E9,#2563EB 60%,#1D4ED8)!important;color:#fff!important;
+  box-shadow:0 10px 26px rgba(0,0,0,.35);text-decoration:none;
+  transition:transform .16s var(--ease)}
+.dregistrar:active{transform:scale(.98)}
+:root[data-eff="light"] .dregistrar{box-shadow:0 8px 20px rgba(15,23,41,.2)}
+.dregistrar .rpi{width:44px;height:44px;border-radius:14px;background:rgba(255,255,255,.2);
+  display:grid;place-items:center;flex:0 0 auto}
+.dregistrar .rpi .ic{width:22px;height:22px}
+.dregistrar .rpt{flex:1;min-width:0}
+.dregistrar .rpt b{display:block;font-size:15.5px;font-weight:800;letter-spacing:-.35px}
+.dregistrar .rpt small{display:block;font-size:12.3px;opacity:.88;margin-top:2px;line-height:1.35}
+.dregistrar .rpa{width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,.22);
+  display:grid;place-items:center;flex:0 0 auto}
+.dregistrar .rpa .ic{width:15px;height:15px}

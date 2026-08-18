@@ -61,6 +61,8 @@ function pintarMapa(){
   if(modoSVG) return pintarSVG();
   if(!capa) return;
   capa.clearLayers();
+  // modo foco de "Dar": solo el origen (pin) y el destino con su ruta
+  if(window.__darFoco) return;
   const z = map.getZoom();
 
   // Albergues: puntos fijos, visibles a cualquier zoom, con carpa dorada y un
