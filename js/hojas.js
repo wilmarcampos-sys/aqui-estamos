@@ -388,6 +388,8 @@ function abrirReporte(zid, pt, refPrev){
   let ref = refPrev || '';
   let persRango = '';
   let nota = '';
+  let prioridad = new Set();      // niños <5, mayores, discapacidad, embarazo
+  let cNombre = '', cTel = '';    // contacto OPCIONAL: nunca se publica
   const PERSNUM = {'1-3':2, '4-8':6, '8+':15, '':0};
   const zonaNom = z => ZONAS.find(x=>x.id===z)?.n || '';
   const irA = p => { paso = p; pintarPaso(); };
@@ -461,6 +463,17 @@ function abrirReporte(zid, pt, refPrev){
           </div>
         </div>
       </details>
+      <details class="fold" ${prioridad.size?'open':''}>
+        <summary>¿Hay alguien que necesite prioridad? · niños, embarazo, discapacidad</summary>
+        <div class="foldbody">
+          <div class="urg" id="r-prio">
+            <button data-pr="ninos5">Niños menores de 5</button>
+            <button data-pr="mayores">Adultos mayores</button>
+            <button data-pr="discapacidad">Discapacidad</button>
+            <button data-pr="embarazo">Embarazo o lactancia</button>
+          </div>
+        </div>
+      </details>
       <div class="sec">¿Qué se necesita? <span class="tag req">necesario</span></div>
       <input id="r-busca" type="search" placeholder="Buscar: gasas, pañales, linterna, agua…">
       <div id="r-items"></div>
@@ -498,6 +511,12 @@ function abrirReporte(zid, pt, refPrev){
         body.querySelectorAll('#r-pers button').forEach(x=>x.classList.remove('sel'));
         if(!era){ b.classList.add('sel'); persRango=b.dataset.p; } else persRango=''; };
     });
+    body.querySelectorAll('#r-prio button').forEach(b=>{
+      if(prioridad.has(b.dataset.pr)) b.classList.add('sel');
+      b.onclick = ()=>{ const k=b.dataset.pr;
+        prioridad.has(k) ? prioridad.delete(k) : prioridad.add(k);
+        b.classList.toggle('sel', prioridad.has(k)); };
+    });
     repintar(); barra();
     $('#r-back2').onclick = ()=>irA(1);
     $('#r-next2').onclick = ()=>{ if(!sel.size) return toast('Escoja al menos una cosa.'); irA(3); };
@@ -516,6 +535,16 @@ function abrirReporte(zid, pt, refPrev){
         <button data-u="2">En 24 horas<span>Se puede aguantar el día</span></button>
         <button data-u="1">Puede esperar<span>Esta semana está bien</span></button>
       </div>
+      <p class="telhint bad" style="margin-top:10px">${ico('alert')} Si hay una emergencia médica en curso, llame al <b>&nbsp;123&nbsp;</b> antes de enviar este reporte.</p>
+      <details class="fold" ${(cNombre||cTel)?'open':''}>
+        <summary>¿Quiere que un coordinador le escriba? (opcional)</summary>
+        <div class="foldbody">
+          <p class="muted" style="margin:0 0 8px">Su teléfono <b>no se publica</b> en el mapa ni en ninguna lista.
+            Solo lo ve el equipo que coordina la ayuda, para avisarle.</p>
+          <input id="r-cnom" placeholder="Su nombre" autocomplete="name" value="${esc(cNombre)}">
+          <input id="r-ctel" inputmode="tel" autocomplete="tel" placeholder="Celular / WhatsApp" value="${esc(cTel)}" style="margin-top:8px">
+        </div>
+      </details>
       <div class="sec">Antes de enviar</div>
       <div class="resumen">
         <div class="resline"><span>${ico('pin')} <b>${esc(zonaNom(punto.z))}</b>${ref?' · '+esc(ref):''}</span><button class="lnk" id="r-edit1">Editar</button></div>
@@ -542,20 +571,34 @@ function abrirReporte(zid, pt, refPrev){
     $('#r-edit2').onclick = ()=>irA(2);
     $('#r-send').onclick = ()=>{
       if(urg==null) return toast('Escoja qué tan urgente es.');
+      cNombre = ($('#r-cnom')?.value||'').trim();
+      cTel = ($('#r-ctel')?.value||'').trim();
       const firma = punto.z+'|'+ref+'|'+[...sel].sort().join(',');
       if(repetido(firma)) return confirmar(true);
       const p = PERSNUM[persRango] || 0;
+      // folio: para que la persona pueda preguntar por su pedido después
+      const folio = 'AY-' + Math.random().toString(36).slice(2,6).toUpperCase();
+      const prio = [...prioridad];
       sel.forEach(k=>guardar('reportes',
         {zona:punto.z, necesidad:k, urgencia:urg, lat:punto.lat, lng:punto.lng,
-         referencia:ref, personas:p, nota, device:DEVICE},
+         referencia:ref, personas:p, nota, device:DEVICE, folio, prioridad:prio},
         {id:uid(), z:punto.z, lat:punto.lat, lng:punto.lng, k, u:urg, ts:now(), personas:p, nota, ref}));
+      // contacto opcional: va a una tabla PRIVADA (solo escritura con la clave
+      // pública; la lee únicamente el equipo verificado). Nunca al mapa.
+      if(cTel){
+        const dig = cTel.replace(/\D/g,'');
+        const e164 = dig.startsWith('57')||dig.startsWith('1') ? '+'+dig : (dig.length===10 ? '+57'+dig : '+'+dig);
+        guardar('reportes_contacto', {folio, zona:punto.z, nombre:cNombre, tel_e164:e164, whatsapp:true, device:DEVICE}, null);
+      }
+      try{ const fs=JSON.parse(localStorage.getItem('ae_folios')||'[]');
+        fs.unshift({folio, z:punto.z, ts:now()}); localStorage.setItem('ae_folios', JSON.stringify(fs.slice(0,20))); }catch(e){}
       render();
-      confirmar(false);
+      confirmar(false, folio);
     };
   }
 
   /* ---- Confirmación: en qué va + mis reportes (por DEVICE, sin cuenta) ---- */
-  function confirmar(yaEstaba){
+  function confirmar(yaEstaba, folio){
     const fs = focos(punto.z);
     const f = fs.find(x=>x.reps.some(r=>Math.abs(r.lat-punto.lat)<1e-6 && Math.abs(r.lng-punto.lng)<1e-6))
            || fs.sort((a,b)=>dist(punto.lat,punto.lng,a.lat,a.lng)-dist(punto.lat,punto.lng,b.lat,b.lng))[0];
@@ -568,6 +611,13 @@ function abrirReporte(zid, pt, refPrev){
         yaEstaba ? 'Ese mismo reporte ya estaba: no se duplicó, pero cuenta como corroboración.'
         : (f && f.n>1 ? `Es el reporte #${f.n} en este punto. La urgencia subió por corroboración.`
                       : 'Gracias. Ya aparece en el mapa.')}</p>
+      ${folio ? `<div style="text-align:center;margin:4px 0 8px">
+        <button type="button" class="mini" data-copiar="${esc(folio)}" style="display:inline-flex;align-items:center;gap:8px;
+          background:var(--chip);border:1px solid var(--line);border-radius:999px;padding:8px 16px;cursor:pointer;
+          font:800 15px/1 inherit;letter-spacing:1px;color:var(--link)">
+          <span class="muted" style="font:700 10.5px/1 inherit;letter-spacing:.8px">FOLIO</span> ${esc(folio)}</button>
+        <p class="muted" style="margin:6px 0 0;font-size:12.5px">Guárdelo: con este número puede preguntar por su pedido. Toque para copiarlo.</p>
+      </div>` : ''}
       <div class="sec">En qué va</div>
       <div class="tl">
         <div class="tli"><span class="tld ok"></span><div class="grow"><b>Recibido</b><div class="cnt">ahora</div></div></div>

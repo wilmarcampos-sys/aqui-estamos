@@ -23,7 +23,7 @@
 <meta name="twitter:description" content="Coordinación abierta de ayuda para el terremoto de Pereira.">
 <meta name="twitter:image" content="https://aquiestamos.co/img/hero-donar.jpg">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
-<link rel="stylesheet" href="css/app.css?v=1.29.0">
+<link rel="stylesheet" href="css/app.css?v=1.30.1">
 <script>
 /* URL sin ".html" en el sitio publicado (en localhost la extensión hace falta). */
 (function(){ var h=location.hostname; if(h==='localhost'||h==='127.0.0.1'||h==='') return;
@@ -134,7 +134,7 @@ document.documentElement.setAttribute('data-eff', window.temaEfectivo());
           <div class="loc-chip" id="pinbar">Toque el mapa donde está, o arrastre el pin</div>
           <div class="count-chip" id="msheet-count" hidden>
             <svg class="ic" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2 1 21h22L12 2Zm0 6.5 6.5 11h-13L12 8.5Z"/></svg>
-            <b id="msheet-count-n">0</b>
+            <b id="msheet-count-n">0</b><span class="clab">abiertos</span>
           </div>
         </div>
         <div class="actions">
@@ -142,17 +142,17 @@ document.documentElement.setAttribute('data-eff', window.temaEfectivo());
             <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 9v4.5M12 17h.01"/><path d="M10.3 3.9 1.8 18.4A2 2 0 0 0 3.5 21.4h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/></svg>
             <span id="fab-need-lbl">Necesito ayuda</span>
           </button>
-          <button type="button" class="sbtn sbtn-dar" id="fab-dar">
+          <button type="button" class="sbtn sbtn-dar" id="fab-dar" aria-label="Tengo algo para dar">
             <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13"/><path d="M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7"/><path d="M7.5 8a2.5 2.5 0 0 1 0-5C11 3 12 8 12 8s1-5 4.5-5a2.5 2.5 0 0 1 0 5"/></svg>
-            <span>Tengo algo para dar</span>
+            <span>Dar</span>
           </button>
           <a class="sbtn sbtn-censo" id="fab-censo" href="/censo" aria-label="Registrar una vivienda en el censo">
             <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.8V20h14V9.8"/><path d="M12 21v-5M9.5 18.5h5"/></svg>
-            <span>Vivienda</span>
+            <span>Censar</span>
           </a>
         </div>
         <div class="msheet-body">
-          <div class="sec-title">Reportes cercanos</div>
+          <div class="sec-title st-row">Reportes cercanos <a href="#" id="ver-todos">Ver todos</a></div>
           <div id="msheet-list"></div>
         </div>
       </div>
@@ -252,15 +252,15 @@ document.documentElement.setAttribute('data-eff', window.temaEfectivo());
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="js/config.js?v=1.29.0"></script>
-<script src="js/version.js?v=1.29.0"></script>
-<script src="js/data.js?v=1.29.0"></script>
-<script src="js/estado.js?v=1.29.0"></script>
-<script src="js/calc.js?v=1.29.0"></script>
-<script src="js/mapa.js?v=1.29.0"></script>
-<script src="js/hojas.js?v=1.29.0"></script>
-<script src="js/cuenta.js?v=1.29.0"></script>
-<script src="js/ui.js?v=1.29.0"></script>
-<script src="js/dar.js?v=1.29.0"></script>
+<script src="js/config.js?v=1.30.1"></script>
+<script src="js/version.js?v=1.30.1"></script>
+<script src="js/data.js?v=1.30.1"></script>
+<script src="js/estado.js?v=1.30.1"></script>
+<script src="js/calc.js?v=1.30.1"></script>
+<script src="js/mapa.js?v=1.30.1"></script>
+<script src="js/hojas.js?v=1.30.1"></script>
+<script src="js/cuenta.js?v=1.30.1"></script>
+<script src="js/ui.js?v=1.30.1"></script>
+<script src="js/dar.js?v=1.30.1"></script>
 </body>
 </html>

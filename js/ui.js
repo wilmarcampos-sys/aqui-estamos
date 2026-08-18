@@ -533,6 +533,9 @@ pintarTema();
 /* Reportes cercanos dentro de la hoja: primero los de la zona del pin,
    luego el resto, siempre lo más nuevo arriba. Datos anónimos que ya son
    públicos en el mapa — aquí solo se leen más fácil. */
+(function(){ const v=document.getElementById('ver-todos');
+  if(v) v.onclick=e=>{ e.preventDefault(); document.querySelector('nav button[data-v="zonas"]').click(); };
+})();
 window.sheetPintar=function(){
   const lista=document.getElementById('msheet-list'); if(!lista) return;
   const reps=(S.reportes||[]).slice().sort((a,b)=>{
@@ -548,12 +551,15 @@ window.sheetPintar=function(){
     return m<60?`hace ${m} m`:(m<1440?`hace ${Math.round(m/60)} h`:`hace ${Math.round(m/1440)} d`)};
   lista.innerHTML = reps.slice(0,8).map(r=>{
     const col=UCOL[r.u]||'#d97706';
-    const lugar = r.ref ? `${esc(r.ref)} · ${esc(zN(r.z))}` : esc(zN(r.z));
+    const zn = zN(r.z);
+    const lugar = (r.ref && r.ref.trim().toLowerCase()!==zn.toLowerCase()) ? `${esc(r.ref)} · ${esc(zn)}` : esc(zn);
     // data-focopt: al tocar abre el detalle del punto; al cerrarlo se vuelve aquí
+    const badge = r.u===3?'<span class="sbadge b3">Crítico</span>':r.u===2?'<span class="sbadge b2">Medio</span>':'<span class="sbadge b1">Bajo</span>';
     return `<div class="scard toca" data-focopt="${r.lat},${r.lng}">
       <div class="sic" style="background:${col}">${ico('alert')}</div>
       <div class="stx"><h4>${esc(NEED[r.k]?.n||r.k)}${r.personas?` · ${r.personas} personas`:''}</h4>
-      <p>${lugar}</p></div><div class="smeta">${hace(r.ts)}</div></div>`;
+      <p>${lugar}${r.nota?` · ${esc(r.nota)}`:''}</p></div>
+      <div class="smeta">${badge}<br>${hace(r.ts)}</div></div>`;
   }).join('') || `<p class="muted" style="font-size:13px;margin:4px 2px">Sin reportes por ahora. Si necesita algo, use el botón rojo.</p>`;
 };
 
