@@ -548,9 +548,12 @@ window.sheetPintar=function(){
     return m<60?`hace ${m} m`:(m<1440?`hace ${Math.round(m/60)} h`:`hace ${Math.round(m/1440)} d`)};
   lista.innerHTML = reps.slice(0,8).map(r=>{
     const col=UCOL[r.u]||'#d97706';
-    return `<div class="scard"><div class="sic" style="background:${col}">${ico('alert')}</div>
+    const lugar = r.ref ? `${esc(r.ref)} · ${esc(zN(r.z))}` : esc(zN(r.z));
+    // data-focopt: al tocar abre el detalle del punto; al cerrarlo se vuelve aquí
+    return `<div class="scard toca" data-focopt="${r.lat},${r.lng}">
+      <div class="sic" style="background:${col}">${ico('alert')}</div>
       <div class="stx"><h4>${esc(NEED[r.k]?.n||r.k)}${r.personas?` · ${r.personas} personas`:''}</h4>
-      <p>${esc(r.ref||zN(r.z))}</p></div><div class="smeta">${hace(r.ts)}</div></div>`;
+      <p>${lugar}</p></div><div class="smeta">${hace(r.ts)}</div></div>`;
   }).join('') || `<p class="muted" style="font-size:13px;margin:4px 2px">Sin reportes por ahora. Si necesita algo, use el botón rojo.</p>`;
 };
 
