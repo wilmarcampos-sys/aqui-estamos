@@ -375,6 +375,32 @@
   .sheet{position:fixed;inset:0;z-index:1200;display:none}
   .sheet.on{display:block}
   .sheet .scrim{position:absolute;inset:0;background:rgba(2,6,18,.68);z-index:0}
+  /* promo "Quiero coordinar mi barrio" + intro del rol */
+  .promo-coord{display:flex;align-items:center;gap:12px;width:100%;text-align:left;font-family:inherit;
+    padding:15px;border-radius:20px;border:0;cursor:pointer;margin-bottom:12px;
+    background:linear-gradient(140deg,#4F46E5,#7C3AED 55%,#9333EA);color:#fff;
+    box-shadow:0 10px 26px rgba(0,0,0,.35);position:relative;overflow:hidden;
+    transition:transform .16s var(--ease)}
+  .promo-coord:active{transform:scale(.98)}
+  :root[data-eff="light"] .promo-coord{box-shadow:0 8px 20px rgba(15,23,41,.2)}
+  .promo-coord::after{content:"";position:absolute;right:-30px;top:-40px;width:130px;height:130px;
+    border-radius:50%;background:rgba(255,255,255,.12)}
+  .promo-coord .pi{width:44px;height:44px;border-radius:14px;background:rgba(255,255,255,.2);
+    display:grid;place-items:center;flex:0 0 auto}
+  .promo-coord .pi svg{width:22px;height:22px}
+  .promo-coord .pt{flex:1;min-width:0;position:relative}
+  .promo-coord .pt b{display:block;font-size:15.5px;font-weight:800;letter-spacing:-.35px}
+  .promo-coord .pt small{display:block;font-size:12.3px;opacity:.88;margin-top:2px;line-height:1.35}
+  .promo-coord .pa{width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,.22);
+    display:grid;place-items:center;flex:0 0 auto;position:relative}
+  .promo-coord .pa svg{width:15px;height:15px}
+  .cintro-b{display:flex;align-items:flex-start;gap:11px;padding:11px 12px;margin-bottom:8px;
+    background:var(--surf);border:1px solid var(--line);border-radius:14px}
+  .cintro-b .cib{width:36px;height:36px;border-radius:12px;flex:0 0 auto;display:grid;place-items:center;
+    background:linear-gradient(160deg,#60A5FA,#2563EB);color:#fff}
+  .cintro-b .cib .ic{width:18px;height:18px}
+  .cintro-b b{font-size:14px;letter-spacing:-.2px}
+
   /* HOJA "DAR": el mapa nunca desaparece */
   .gsheet{position:absolute;left:0;right:0;bottom:0;z-index:640;background:var(--card);
     border-radius:24px 24px 0 0;border-top:1px solid var(--line);

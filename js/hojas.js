@@ -649,6 +649,46 @@ function abrirReporte(zid, pt, refPrev){
   pintarPaso();
 }
 
+/* ---------- introduccion al rol de coordinador ----------
+   Pantalla informativa antes del registro: que vas a poder hacer,
+   requisitos humanos y codigo de conducta. El registro sigue siendo
+   autoservicio con celular + PIN — sin cedula ni documentos. */
+function abrirCoordIntro(){
+  const huerf = huerfanos();
+  const beneficio = (ic, t, s2)=>`<div class="cintro-b"><span class="cib">${ico(ic)}</span>
+    <div class="grow"><b>${t}</b><div class="cnt">${s2}</div></div></div>`;
+  abrirSheet(`
+    <h2 style="margin:2px 0 4px">Coordinar tu zona</h2>
+    <p class="muted" style="margin:0 0 12px">Un coordinador es quien verifica en terreno lo que se
+      reporta en la app y decide a dónde va la ayuda primero.</p>
+    <div class="sec">Qué vas a poder hacer</div>
+    ${beneficio('check','Validar reportes','Confirmar o cerrar pedidos de tu barrio')}
+    ${beneficio('users','Dirigir entregas','Registrar lo que llega y marcar rutas bloqueadas')}
+    ${beneficio('tent','Verificar albergues y viviendas','Capacidad, cupos y censo de tu sector')}
+    ${beneficio('pin','Ver los teléfonos de contacto','De quien pide ayuda en tu zona, para avisarle')}
+    ${huerf.length ? `<div class="sec">Donde más te necesitan</div>
+      <p class="muted" style="margin:0 0 8px">${huerf.length} punto${huerf.length>1?'s':''} con necesidades y nadie a cargo:</p>
+      <div>${huerf.slice(0,4).map(f=>`<span class="chip u3">${esc(f.ref||f.zona.n)}</span>`).join('')}</div>` : ''}
+    <div class="sec">Requisitos</div>
+    <div class="resumen">
+      <div class="resline"><span>Ser mayor de 18 años</span></div>
+      <div class="resline"><span>Vivir o trabajar en la zona que vas a coordinar</span></div>
+      <div class="resline"><span>Un celular con WhatsApp — nada más: sin cédula ni papeles</span></div>
+    </div>
+    <div class="sec">Compromisos</div>
+    <button type="button" class="srow" id="ci-cod"><span class="st"><b>Acepto el código de conducta</b><small>Trato digno, no discriminación, no proselitismo, y no comparto teléfonos fuera de la app</small></span><span class="sw"></span></button>
+    <button class="btn guide" id="ci-empezar" disabled>Empezar registro</button>
+    <button class="cerrar-txt" data-close-btn>Ahora no</button>
+  `);
+  let cod=false;
+  $('#ci-cod').onclick = ()=>{ cod=!cod; $('#ci-cod').classList.toggle('on',cod);
+    $('#ci-empezar').disabled=!cod; };
+  $('#ci-empezar').onclick = ()=>{
+    try{ localStorage.setItem('ae_codigo_conducta', String(now())); }catch(e){}
+    const pt = mainPt || ptDe('centro'); abrirCoord(pt.z, pt);
+  };
+}
+
 /* ---------- registrar entrega ---------- */
 function abrirEntrega(zid, kfijo, pt){
   const z0 = ZONAS.find(z=>z.id===zid);

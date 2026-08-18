@@ -96,6 +96,7 @@ if(bMarca) bMarca.onclick = irAlMapa;
 /* Entrar / inscribirse desde cualquier parte (los botones se re-pintan) */
 document.addEventListener('click', e=>{
   if(e.target.closest('[data-cuenta]')) return abrirCuenta();
+  if(e.target.closest('[data-coord-intro]')) return abrirCoordIntro();
   if(e.target.closest('[data-inscribir]')){ const pt = mainPt || ptDe('centro'); return abrirCoord(pt.z, pt); }
 });
 
@@ -244,7 +245,15 @@ function render(){
   // Sin sesión, dos caminos claros (como la hoja del avatar): inscribirse o
   // entrar. Con sesión, su cuenta y un atajo para cubrir otro sector.
   const entrada = $('#coord-entrada');
-  if(entrada) entrada.innerHTML = YO
+  const sinCoord = todos.filter(s=>s.lista.length && !s.nCoord).map(s=>s.z.n);
+  const promo = YO ? '' : `
+    <button type="button" class="promo-coord" data-coord-intro>
+      <span class="pi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.5 4 6v6c0 5 3.4 8.7 8 9.5 4.6-.8 8-4.5 8-9.5V6l-8-3.5Z"/><path d="m9 12 2 2 4-4"/></svg></span>
+      <span class="pt"><b>Quiero coordinar mi barrio</b>
+        <small>${sinCoord.length ? esc(sinCoord.slice(0,2).join(' y '))+(sinCoord.length>2?` y ${sinCoord.length-2} más`:'')+' no tienen coordinador hoy' : 'Tu barrio te necesita'}</small></span>
+      <span class="pa"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg></span>
+    </button>`;
+  if(entrada) entrada.innerHTML = promo + (YO
     ? `<div class="fila-mia ok">
          <div class="row">
            ${avatar({foto:YO.foto, nombre:YO.nombre})}
@@ -258,9 +267,9 @@ function render(){
        <button type="button" class="btn" data-inscribir>${ico('plus')} Cubrir otro sector</button>`
     : `<div class="card">
          <p class="muted" style="margin:0 0 11px">¿Vas a ayudar a coordinar un sector? Con tu celular y un PIN, sin correo ni contraseñas largas.</p>
-         <button type="button" class="btn guide" data-inscribir style="margin-top:0">Inscribirme como coordinador</button>
+         <button type="button" class="btn guide" data-coord-intro style="margin-top:0">Inscribirme como coordinador</button>
          <button type="button" class="btn flat" data-cuenta>Ya me inscribí, quiero entrar</button>
-       </div>`;
+       </div>`);
 
   const secO=$('#sec-orf'), secS=$('#sec-solo');
   if(secO) secO.innerHTML = ico('alert')+' Puntos sin nadie a cargo';
