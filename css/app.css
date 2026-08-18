@@ -211,6 +211,12 @@
   .sbadge.b3{background:rgba(239,68,68,.14);color:#F87171}
   .sbadge.b2{background:rgba(245,158,11,.16);color:#FBBF24}
   .sbadge.b1{background:rgba(201,162,39,.16);color:#D4AC2B}
+  .sbadge.bok{background:rgba(47,158,95,.16);color:#5FBE8A}
+  :root[data-eff="light"] .sbadge.bok{color:#26714A}
+  .zbar{margin-top:10px}
+  .zbar>span{background:linear-gradient(90deg,#F59E0B,#EF4444)}
+  .zfoot{display:flex;justify-content:space-between;margin-top:7px;
+    font-size:11.5px;color:var(--dim);font-weight:650}
   :root[data-eff="light"] .sbadge.b3{color:#C11B1B}
   :root[data-eff="light"] .sbadge.b2{color:#8A5A07}
   :root[data-eff="light"] .sbadge.b1{color:#8A6508}

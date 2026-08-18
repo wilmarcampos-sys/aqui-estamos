@@ -12,6 +12,10 @@ if(!modoSVG){
     if(zout) zout.onclick = ()=>map.setZoom(map.getZoom()-1, {animate:false});
     L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',{maxZoom:19, subdomains:'abcd'}).addTo(map);
     capa = L.layerGroup().addTo(map);
+    // primer vistazo: del panorama se acerca solo al centro urbano,
+    // para que la persona vea de una que hay zonas que mirar
+    setTimeout(()=>{ try{ map.flyTo([4.8095,-75.705], 13.3, {duration:1.4}); }catch(e){} }, 900);
+    setTimeout(()=>{ try{ if(map.getZoom()<12.5) map.setView([4.8095,-75.705], 13.3, {animate:false}); }catch(e){} }, 2800);
   }catch(e){ modoSVG = true; }
 }
 

@@ -329,21 +329,32 @@ function render(){
   if(filtro==='corregimiento') lz=lz.filter(s=>s.z.t==='corregimiento');
   if(filtro==='municipio') lz=lz.filter(s=>s.z.t==='municipio');
   if(filtro==='critica') lz=lz.filter(s=>s.idx>=60);
-  $('#lista-zonas').innerHTML = lz.map((s,i)=>`
-    <div class="card" data-zona="${s.z.id}" style="cursor:pointer">
-      <div class="row">
-        <div class="rank" style="background:${color(s.idx)};color:#fff">${s.idx}</div>
+  $('#lista-zonas').innerHTML = lz.map((s,i)=>{
+    // lenguaje humano: badge con palabra, barra de % atendido y personas
+    const at = Math.max(0, 100 - s.idx);
+    const [lbl, cls] = s.idx>=80 ? ['Olvidada','b3'] : s.idx>=60 ? ['Crítica','b3']
+                     : s.idx>=40 ? ['Rezagada','b2'] : s.idx>=20 ? ['Parcial','b2'] : ['Atendida','bok'];
+    const pers = s.pend.reduce((a,p)=>a+(p.personas||0),0);
+    const frase = [
+      s.z.t==='corregimiento'?'Rural':s.z.t==='municipio'?'Municipio vecino':null,
+      s.ultEnt ? `última ayuda ${hace(s.ultEnt)}` : 'nunca ha llegado ayuda',
+      s.nCoord ? `${s.nCoord} coordinador${s.nCoord===1?'':'es'}` : 'sin coordinador',
+    ].filter(Boolean).join(' · ');
+    return `
+    <div class="card zcard" data-zona="${s.z.id}" style="cursor:pointer">
+      <div class="row" style="align-items:flex-start">
         <div class="grow">
-          <div class="row"><h3 class="grow trunc">${esc(s.z.n)}</h3>
-            <span class="muted">${etiqueta(s.idx)}</span></div>
-          <div class="muted">${s.z.t==='corregimiento'?'Rural · ':s.z.t==='municipio'?'Municipio vecino · ':''}${s.ultEnt?`última ayuda ${hace(s.ultEnt)}`:'nunca ha llegado ayuda'} ·
-            ${s.nCoord} coordinador${s.nCoord===1?'':'es'}</div>
+          <h3 class="trunc" style="margin:0">${esc(s.z.n)}</h3>
+          <div class="muted" style="font-size:12.5px;margin-top:3px">${frase}</div>
         </div>
+        <span class="sbadge ${cls}">${lbl}</span>
       </div>
-      <div class="bar"><span style="width:${s.idx}%;background:${color(s.idx)}"></span></div>
+      <div class="bar zbar"><span style="width:${at}%"></span></div>
+      <div class="zfoot"><span>${at} % atendido</span><span>${pers?`${pers.toLocaleString('es-CO')} personas`:''}</span></div>
       <div>${s.pend.slice(0,5).map(p=>`<span class="chip ${p.u===3?'u3':p.u===2?'u2':''}">${esc(NEED[p.k]?.n||p.k)}${p.corrob>1?` ×${p.corrob}`:''}${p.subio?' ↑':''}</span>`).join('')}
       ${s.pend.length>5?`<span class="chip">+${s.pend.length-5} más</span>`:''}</div>
-    </div>`).join('') || vacio('El mapa está limpio',
+    </div>`;
+  }).join('') || vacio('El mapa está limpio',
        S.reportes.length ? 'Ninguna zona coincide con este filtro.'
        : 'Nadie ha reportado necesidades todavía. Si usted sabe de un sitio que necesita ayuda, tóquelo en el mapa y repórtelo.',
        'Reportar una necesidad');

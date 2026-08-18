@@ -74,7 +74,6 @@ function aplicarTab(){
   show('#d-guia', amz); show('#d-modo', amz); show('#d-cats', amz);
   show('#d-ubicame', !amz); show('#d-centros-h', !amz); show('#d-centros', !amz);
   const sub=$('#d-centros-sub'); if(sub) sub.hidden=amz;
-  const reg=$('#d-registrar'); if(reg) reg.hidden=amz;
 }
 function setTab(x){ DTAB=x; try{ localStorage.setItem('ae_donar_tab',x); }catch(e){}
   renderTabs(); aplicarTab(); }
