@@ -44,6 +44,21 @@ let gRuta = null, gMk = null;
 
 const G_TITLES = {0:'¿Dónde estás?', 1:'¿Qué traes?', 2:'Buscando…', 3:'Llévalo aquí'};
 
+/* Cruce con OTRAS FUENTES: las necesidades de los acopios de alluda.online
+   también son "pedir ayuda", así que entran al match. Su categoría libre se
+   traduce a nuestras categorías de Dar por palabras clave. */
+const ACO_CAT = [
+  {rx:/agua/i, id:'agua'},
+  {rx:/aliment|mercado|comida|perecedero/i, id:'comida'},
+  {rx:/medic|salud|farmac|botiqu/i, id:'medic'},
+  {rx:/pañal|panal|bebé|bebe|infantil|leche|f[oó]rmula/i, id:'bebes'},
+  {rx:/cobija|abrigo|colchon|carpa|dormir|frazada/i, id:'abrigo'},
+  {rx:/ropa|calzado|zapato/i, id:'ropa'},
+  {rx:/aseo|higiene|limpieza|jab[oó]n/i, id:'aseo'},
+  {rx:/herramient|construc|pala|linterna|pila/i, id:'herr'},
+];
+const acoCat = n => { const hit=ACO_CAT.find(x=>x.rx.test((n.cat||'')+' '+(n.desc||''))); return hit?hit.id:'otra'; };
+
 /* ---- candidatos con el puntaje transparente ---- */
 function darCandidatos(){
   const keys = new Set();
@@ -68,6 +83,19 @@ function darCandidatos(){
     const puntaje = u*40 + Math.min(personas,25)*8 + (nadie?30:0) - km*6;
     out.push({f, z, match, u, personas, nadie, diasSin, km, puntaje, org});
   }));
+  // acopios aliados con pendientes que calzan con lo que traes.
+  // Sin el bono de "nadie ha llegado" y con un pequeño descuento: la gente
+  // que pide directo va primero; el acopio es el segundo mejor destino.
+  (window.ACOPIOS||[]).forEach(a=>{
+    const match = a.needs.filter(n=>gSel.has(acoCat(n)));
+    if(!match.length) return;
+    const km = dist(org.lat,org.lng,a.lat,a.lng)/1000;
+    const u = match.some(n=>/urgente/i.test(n.prio||'')) ? 3 : 2;
+    const puntaje = u*40 + Math.min(match.length*4,25) - km*6 - 10;
+    out.push({tipo:'acopio', a, f:{ref:a.nom, lat:a.lat, lng:a.lng},
+      z:{n:a.ciudad||'', id:null}, match, u, personas:0, nadie:false,
+      diasSin:null, km, puntaje, org});
+  });
   const dentro = out.filter(c=>c.km <= gKm);
   return (dentro.length ? dentro : out).sort((a,b)=>b.puntaje-a.puntaje);
 }
@@ -115,15 +143,18 @@ function gMatch(){
   const c = gCand[gIdx];
   const min = Math.max(1, Math.round(c.km / (gKm===1?4:gKm===5?20:30) * 60));
   const medio = gKm===1?'a pie':gKm===5?'en moto':'en carro';
-  const piden = c.match.slice(0,3).map(x=>NEED[x.k]?.n||x.k).join(' · ');
-  const cb = cubridores(c.f.lat, c.f.lng, c.z.id)[0];
+  const esAco = c.tipo==='acopio';
+  const piden = esAco
+    ? [...new Set(c.match.map(n=>n.cat||'Otros'))].slice(0,3).join(' · ')
+    : c.match.slice(0,3).map(x=>NEED[x.k]?.n||x.k).join(' · ');
+  const cb = esAco ? null : cubridores(c.f.lat, c.f.lng, c.z.id)[0];
   const traes = DAR_CATS.filter(x=>gSel.has(x.id)).map(x=>x.n.toLowerCase()).join(', ');
   document.getElementById('gs-match').innerHTML = `
     <div class="match">
       <div class="match-h">
         <span class="mrank">${gIdx+1}</span>
         <div class="mt"><b>${esc(c.f.ref||c.z.n)}</b>
-          <small>${esc(c.z.n)} · ${c.km<1?Math.round(c.km*1000)+' m':c.km.toFixed(1)+' km'} · ${min} min ${medio}</small></div>
+          <small>${esAco?'Acopio · ':''}${esc(c.z.n)} · ${c.km<1?Math.round(c.km*1000)+' m':c.km.toFixed(1)+' km'} · ${min} min ${medio}</small></div>
         <span class="sbadge ${c.u===3?'b3':c.u===2?'b2':'b1'}">${c.u===3?'Urgencia alta':c.u===2?'Urgente':'Puede esperar'}</span>
       </div>
       <div class="match-line"><span class="ml-k">Piden</span><span class="ml-v">${esc(piden)}${c.personas?` · ${c.personas} personas`:''}</span></div>
@@ -139,16 +170,21 @@ function gMatch(){
         <span class="cn">${esc(cb.nom)}<small>Coordina este sector</small></span>
         ${cb.tel?`<button type="button" class="wa-mini" data-wa="${esc(String(cb.tel).replace(/\D/g,''))}" aria-label="WhatsApp">
           <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 0 0-8.6 15L2 22l5.2-1.4A10 10 0 1 0 12 2Zm5.5 14.1c-.2.6-1.2 1.2-1.7 1.2-.5.1-1 .1-1.6-.1-.4-.1-.9-.3-1.5-.6a11 11 0 0 1-4.2-3.9c-.3-.5-.7-1.2-.7-1.9s.3-1.1.5-1.3c.2-.2.4-.3.6-.3h.4c.1 0 .3 0 .5.4l.7 1.6c0 .1.1.3 0 .4l-.3.4-.3.3c-.1.1-.2.2 0 .5.2.3.7 1.1 1.4 1.7.9.8 1.6 1 1.9 1.2.2.1.4.1.5-.1l.6-.8c.2-.2.3-.2.5-.1l1.6.8c.2.1.4.2.4.3v.5Z"/></svg></button>`:''}
-      </div>` : `<div class="match-line"><span class="ml-k">A cargo</span><span class="ml-v">Nadie todavía — tu entrega es doblemente valiosa</span></div>`}
+      </div>` : esAco
+        ? `<div class="match-line"><span class="ml-k">Fuente</span><span class="ml-v">Centro de acopio de la red alluda.online — recibe y clasifica</span></div>`
+        : `<div class="match-line"><span class="ml-k">A cargo</span><span class="ml-v">Nadie todavía — tu entrega es doblemente valiosa</span></div>`}
     </div>
     <button type="button" class="alt-link" id="gs-alt" ${gCand.length>1?'':'hidden'}>
       ${gIdx+1 < gCand.length ? `Ver la siguiente de ${gCand.length} opciones cerca ›` : '‹ Volver a la mejor opción'}</button>
-    <button type="button" class="alt-link" id="gs-entregue" style="color:#5FBE8A">Ya lo entregué — registrarlo</button>
+    <button type="button" class="alt-link" id="gs-entregue" style="color:#5FBE8A">${esAco?'Ver ficha del centro y contacto ›':'Ya lo entregué — registrarlo'}</button>
   `;
   const alt = document.getElementById('gs-alt');
   if(alt) alt.onclick = ()=>{ gIdx = (gIdx+1) % gCand.length; gMatch(); };
   document.getElementById('gs-entregue').onclick = ()=>{
     gCerrar();
+    // a un acopio no se le "registra entrega" en nuestros focos: la
+    // confirmación vive en el centro (ficha con dirección y contacto)
+    if(esAco){ abrirAcopio(c.a); return; }
     abrirEntrega(c.z.id, c.match.map(x=>x.k), {z:c.z.id, lat:c.f.lat, lng:c.f.lng});
   };
   const wa = document.querySelector('#gs-match [data-wa]');
