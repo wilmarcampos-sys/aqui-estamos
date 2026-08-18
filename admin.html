@@ -8,7 +8,7 @@
 <link rel="icon" type="image/svg+xml" href="logo/marca.svg">
 <title>Aquí Estamos · Administración</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
-<link rel="stylesheet" href="css/app.css">
+<link rel="stylesheet" href="css/app.css?v=1.46.0">
 <style>
   /* El panel es mobile-first: una columna, pestañas fijas abajo. En pantalla
      grande se centra en una franja de ancho de celular para no deformarse. */
@@ -42,6 +42,15 @@
     padding:0 4px;border-radius:8px;background:#d97706;color:#160c02;font-size:10px;font-weight:800;
     display:none;align-items:center;justify-content:center;line-height:1}
   .tabbar button .badge.on{display:flex}
+
+  /* badges pill (mismo lenguaje de la app) */
+  .sbadge{display:inline-block;padding:2px 8px;border-radius:999px;font-size:10.5px;font-weight:800;letter-spacing:.2px;vertical-align:1px}
+  .sbadge.b3{background:rgba(239,68,68,.14);color:#F87171}
+  .sbadge.b2{background:rgba(245,158,11,.16);color:#FBBF24}
+  .sbadge.b1{background:rgba(201,162,39,.16);color:#D4AC2B}
+  .fila{display:flex;align-items:center;gap:8px;font-size:16px}
+  .seg{border-radius:999px}
+  .seg button{border-radius:999px}
 
   /* ---- login ---- */
   .login{max-width:400px;margin:8vh auto;text-align:center;padding:0 20px}
@@ -199,6 +208,7 @@
 
     <main>
       <section class="view on" id="v-inicio"></section>
+      <section class="view" id="v-pedidos"></section>
       <section class="view" id="v-personas"></section>
       <section class="view" id="v-zonas"></section>
       <section class="view" id="v-mas"></section>
@@ -208,6 +218,10 @@
       <button data-v="inicio" class="on">
         <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/></svg>
         <span class="lab">Inicio</span><span class="badge" id="bg-inicio"></span>
+      </button>
+      <button data-v="pedidos">
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5h6M9 3.5A1.5 1.5 0 0 1 10.5 2h3A1.5 1.5 0 0 1 15 3.5V5H9V3.5Z"/><rect x="5" y="4" width="14" height="18" rx="2.5"/><path d="m9 13 2 2 4-4"/></svg>
+        <span class="lab">Pedidos</span><span class="badge" id="bg-pedidos"></span>
       </button>
       <button data-v="personas">
         <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9.5" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.9"/></svg>
@@ -236,9 +250,9 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="js/config.js"></script>
-<script src="js/version.js"></script>
-<script src="js/data.js"></script>
+<script src="js/config.js?v=1.46.0"></script>
+<script src="js/version.js?v=1.46.0"></script>
+<script src="js/data.js?v=1.46.0"></script>
 <script>
 /* ============================================================
    PANEL DE ADMINISTRACIÓN — Aquí Estamos
@@ -301,6 +315,23 @@ function etiqueta(i){ return i>=80?'Sin ayuda' : i>=60?'Crítica' : i>=40?'Rezag
 let COORDS   = [];   // objetos coordinador (micro-zona), incluye anulados
 let REPORTES = [];
 let ENTREGAS = [];
+let CONTACTOS = {};  // folio -> {nombre, tel, whatsapp}  (tabla privada; requiere clave)
+let CENSO    = [];   // viviendas del censo (privado con clave; anónimo sin ella)
+let SEGP     = 'abiertos';   // segmento de Pedidos: abiertos | atendidos | censo
+
+/* Clave de administración: se pega UNA vez y vive solo en este teléfono.
+   Da lectura a las tablas privadas (contactos del reporte, censo completo).
+   Nunca va en el código ni en el repositorio. */
+const AKEY = ()=>{ try{ return localStorage.getItem('ae_admin_sk')||''; }catch(e){ return ''; } };
+async function sfetch(pathq){
+  const k=AKEY(); if(!k) return null;
+  try{
+    const r = await fetch(`${CONFIG.SUPABASE_URL}/rest/v1/${pathq}`,
+      {headers:{apikey:k, Authorization:'Bearer '+k}});
+    if(!r.ok) return null;
+    return await r.json();
+  }catch(e){ return null; }
+}
 let VISTA = 'inicio';
 let SEG   = 'esperando';
 let BUSCA = '';
@@ -311,7 +342,13 @@ const deCoo = c=>({ id:c.id, z:c.zona, micro:c.micro||'', radio:c.radio||500,
   email:c.email||'', nota:c.nota||'', foto:c.foto||null, ver:!!c.verificado, anulado:!!c.anulado,
   codigo:c.codigo||'', cuenta:c.cuenta||null, creado:+new Date(c.creado||Date.now()) });
 const deRep = r=>({ id:r.id, z:r.zona, k:r.necesidad, u:r.urgencia, lat:+r.lat, lng:+r.lng,
-  ref:r.referencia||'', personas:r.personas||0, ts:+new Date(r.creado||Date.now()) });
+  ref:r.referencia||'', personas:r.personas||0, ts:+new Date(r.creado||Date.now()),
+  folio:r.folio||'', prioridad:r.prioridad||[], nota:r.nota||'' });
+const deCen = c=>({ id:c.id, ficha:c.ficha||'', barrio:c.barrio||'', dir:c.direccion||'', sena:c.sena||'',
+  nombre:[c.nombre,c.apellido].filter(Boolean).join(' '), cedula:c.cedula||'', tel:c.tel_e164||'',
+  personas:c.personas||0, men5:c.menores5||0, may65:c.mayores65||0, cond:c.condiciones||[],
+  ev:c.estado_vivienda||'', needs:c.necesidades||[], detalle:c.detalle||'', lat:c.lat?+c.lat:null, lng:c.lng?+c.lng:null,
+  ts:+new Date(c.creado||Date.now()) });
 const deEnt = e=>({ id:e.id, z:e.zona, k:e.necesidad, quien:e.quien||'Anónimo',
   cant:e.cantidad||'', ts:+new Date(e.creado||Date.now()) });
 
@@ -346,6 +383,14 @@ function focos(zid){
     f.personas = f.needs.reduce((s,x)=>s+x.personas,0);
     return f;
   }).sort((a,b)=>b.u-a.u||b.n-a.n);
+}
+function repAtendido(r){
+  return ENTREGAS.some(e=>e.k===r.k && e.z===r.z && e.ts>r.ts);
+}
+function cenAtendida(c){
+  if(c.lat==null) return false;
+  return ENTREGAS.some(e=>e.ts > now()-7*24*H && e.z && c.needs.length && true) &&
+    false; /* sin lat de entregas aquí; el estado fino vive en la app */
 }
 function cubridores(lat,lng){
   return activos().filter(c=>c.lat && dist(lat,lng,c.lat,c.lng) <= (c.radio||500));
@@ -420,6 +465,16 @@ function vInicio(){
       <div class="ti">${sol.length} sector${sol.length>1?'es':''} con una sola persona</div>
       <div class="cx">${esc(sol[0].zona.n)} — solo <b>${esc(sol[0].solo.nom)}</b> a cargo. Si falla, queda ciego.</div>
       <button class="btn flat" data-goto="zonas">Ver en Zonas</button></div>`;
+  const vulns = REPORTES.filter(r=>r.u===3 && (r.prioridad||[]).length && !repAtendido(r));
+  if(vulns.length) alertas += `<div class="alert red">
+      <div class="ti">${vulns.length} pedido${vulns.length>1?'s':''} crítico${vulns.length>1?'s':''} con personas vulnerables</div>
+      <div class="cx">Niños, embarazo o discapacidad esperando: primero en la fila.</div>
+      <button class="btn red" data-goto="pedidos">Ver Pedidos</button></div>`;
+  const inhab = CENSO.filter(c=>c.ev==='inhabitable').length;
+  if(inhab) alertas += `<div class="alert amber">
+      <div class="ti">${inhab} vivienda${inhab>1?'s':''} inhabitable${inhab>1?'s':''} en el censo</div>
+      <div class="cx">Familias durmiendo fuera — cola de evaluación estructural.</div>
+      <button class="btn flat" data-goto="pedidos" data-seg="censo">Ver el censo</button></div>`;
   if(pend.length) alertas += `<div class="alert amber">
       <div class="ti">${pend.length} ${pend.length>1?'inscripciones':'inscripción'} esperando autorización</div>
       <div class="cx">Le llegó el código por WhatsApp: búsquela y confirme que es esa persona.</div>
@@ -463,6 +518,125 @@ function movimientos(){
   ENTREGAS.forEach(e=> evs.push({ts:e.ts, color:'#3f8f5f',
     txt:`Entrega: ${esc(NEED[e.k]?.n||e.k)} → ${esc(zonaNombre(e.z))}${e.quien?` · ${esc(e.quien)}`:''}`}));
   return evs.sort((a,b)=>b.ts-a.ts).slice(0,6);
+}
+
+/* ---------- PEDIDOS (folio + contacto privado) y CENSO ---------- */
+const EV_TXT = {habitable:['Habitable','#22c55e'], danos:['Con daños','#f5a524'], inhabitable:['Inhabitable','#f87171']};
+const PRIO_TXT = {ninos5:'niños <5', mayores:'adultos mayores', discapacidad:'discapacidad', embarazo:'embarazo'};
+
+function vPedidos(){
+  const sinClave = !AKEY() && !DEMO;
+  const aviso = sinClave ? `<div class="alert amber"><div class="ti">Sin clave de administración</div>
+    <div class="cx">Los teléfonos de contacto y el censo completo son privados. Pega tu clave en <b>Más → Clave de administración</b> para verlos aquí.</div></div>` : '';
+
+  if(SEGP==='censo'){ return vCensoLista(aviso); }
+
+  const abiertos = REPORTES.filter(r=>!repAtendido(r));
+  const lista = (SEGP==='abiertos' ? abiertos : REPORTES.filter(r=>repAtendido(r)))
+    .sort((a,b)=> (b.u-a.u) || (b.ts-a.ts)).slice(0,120);
+
+  const filas = lista.map(r=>{
+    const cont = CONTACTOS[r.folio];
+    const prio = (r.prioridad||[]).map(k=>PRIO_TXT[k]||k).filter(Boolean);
+    return `<div class="prow ${r.u===3?'pendiente':''}">
+      <div class="info" data-pedido="${esc(r.id)}">
+        <div class="nm">${esc(NEED[r.k]?.n||r.k)}${r.personas?` · ${r.personas}p`:''}
+          <span class="sbadge ${r.u===3?'b3':r.u===2?'b2':'b1'}" style="margin-left:4px">${r.u===3?'Crítico':r.u===2?'Urgente':'Puede esperar'}</span></div>
+        <div class="mt">${esc(zonaNombre(r.z))}${r.ref?` · ${esc(r.ref)}`:''} · ${hace(r.ts)}</div>
+        ${prio.length?`<div class="mt" style="color:#f5a524">Prioridad: ${esc(prio.join(', '))}</div>`:''}
+        ${r.folio?`<div class="cd">${esc(r.folio)}${cont?` · ${esc(cont.nombre||'')}`:''}</div>`:''}
+      </div>
+      ${cont&&cont.tel?`<a class="waq" href="${waLink(cont.tel,'Hola, le escribo de Aquí Estamos por su pedido '+r.folio)}" target="_blank" rel="noopener">${WA_SVG}</a>`:''}
+      <button class="chev" data-pedido="${esc(r.id)}">›</button>
+    </div>`;
+  }).join('') || `<div class="vacio"><b>${SEGP==='abiertos'?'Sin pedidos abiertos':'Nada atendido todavía'}</b><p>${SEGP==='abiertos'?'Cuando alguien pida ayuda aparece aquí.':'Al registrar entregas, los pedidos pasan a esta lista.'}</p></div>`;
+
+  $('#v-pedidos').innerHTML = `${aviso}
+    <div class="seg" id="segp">
+      <button data-sp="abiertos" class="${SEGP==='abiertos'?'on':''}">Abiertos <span class="c">${abiertos.length}</span></button>
+      <button data-sp="atendidos" class="${SEGP==='atendidos'?'on':''}">Atendidos</button>
+      <button data-sp="censo" class="${SEGP==='censo'?'on':''}">Censo <span class="c">${CENSO.length}</span></button>
+    </div>
+    ${filas}`;
+}
+
+function vCensoLista(aviso){
+  const inhab = CENSO.filter(c=>c.ev==='inhabitable');
+  const filas = CENSO.slice().sort((a,b)=> (a.ev==='inhabitable'?-1:0)-(b.ev==='inhabitable'?-1:0) || b.ts-a.ts)
+    .slice(0,150).map(c=>{
+    const ev = EV_TXT[c.ev]||null;
+    return `<div class="prow ${c.ev==='inhabitable'?'pendiente':''}">
+      <div class="info" data-vivienda="${esc(c.id)}">
+        <div class="nm">${esc(c.nombre||('Vivienda '+(c.ficha||'')))}${c.personas?` · ${c.personas}p`:''}
+          ${ev?`<span class="sbadge" style="margin-left:4px;background:${ev[1]}22;color:${ev[1]}">${ev[0]}</span>`:''}</div>
+        <div class="mt">${esc(c.barrio||'—')}${c.dir?` · ${esc(c.dir)}`:''} · ${hace(c.ts)}</div>
+        <div class="mt">${esc((c.needs||[]).join(', ')||'sin necesidades')}</div>
+        ${c.ficha?`<div class="cd">${esc(c.ficha)}</div>`:''}
+      </div>
+      ${c.tel?`<a class="waq" href="${waLink(c.tel,'Hola, le escribo de Aquí Estamos por el censo '+c.ficha)}" target="_blank" rel="noopener">${WA_SVG}</a>`:''}
+      <button class="chev" data-vivienda="${esc(c.id)}">›</button>
+    </div>`;
+  }).join('') || `<div class="vacio"><b>Sin viviendas${AKEY()||DEMO?'':' visibles'}</b><p>${AKEY()||DEMO?'Cuando se registre una vivienda en el censo aparece aquí.':'Con la clave de administración ves el censo completo (nombres, teléfonos y fichas).'}</p></div>`;
+
+  $('#v-pedidos').innerHTML = `${aviso}
+    <div class="seg" id="segp">
+      <button data-sp="abiertos">Abiertos</button>
+      <button data-sp="atendidos">Atendidos</button>
+      <button data-sp="censo" class="on">Censo <span class="c">${CENSO.length}</span></button>
+    </div>
+    ${inhab.length?`<div class="alert red"><div class="ti">${inhab.length} vivienda${inhab.length>1?'s':''} inhabitable${inhab.length>1?'s':''}</div>
+      <div class="cx">Familias durmiendo fuera — en cola de evaluación estructural.</div></div>`:''}
+    ${filas}`;
+}
+
+function abrirPedido(id){
+  const r = REPORTES.find(x=>String(x.id)===String(id)); if(!r) return;
+  const cont = CONTACTOS[r.folio];
+  const prio = (r.prioridad||[]).map(k=>PRIO_TXT[k]||k);
+  const at = repAtendido(r);
+  abrirSheet(`
+    <div class="sec" style="margin-top:4px">Pedido ${esc(r.folio||'')}</div>
+    <div class="fila"><b>${esc(NEED[r.k]?.n||r.k)}</b>
+      <span class="sbadge ${r.u===3?'b3':r.u===2?'b2':'b1'}">${r.u===3?'Crítico':r.u===2?'Urgente':'Puede esperar'}</span></div>
+    <p class="muted" style="margin:6px 0">${esc(zonaNombre(r.z))}${r.ref?` · ${esc(r.ref)}`:''} · ${hace(r.ts)}
+      ${r.personas?` · ${r.personas} personas`:''}${prio.length?` · prioridad: ${esc(prio.join(', '))}`:''}</p>
+    ${r.nota?`<p class="muted" style="margin:6px 0">“${esc(r.nota)}”</p>`:''}
+    ${cont?`<div class="lbl">Contacto (privado — no compartir)</div>
+      <div class="prow"><div class="info"><div class="nm">${esc(cont.nombre||'Sin nombre')}</div>
+        <div class="mt">${esc(telBonito(cont.tel))}${cont.whatsapp?' · prefiere WhatsApp':''}</div></div>
+        <a class="waq" href="${waLink(cont.tel,'Hola, le escribo de Aquí Estamos por su pedido '+r.folio)}" target="_blank" rel="noopener">${WA_SVG}</a></div>`
+      : `<p class="muted" style="margin:8px 0">${AKEY()||DEMO?'Este pedido no dejó contacto.':'El contacto es privado: pega tu clave en Más → Clave de administración.'}</p>`}
+    ${at?`<div class="alert green" style="margin-top:10px"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+      <div><div class="ti">Atendido</div><div class="cx">Hay entrega registrada de esta necesidad en la zona.</div></div></div>`
+    : `<button class="btn green" data-atender="${esc(r.id)}" style="margin-top:10px">Marcar atendido (registrar entrega)</button>`}
+  `);
+}
+
+function abrirVivienda(id){
+  const c = CENSO.find(x=>String(x.id)===String(id)); if(!c) return;
+  const ev = EV_TXT[c.ev]||null;
+  const cond = (c.cond||[]).join(', ');
+  abrirSheet(`
+    <div class="sec" style="margin-top:4px">Ficha ${esc(c.ficha||'del censo')}</div>
+    <div class="fila"><b>${esc(c.nombre||'Vivienda')}</b>
+      ${ev?`<span class="sbadge" style="background:${ev[1]}22;color:${ev[1]}">${ev[0]}</span>`:''}</div>
+    <p class="muted" style="margin:6px 0">${esc(c.barrio||'—')}${c.dir?` · ${esc(c.dir)}`:''}${c.sena?` · ${esc(c.sena)}`:''}</p>
+    <p class="muted" style="margin:6px 0">${c.personas} persona${c.personas>1?'s':''}${c.men5?` · ${c.men5} menor${c.men5>1?'es':''} de 5`:''}${c.may65?` · ${c.may65} mayor${c.may65>1?'es':''} de 65`:''}${cond?` · ${esc(cond)}`:''}</p>
+    ${c.cedula?`<p class="muted" style="margin:6px 0">CC ${esc(c.cedula)}${c.tel?` · ${esc(telBonito(c.tel))}`:''} <span style="color:#f5a524">(privado — no compartir)</span></p>`:''}
+    <div class="lbl">Pendiente</div>
+    <p class="muted">${esc((c.needs||[]).join(', ')||'—')}${c.detalle?` · “${esc(c.detalle)}”`:''}</p>
+    ${c.tel?`<a class="btn" style="background:#25d366;color:#04220f;display:block;text-align:center;text-decoration:none;margin-top:10px"
+      href="${waLink(c.tel,'Hola, le escribo de Aquí Estamos por el censo '+c.ficha)}" target="_blank" rel="noopener">Escribir por WhatsApp</a>`:''}
+  `);
+}
+
+async function atenderPedido(id){
+  const r = REPORTES.find(x=>String(x.id)===String(id)); if(!r) return;
+  if(DEMO){ ENTREGAS.push({id:'d'+Date.now(), z:r.z, k:r.k, quien:'Coordinación', cant:'', ts:now()}); toast('Atendido (demo).'); cerrarSheet(); render(); return; }
+  const {error} = await db.from('entregas').insert({zona:r.z, necesidad:r.k, lat:r.lat, lng:r.lng,
+    quien:'Coordinación', cantidad:null, nota:'Cerrado desde el panel · '+(r.folio||'')});
+  toast(error ? 'No se pudo: '+error.message : 'Atendido: quedó registrado como entrega.');
+  cerrarSheet(); if(!error) await cargar();
 }
 
 /* ---------- PERSONAS ---------- */
@@ -662,7 +836,16 @@ function vMas(){
       <div class="grow"><b>${esc(YO.email?YO.email.split('@')[0]:'Administración')}</b>
         <span>${esc(YO.email||(DEMO?'modo demostración':''))}</span></div>
     </div>
+    <div class="lbl">Acceso</div>
+    <button class="mitem" id="btn-clave">
+      <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10.5" width="16" height="10.5" rx="3"/><path d="M8 10.5V7a4 4 0 0 1 8 0v3.5"/></svg>
+      <div class="grow"><b>Clave de administración</b><span>${AKEY()?'Guardada en este teléfono · datos privados visibles':'Sin clave — contactos y censo ocultos'}</span></div><span class="chev">›</span>
+    </button>
     <div class="lbl">Datos</div>
+    <button class="mitem" id="btn-export-censo">
+      <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h9l5 5v13H6z"/><path d="M14 3v6h6M9 14h7M9 17.5h5"/></svg>
+      <div class="grow"><b>Exportar censo (CSV)</b><span>Para autoridades — requiere la clave</span></div><span class="chev">›</span>
+    </button>
     <button class="mitem" id="btn-export">
       <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg>
       <div class="grow"><b>Exportar todo (JSON)</b><span>Reportes, entregas y coordinadores — respaldo o cifras</span></div><span class="chev">›</span>
@@ -755,10 +938,24 @@ async function exportar(){
   }catch(ex){ toast('No se pudo exportar.'); }
 }
 
+function exportarCenso(){
+  if(!CENSO.length){ toast(AKEY()||DEMO?'No hay viviendas en el censo.':'Necesitas la clave de administración.'); return; }
+  const cab = ['ficha','nombre','cedula','telefono','barrio','direccion','sena','personas','menores5','mayores65','condiciones','estado_vivienda','necesidades','detalle','lat','lng','registrado'];
+  const q = v => '"'+String(v??'').replace(/"/g,'""')+'"';
+  const filas = CENSO.map(c=>[c.ficha,c.nombre,c.cedula,c.tel,c.barrio,c.dir,c.sena,c.personas,c.men5,c.may65,
+    (c.cond||[]).join('; '),c.ev,(c.needs||[]).join('; '),c.detalle,c.lat??'',c.lng??'',new Date(c.ts).toISOString()].map(q).join(','));
+  const blob = new Blob(['\ufeff'+cab.join(',')+'\n'+filas.join('\n')], {type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download='censo-aqui-estamos-'+new Date().toISOString().slice(0,10)+'.csv'; a.click();
+  URL.revokeObjectURL(a.href);
+  toast('Censo exportado: '+CENSO.length+' viviendas.');
+}
+
 /* ============================================================
    RENDER + NAVEGACIÓN
    ============================================================ */
 const TITULOS = { inicio:['Hoy', ()=>new Date(now()).toLocaleDateString('es-CO',{weekday:'long',day:'numeric',month:'long'})],
+  pedidos:['Pedidos','folio, contacto y censo'],
   personas:['Personas','autorizar y consultar'], zonas:['Zonas','mapa y quién cubre qué'], mas:['Más','cuenta, datos y ayuda'] };
 
 function render(){
@@ -769,6 +966,7 @@ function render(){
   $('#subtitulo').textContent = typeof sub==='function'?sub():sub;
 
   if(VISTA==='inicio') vInicio();
+  if(VISTA==='pedidos') vPedidos();
   if(VISTA==='personas') vPersonas();
   if(VISTA==='zonas') vZonas();
   if(VISTA==='mas') vMas();
@@ -777,6 +975,7 @@ function render(){
   const pend = activos().filter(c=>!c.ver).length;
   const necesita = (ZONAS||[]).map(estadoZona).filter(s=>s.reps>0 && s.nCoord===0).length;
   setBadge('personas', pend);
+  setBadge('pedidos', REPORTES.filter(r=>r.u===3 && !repAtendido(r)).length);
   setBadge('zonas', necesita);
   setBadge('inicio', 0);
   setBadge('mas', 0);
@@ -792,7 +991,7 @@ $('#tabbar').addEventListener('click', e=>{ const b=e.target.closest('button[dat
 
 document.addEventListener('click', e=>{
   const g = e.target.closest('[data-goto]');
-  if(g){ return ir(g.dataset.goto, g.dataset.seg); }
+  if(g){ if(g.dataset.goto==='pedidos' && g.dataset.seg) SEGP=g.dataset.seg; return ir(g.dataset.goto, g.dataset.seg); }
 
   const tg = e.target.closest('[data-toggle]');
   if(tg){ const grp=tg.closest('.pgroup'), sz=grp&&grp.querySelector('.subzones');
@@ -810,6 +1009,35 @@ document.addEventListener('click', e=>{
   const ay = e.target.closest('[data-ayuda]'); if(ay) return abrirAyuda(ay.dataset.ayuda);
   if(e.target.closest('[data-cifras]')) return abrirCifras();
   if(e.target.closest('#btn-export')) return exportar();
+  if(e.target.closest('#btn-export-censo')) return exportarCenso();
+  if(e.target.closest('#btn-clave')){
+    abrirSheet(`<div class="sec" style="margin-top:4px">Clave de administración</div>
+      <p class="muted" style="line-height:1.55">Pega aquí la clave secreta (service key). Se guarda <b>solo en este teléfono</b> y da acceso a los datos privados: contactos de pedidos y censo completo. No la compartas.</p>
+      <input id="clave-in" type="password" placeholder="Pega la clave…" value="${esc(AKEY())}" style="margin-top:10px">
+      <button class="btn" id="clave-ok">Guardar en este teléfono</button>
+      ${AKEY()?'<button class="btn flat" id="clave-borrar" style="width:100%">Borrar la clave de este teléfono</button>':''}`);
+    setTimeout(()=>{
+      const okb=$('#clave-ok'); if(okb) okb.onclick=async ()=>{
+        const v=$('#clave-in').value.trim();
+        if(!v){ toast('Pega la clave primero.'); return; }
+        try{ localStorage.setItem('ae_admin_sk', v); }catch(e){}
+        toast('Clave guardada. Cargando datos privados…'); cerrarSheet(); await cargar();
+      };
+      const bb=$('#clave-borrar'); if(bb) bb.onclick=async ()=>{
+        try{ localStorage.removeItem('ae_admin_sk'); }catch(e){}
+        CONTACTOS={}; CENSO=[]; toast('Clave borrada.'); cerrarSheet(); render();
+      };
+    },50);
+    return;
+  }
+  const ped = e.target.closest('[data-pedido]');
+  if(ped) return abrirPedido(ped.dataset.pedido);
+  const viv = e.target.closest('[data-vivienda]');
+  if(viv) return abrirVivienda(viv.dataset.vivienda);
+  const att = e.target.closest('[data-atender]');
+  if(att){ att.disabled=true; att.textContent='Registrando…'; return atenderPedido(att.dataset.atender); }
+  const sp = e.target.closest('#segp button');
+  if(sp){ SEGP=sp.dataset.sp; return render(); }
   if(e.target.closest('[data-close-btn]') || e.target.closest('.scrim')) return cerrarSheet();
 
   const cp = e.target.closest('[data-copiar]');
@@ -864,6 +1092,13 @@ async function cargar(){
   REPORTES = (r.data||[]).map(deRep);
   ENTREGAS = (e.data||[]).map(deEnt);
   COORDS   = (c.data||[]).map(deCoo);
+  // privadas: solo con la clave de administración
+  const [cont, cen] = await Promise.all([
+    sfetch('reportes_contacto?select=folio,nombre,tel_e164,whatsapp&order=creado.desc&limit=2000'),
+    sfetch('censo?select=*&order=creado.desc&limit=3000'),
+  ]);
+  CONTACTOS = {}; (cont||[]).forEach(x=>{ if(x.folio && !CONTACTOS[x.folio]) CONTACTOS[x.folio]={nombre:x.nombre,tel:x.tel_e164,whatsapp:x.whatsapp}; });
+  CENSO = (cen||[]).map(deCen);
   render();
 }
 
@@ -966,6 +1201,27 @@ function cargarDemo(){
 
   COORDS   = coordRows.map(deCoo);
   REPORTES = repRows.map(deRep);
+  // pedidos con folio, prioridad y contacto (demo)
+  if(REPORTES[0]){ REPORTES[0].folio='AY-DE01'; REPORTES[0].prioridad=['ninos5','embarazo']; REPORTES[0].nota='llevamos 3 días sin agua, hay 2 bebés'; }
+  if(REPORTES[1]){ REPORTES[1].folio='AY-DE02'; REPORTES[1].prioridad=['mayores']; }
+  if(REPORTES[2]){ REPORTES[2].folio='AY-DE03'; }
+  CONTACTOS = {
+    'AY-DE01': {nombre:'Marta Ospina', tel:'+573114482210', whatsapp:true},
+    'AY-DE03': {nombre:'Carlos Duque', tel:'+573001112233', whatsapp:false},
+  };
+  CENSO = [
+    deCen({id:'cv1', ficha:'CV-DE01', nombre:'Marta', apellido:'Ospina', cedula:'42111222', tel_e164:'+573114482210',
+      barrio:'Villa Santana', direccion:'Cra 12 #14-30', sena:'Casa de reja verde', personas:6, menores5:2, mayores65:1,
+      condiciones:['embarazo','cronica'], estado_vivienda:'inhabitable', necesidades:['agua','medicamentos','bebes'],
+      detalle:'Duermen en la cancha', lat:4.808, lng:-75.665, creado:new Date(now()-30*H).toISOString()}),
+    deCen({id:'cv2', ficha:'CV-DE02', nombre:'José', apellido:'Ramírez', cedula:'10222333', tel_e164:'+573015556677',
+      barrio:'Cuba', direccion:'Mz 4 casa 12', personas:3, menores5:0, mayores65:2,
+      condiciones:['discapacidad'], estado_vivienda:'danos', necesidades:['mercado','ropa'],
+      lat:4.795, lng:-75.735, creado:new Date(now()-8*H).toISOString()}),
+    deCen({id:'cv3', ficha:'CV-DE03', nombre:'Luz', apellido:'García', cedula:'25333444', tel_e164:'',
+      barrio:'Centro', personas:4, estado_vivienda:'habitable', necesidades:['agua'],
+      creado:new Date(now()-2*H).toISOString()}),
+  ];
   ENTREGAS = entRows.map(deEnt);
 }
 </script>
