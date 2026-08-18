@@ -268,6 +268,33 @@ function render(){
     : `<button type="button" class="btn flat" data-cuenta style="margin-top:0">Ya me inscribí, quiero entrar</button>
        <p class="muted" style="margin:8px 2px 0;font-size:12.5px">El registro es con tu celular y un PIN — sin correo ni contraseñas largas.</p>`);
 
+  // estadisticas de coordinacion (diseño app): tres numeros que orientan
+  const stats=$('#coord-stats');
+  if(stats) stats.innerHTML = `
+    <div class="stat"><b style="color:#F87171">${S.reportes.length}</b><small>Reportes abiertos</small></div>
+    <div class="stat"><b style="color:#FBBF24">${S.coords.filter(c=>!c.anulado).length}</b><small>Coordinadores</small></div>
+    <div class="stat"><b style="color:#5FBE8A">${S.entregas.length}</b><small>Entregas</small></div>`;
+
+  // necesidades mas pedidas en toda la ciudad, con barra relativa
+  (function(){
+    const w=$('#lista-pedidas'), bl=document.getElementById('b-pedidas');
+    if(!w) return;
+    const g={};
+    S.reportes.forEach(r=>{ const e=g[r.k]=g[r.k]||{k:r.k,n:0,u:0}; e.n++; e.u=Math.max(e.u,r.u); });
+    const top=Object.values(g).sort((a,b)=>b.n-a.n).slice(0,5);
+    if(bl) bl.style.display = top.length ? '' : 'none';
+    const max=top.length?top[0].n:1;
+    w.innerHTML = top.map((x,i)=>`
+      <div class="card zcard">
+        <div class="row" style="align-items:flex-start">
+          <div class="grow"><h3 class="trunc" style="margin:0;font-size:15px">${esc(NEED[x.k]?.n||x.k)}</h3>
+            <div class="muted" style="font-size:12px;margin-top:2px">Prioridad ${x.u===3?'1':x.u===2?'2':'3'}</div></div>
+          <span class="sbadge ${x.u===3?'b3':'b2'}">${x.n} pedido${x.n>1?'s':''}</span>
+        </div>
+        <div class="bar zbar"><span style="width:${Math.round(x.n/max*100)}%"></span></div>
+      </div>`).join('');
+  })();
+
   const secO=$('#sec-orf'), secS=$('#sec-solo');
   if(secO) secO.innerHTML = ico('alert')+' Puntos sin nadie a cargo';
   if(secS) secS.innerHTML = ico('user')+' Sectores con una sola persona';

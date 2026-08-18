@@ -217,6 +217,13 @@
   .zbar>span{background:linear-gradient(90deg,#F59E0B,#EF4444)}
   .zfoot{display:flex;justify-content:space-between;margin-top:7px;
     font-size:11.5px;color:var(--dim);font-weight:650}
+  /* fila de estadisticas de coordinacion (diseño app) */
+  .stat-row{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-bottom:14px}
+  .stat-row:empty{display:none}
+  .stat{background:var(--card);border-radius:16px;padding:13px 11px;text-align:center;
+    box-shadow:0 1px 2px rgba(0,0,0,.2), 0 10px 24px -16px rgba(0,0,0,.55)}
+  .stat b{display:block;font-size:22px;font-weight:800;letter-spacing:-1px;font-variant-numeric:tabular-nums}
+  .stat small{display:block;margin-top:2px;font-size:11px;color:var(--dim);font-weight:650}
   :root[data-eff="light"] .sbadge.b3{color:#C11B1B}
   :root[data-eff="light"] .sbadge.b2{color:#8A5A07}
   :root[data-eff="light"] .sbadge.b1{color:#8A6508}
