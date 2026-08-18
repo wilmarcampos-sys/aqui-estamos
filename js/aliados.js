@@ -50,6 +50,9 @@ function pintarAcopios(){
   if(!mostrarAcopios) return;
   ACOPIOS.forEach(a=>{
     const urg = a.needs.filter(n=>/urgente/i.test(n.prio||'')).length;
+    // halo rojo: un acopio con urgencias marca su área igual que una necesidad
+    if(urg) L.circle([a.lat,a.lng], {radius:120+Math.min(180,urg*22), color:'#dc2626', weight:1,
+      opacity:.35, fillColor:'#dc2626', fillOpacity:.13, interactive:false}).addTo(capaAcopios);
     const badge = a.needs.length ? `<span style="position:absolute;top:-7px;right:-7px;min-width:18px;height:18px;padding:0 3px;
       border-radius:9px;background:${urg?'#dc2626':'#0d9488'};border:2px solid #fff;color:#fff;
       font:800 11px/15px system-ui;text-align:center">${a.needs.length}</span>` : '';

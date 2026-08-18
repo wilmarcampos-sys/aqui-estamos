@@ -423,7 +423,11 @@ function render(){
       <div class="bar zbar"><span style="width:${at}%"></span></div>
       <div class="zfoot"><span>${at} % atendido</span><span>${pers?`${pers.toLocaleString('es-CO')} personas`:''}</span></div>
       <div>${s.pend.slice(0,5).map(p=>`<span class="chip ${p.u===3?'u3':p.u===2?'u2':''}">${esc(NEED[p.k]?.n||p.k)}${p.corrob>1?` ×${p.corrob}`:''}${p.subio?' ↑':''}</span>`).join('')}
-      ${s.pend.length>5?`<span class="chip">+${s.pend.length-5} más</span>`:''}</div>
+      ${s.pend.length>5?`<span class="chip">+${s.pend.length-5} más</span>`:''}
+      ${(()=>{ const ac=(window.ACOPIOS||[]).filter(a=>a.zid===s.z.id&&a.needs.length);
+        if(!ac.length) return '';
+        const urg=ac.reduce((n,a)=>n+a.needs.filter(x=>/urgente/i.test(x.prio||'')).length,0);
+        return `<span class="chip aco">${ac.length} acopio${ac.length>1?'s':''} pide${ac.length>1?'n':''} ayuda${urg?` · ${urg} urgente${urg>1?'s':''}`:''}</span>`; })()}</div>
     </div>`;
   }).join('') || vacio('El mapa está limpio',
        S.reportes.length ? 'Ninguna zona coincide con este filtro.'

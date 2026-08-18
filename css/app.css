@@ -1020,3 +1020,6 @@ input.pin{letter-spacing:9px;font-size:20px;text-align:center;font-weight:700}
 .acodir{display:flex;gap:8px;align-items:flex-start;font-size:13px;color:var(--dim);
   line-height:1.45;margin:2px 0 4px}
 .acodir .ic{flex:0 0 auto;margin-top:2px}
+
+.chip.aco{background:rgba(20,184,166,.14);border-color:rgba(20,184,166,.4);color:#2DD4BF}
+:root[data-eff="light"] .chip.aco{color:#0F766E}
