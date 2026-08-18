@@ -1023,3 +1023,9 @@ input.pin{letter-spacing:9px;font-size:20px;text-align:center;font-weight:700}
 
 .chip.aco{background:rgba(20,184,166,.14);border-color:rgba(20,184,166,.4);color:#2DD4BF}
 :root[data-eff="light"] .chip.aco{color:#0F766E}
+
+/* contacto institucional de un acopio (linea publica verificada) */
+.acotel{background:var(--surf);border:1px solid var(--line);border-radius:14px;padding:11px 12px;margin:2px 0 4px}
+.acotel b{font-size:13.5px}
+.acotel .telacts{margin-top:8px}
+.acotel .mini.wa{background:#25D366;color:#fff}

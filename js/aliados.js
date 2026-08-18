@@ -14,6 +14,14 @@ const ALIADO = {
   sitio: 'https://alluda.online',
 };
 let ACOPIOS = [];
+/* Enriquecimiento SOLO de entidades institucionales con conmutador público
+   verificado en línea (ago-2026). Es la línea general de la entidad, NO el
+   contacto directo del acopio — se etiqueta así de forma explícita. */
+const ALIADO_INFO = [
+  { rx:/universidad tecnol[oó]gica|ERAP UTP|\bUTP\b/i, tel:'+57 606 313 7300', ent:'Universidad Tecnológica de Pereira', web:'https://www.utp.edu.co' },
+  { rx:/comfamiliar/i, tel:'+57 606 313 5600', ent:'Comfamiliar Risaralda', web:'https://comfamiliar.com' },
+  { rx:/c[aá]mara de comercio|sede tip/i, tel:'+57 606 322 8599', ent:'Cámara de Comercio de Dosquebradas', web:'https://www.camado.org.co' },
+];
 let mostrarAcopios = true;
 let capaAcopios = (typeof map !== 'undefined' && map && !modoSVG) ? L.layerGroup().addTo(map) : null;
 
@@ -91,6 +99,15 @@ function abrirAcopio(a){
       </div>
     </div>
     ${a.dir?`<div class="acodir">${ico('pin')} ${esc(a.dir)}</div>`:''}
+    ${(()=>{ const info=ALIADO_INFO.find(x=>x.rx.test(a.nom)); if(!info) return '';
+      return `<div class="acotel">
+        <div class="grow"><b>${esc(info.ent)}</b> <span class="pend">línea pública</span>
+          <div class="muted" style="font-size:11.5px;margin-top:2px">Conmutador de la entidad, <b>no</b> el contacto directo del acopio. Verifica antes de ir.</div></div>
+        <div class="telacts">
+          <a class="mini wa" href="tel:${info.tel.replace(/[^0-9+]/g,'')}">${ico('pin').replace('pin','')}Llamar</a>
+          <button type="button" class="tcopy" data-copiar="${esc(info.tel)}">${esc(info.tel)}</button>
+        </div>
+      </div>`; })()}
     <div class="sec">Lo que le falta (${a.needs.length})</div>
     ${cats}
     <a class="btn guide" style="display:flex;align-items:center;justify-content:center;gap:8px;text-decoration:none"
