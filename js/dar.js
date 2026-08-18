@@ -1,7 +1,7 @@
 /* ============================================================
-   8. TENGO ALGO PARA DAR
-   Cierra el ciclo oferta-demanda: la persona dice QUÉ trae y la
-   app le dice A DÓNDE llevarlo — un solo destino, con el porqué.
+   8. TENGO ALGO PARA DAR — hoja "Dar" con match automático.
+   El mapa NUNCA desaparece: la hoja ocupa abajo y el destino se
+   encuadra arriba con una ruta punteada verde.
 
    El destino se decide con un puntaje transparente, calculado
    aquí mismo en el teléfono (funciona sin señal y es explicable):
@@ -9,68 +9,48 @@
      puntaje = urgencia×40 + personas×8 (tope 25)
              + 30 si nadie ha llegado − km×6
 
-   Nada de cajas negras: el "por qué este punto" se le muestra
-   a la persona con palabras.
+   y se filtra por el alcance que la persona elige (a pie / moto /
+   carro). El "por qué" se muestra con palabras, no cajas negras.
    ============================================================ */
 
-/* Qué trae la gente, en 7 grupos con dibujo grande (casi sin leer).
-   Cada grupo junta las claves reales del catálogo de necesidades. */
 const DAR_CATS = [
-  {id:'agua',   n:'Agua',            ic:'droplet', keys:['agua','carrotanq','potabiliza']},
-  {id:'comida', n:'Comida',          ic:'utensils', keys:['mercado','enlatados','liviano','caliente','cocina','menaje','mascotas']},
-  {id:'abrigo', n:'Cobijas y dormir',ic:'tent',    keys:[]},   // se llena abajo con el catálogo
-  {id:'ropa',   n:'Ropa y calzado',  ic:'shirt',   keys:[]},
-  {id:'aseo',   n:'Aseo',            ic:'soap',    keys:[]},
-  {id:'medic',  n:'Medicinas',       ic:'pill',    keys:[]},
-  {id:'bebes',  n:'Para bebés',      ic:'bottle',  keys:['formula']},
+  {id:'agua',   n:'Agua',        ic:'droplet',  keys:['agua','carrotanq','potabiliza']},
+  {id:'comida', n:'Mercado',     ic:'utensils', keys:['mercado','enlatados','liviano','caliente','cocina','menaje','mascotas']},
+  {id:'medic',  n:'Medicinas',   ic:'pill',     keys:[]},
+  {id:'bebes',  n:'Pañales',     ic:'bottle',   keys:['formula']},
+  {id:'abrigo', n:'Cobijas',     ic:'tent',     keys:[]},
+  {id:'ropa',   n:'Ropa',        ic:'shirt',    keys:[]},
+  {id:'aseo',   n:'Aseo',        ic:'soap',     keys:[]},
+  {id:'herr',   n:'Herramientas',ic:'wrench',   keys:[]},
+  {id:'otra',   n:'Otra',        ic:'plus',     keys:[]},   // todo lo demás del catálogo
 ];
-/* Completa los grupos desde el catálogo real, para no repetir listas a mano. */
 (function(){
-  const porCat = {};
-  CATALOGO.forEach(c=>{ porCat[c.cat] = c.items.map(i=>i.k); });
-  const add = (id, cats)=>{ const g=DAR_CATS.find(x=>x.id===id);
-    cats.forEach(c=>{ (porCat[c]||[]).forEach(k=>{ if(!g.keys.includes(k)) g.keys.push(k); }); }); };
-  add('abrigo', ['Dónde dormir']);
-  add('ropa',   ['Ropa y calzado']);
-  add('aseo',   ['Higiene personal','Servicios y limpieza']);
-  add('medic',  ['Material de curación','Insumos médicos','Medicamentos']);
-  add('bebes',  ['Bebés y crianza']);
+  const porCat = {}; CATALOGO.forEach(c=>{ porCat[c.cat] = c.items.map(i=>i.k); });
+  const add=(id,cats)=>{ const g=DAR_CATS.find(x=>x.id===id);
+    cats.forEach(c=>(porCat[c]||[]).forEach(k=>{ if(!g.keys.includes(k)) g.keys.push(k); })); };
+  add('medic', ['Material de curación','Insumos médicos','Medicamentos']);
+  add('abrigo',['Dónde dormir']);
+  add('ropa',  ['Ropa y calzado']);
+  add('aseo',  ['Higiene personal','Servicios y limpieza']);
+  add('bebes', ['Bebés y crianza']);
+  add('herr',  ['Herramientas y rescate']);
+  const usadas = new Set(DAR_CATS.flatMap(c=>c.keys));
+  const g=DAR_CATS.find(x=>x.id==='otra');
+  Object.values(porCat).flat().forEach(k=>{ if(!usadas.has(k)) g.keys.push(k); });
 })();
 
-let darSel = new Set();
+let gSel = new Set(), gQty = 1, gKm = 5, gStep = 1, gCand = [], gIdx = 0, gTimer = null;
+let gRuta = null, gMk = null;
 
-/* ---- PASO 1: ¿qué tienes para dar? ---- */
-function abrirDar(){
-  darSel = new Set();
-  abrirSheet(`
-    <h2 style="margin:2px 0 4px">¿Qué tienes para dar?</h2>
-    <p class="muted" style="margin:0 0 12px">Toca lo que traes. Puedes elegir varios.</p>
-    <div class="dar-grid">
-      ${DAR_CATS.map(c=>`<button type="button" class="dar-tile" data-dar="${c.id}">
-        ${ico(c.ic,'lg')}<span>${esc(c.n)}</span></button>`).join('')}
-    </div>
-    <button type="button" class="btn guide" id="dar-sigue" disabled style="margin-top:14px">Continuar</button>
-    <button type="button" class="btn flat" data-close style="width:100%">Cancelar</button>
-  `);
-  const sigue = $('#dar-sigue');
-  document.querySelectorAll('.dar-tile').forEach(t=>t.onclick=()=>{
-    const id=t.dataset.dar;
-    darSel.has(id) ? darSel.delete(id) : darSel.add(id);
-    t.classList.toggle('sel', darSel.has(id));
-    sigue.disabled = !darSel.size;
-    sigue.textContent = darSel.size ? `Continuar (${darSel.size})` : 'Continuar';
-  });
-  sigue.onclick = ()=>darDestino();
-}
+const G_TITLES = {1:'¿Qué traes?', 2:'Buscando…', 3:'Llévalo aquí'};
 
-/* ---- el puntaje: a qué punto conviene llevarlo ---- */
+/* ---- candidatos con el puntaje transparente ---- */
 function darCandidatos(){
   const keys = new Set();
-  DAR_CATS.filter(c=>darSel.has(c.id)).forEach(c=>c.keys.forEach(k=>keys.add(k)));
+  DAR_CATS.filter(c=>gSel.has(c.id)).forEach(c=>c.keys.forEach(k=>keys.add(k)));
   const org = (typeof mainPt!=='undefined' && mainPt) ? mainPt : {lat:4.8133,lng:-75.6961};
   const out = [];
   ZONAS.forEach(z=>focos(z.id).forEach(f=>{
-    // solo lo PENDIENTE de lo que la persona trae (sin entrega reciente cerca)
     const match = f.needs.filter(x=>{
       if(!keys.has(x.k)) return false;
       const e = S.entregas.filter(y=>y.k===x.k && y.lat && dist(f.lat,f.lng,y.lat,y.lng)<400)
@@ -81,85 +61,164 @@ function darCandidatos(){
     const entCerca = S.entregas.filter(y=>y.lat && dist(f.lat,f.lng,y.lat,y.lng)<300)
                                .sort((p,q)=>q.ts-p.ts)[0];
     const nadie = !(entCerca && (now()-entCerca.ts) < 7*24*H);
+    const diasSin = entCerca ? Math.round((now()-entCerca.ts)/86400000) : null;
     const km = dist(org.lat,org.lng,f.lat,f.lng)/1000;
     const u = Math.max(...match.map(x=>x.u));
     const personas = match.reduce((s,x)=>s+x.personas,0);
     const puntaje = u*40 + Math.min(personas,25)*8 + (nadie?30:0) - km*6;
-    out.push({f, z, match, u, personas, nadie, km, puntaje});
+    out.push({f, z, match, u, personas, nadie, diasSin, km, puntaje, org});
   }));
-  return out.sort((a,b)=>b.puntaje-a.puntaje);
+  const dentro = out.filter(c=>c.km <= gKm);
+  return (dentro.length ? dentro : out).sort((a,b)=>b.puntaje-a.puntaje);
 }
 
-/* ---- PASO 2: llévalo aquí (un solo destino, con el porqué) ---- */
-function darDestino(iAlt){
-  const cand = darCandidatos();
-  if(!cand.length){
-    abrirSheet(`
-      <div class="vacio"><div class="vic">${ico('check')}</div>
-        <b>Por ahora eso está cubierto</b>
-        <p>No hay puntos pendientes que necesiten justo lo que traes. También puedes
-        llevarlo a un albergue o a un centro de acopio.</p></div>
-      <button type="button" class="btn" id="dar-otra">Elegir otra cosa</button>
-      <button type="button" class="btn flat" data-close style="width:100%">Cerrar</button>`);
-    $('#dar-otra').onclick=()=>abrirDar();
-    return;
+/* ---- la hoja ---- */
+const gs = document.getElementById('gsheet');
+function gGo(n){
+  gStep = n;
+  gs.querySelectorAll('.gstep').forEach(x=>x.classList.toggle('active', +x.dataset.g===n));
+  document.getElementById('gs-title').textContent = G_TITLES[n]||'';
+  const cta = document.getElementById('gs-next');
+  if(n===1){ cta.textContent='Buscar dónde falta'; cta.className='cta green'; }
+  if(n===2){ cta.textContent='Cancelar'; cta.className='cta soft'; }
+  if(n===3){ cta.textContent='Cómo llegar'; cta.className='cta blue'; }
+  gs.querySelector('.gs-body').scrollTop = 0;
+  clearTimeout(gTimer);
+  if(n!==3) gRutaQuitar();
+  if(n===2){
+    const que = DAR_CATS.filter(c=>gSel.has(c.id)).map(c=>c.n.toLowerCase()).join(', ');
+    document.getElementById('gs-busca-t').textContent = `Buscando dónde falta ${que}…`;
+    document.getElementById('gs-busca-s').textContent = `Cruzando ${S.reportes.length} reportes abiertos con tu ubicación`;
+    gTimer = setTimeout(()=>{
+      gCand = darCandidatos(); gIdx = 0;
+      gCand.length ? gMatch() : gVacio();
+    }, 1200);
   }
-  const i = Math.min(iAlt||0, cand.length-1);
-  const c = cand[i];
-  const kmTxt = c.km<1 ? `${Math.round(c.km*1000)} m` : `${c.km.toFixed(1)} km`;
-  const porQue = [
-    c.match.some(x=>x.u===3) ? 'urgencia alta' : null,
-    c.personas ? `~${c.personas} persona${c.personas>1?'s':''}` : null,
-    c.nadie ? 'nadie ha llegado' : null,
-    `a ${kmTxt} de tu pin`,
-  ].filter(Boolean).join(' · ');
-  const chips = c.match.slice(0,5).map(x=>
-    `<span class="chip ${x.u===3?'u3':x.u===2?'u2':''}">${esc(NEED[x.k]?.n||x.k)}</span>`).join('');
-  abrirSheet(`
-    <h2 style="margin:2px 0 4px">Llévalo aquí</h2>
-    <p class="muted" style="margin:0 0 12px">Aquí de verdad falta lo que traes.</p>
-    <div class="card" style="margin-bottom:12px">
-      <div class="row">
-        <div class="rank" style="background:${UCOL[c.u]||'#d97706'};color:#fff">${ico('pin')}</div>
-        <div class="grow">
-          <h3 class="trunc" style="margin:0">${esc(c.f.ref||c.z.n)}</h3>
-          <div class="muted">${esc(c.z.n)} · ${porQue}</div>
-        </div>
+}
+function gAbrir(){
+  gSel = new Set(); gIdx = 0;
+  gs.querySelectorAll('.mini-chip').forEach(c=>c.setAttribute('aria-pressed','false'));
+  document.querySelector('.msheet')?.classList.add('tucked');
+  gGo(1);
+  requestAnimationFrame(()=>gs.classList.add('open'));
+}
+function gCerrar(){
+  clearTimeout(gTimer);
+  gs.classList.remove('open');
+  document.querySelector('.msheet')?.classList.remove('tucked');
+  gRutaQuitar();
+}
+
+/* ---- paso 3: el match, con ruta en el mapa ---- */
+function gMatch(){
+  const c = gCand[gIdx];
+  const min = Math.max(1, Math.round(c.km / (gKm===1?4:gKm===5?20:30) * 60));
+  const medio = gKm===1?'a pie':gKm===5?'en moto':'en carro';
+  const piden = c.match.slice(0,3).map(x=>NEED[x.k]?.n||x.k).join(' · ');
+  const cb = cubridores(c.f.lat, c.f.lng, c.z.id)[0];
+  const traes = DAR_CATS.filter(x=>gSel.has(x.id)).map(x=>x.n.toLowerCase()).join(', ');
+  document.getElementById('gs-match').innerHTML = `
+    <div class="match">
+      <div class="match-h">
+        <span class="mrank">${gIdx+1}</span>
+        <div class="mt"><b>${esc(c.f.ref||c.z.n)}</b>
+          <small>${esc(c.z.n)} · ${c.km<1?Math.round(c.km*1000)+' m':c.km.toFixed(1)+' km'} · ${min} min ${medio}</small></div>
+        <span class="sbadge ${c.u===3?'b3':c.u===2?'b2':'b1'}">${c.u===3?'Urgencia alta':c.u===2?'Urgente':'Puede esperar'}</span>
       </div>
-      <div style="margin-top:8px">${chips}</div>
+      <div class="match-line"><span class="ml-k">Piden</span><span class="ml-v">${esc(piden)}${c.personas?` · ${c.personas} personas`:''}</span></div>
+      <div class="match-line"><span class="ml-k">Tú traes</span><span class="ml-v ok">${esc(traes)} · ${gQty} unidad${gQty>1?'es':''}</span></div>
+      ${c.nadie ? `<div class="match-line warn"><span class="ml-k">Ojo</span><span class="ml-v">${c.diasSin!=null?`Nadie ha llegado en ${c.diasSin} día${c.diasSin===1?'':'s'}`:'Aquí no ha llegado nadie todavía'}</span></div>` : ''}
+      ${cb ? `<div class="coord-mini">
+        <span class="av2">${esc((cb.nom||'?').trim().split(/\s+/).slice(0,2).map(x=>x[0]||'').join('').toUpperCase())}</span>
+        <span class="cn">${esc(cb.nom)}<small>Coordina este sector</small></span>
+        ${cb.tel?`<button type="button" class="wa-mini" data-wa="${esc(String(cb.tel).replace(/\D/g,''))}" aria-label="WhatsApp">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 0 0-8.6 15L2 22l5.2-1.4A10 10 0 1 0 12 2Zm5.5 14.1c-.2.6-1.2 1.2-1.7 1.2-.5.1-1 .1-1.6-.1-.4-.1-.9-.3-1.5-.6a11 11 0 0 1-4.2-3.9c-.3-.5-.7-1.2-.7-1.9s.3-1.1.5-1.3c.2-.2.4-.3.6-.3h.4c.1 0 .3 0 .5.4l.7 1.6c0 .1.1.3 0 .4l-.3.4-.3.3c-.1.1-.2.2 0 .5.2.3.7 1.1 1.4 1.7.9.8 1.6 1 1.9 1.2.2.1.4.1.5-.1l.6-.8c.2-.2.3-.2.5-.1l1.6.8c.2.1.4.2.4.3v.5Z"/></svg></button>`:''}
+      </div>` : `<div class="match-line"><span class="ml-k">A cargo</span><span class="ml-v">Nadie todavía — tu entrega es doblemente valiosa</span></div>`}
     </div>
-    <a class="btn guide" style="display:flex;align-items:center;justify-content:center;gap:8px;text-decoration:none"
-       href="https://www.google.com/maps/dir/?api=1&destination=${c.f.lat},${c.f.lng}" target="_blank" rel="noopener">
-       ${ico('pin')} Cómo llegar</a>
-    <button type="button" class="btn" id="dar-entregue"
-      style="background:#2f7d4f;color:#fff">${ico('check')} Ya lo entregué</button>
-    ${cand.length>i+1?`<button type="button" class="btn flat" id="dar-otro" style="width:100%">Ver otra opción</button>`:''}
-    <button type="button" class="btn flat" data-close style="width:100%">Cerrar</button>
-  `);
-  $('#dar-entregue').onclick = ()=>abrirEntrega(c.z.id, c.match.map(x=>x.k), {z:c.z.id, lat:c.f.lat, lng:c.f.lng});
-  const otro = $('#dar-otro'); if(otro) otro.onclick = ()=>darDestino(i+1);
-  // el mapa manda: panel a media pantalla, el destino queda visible arriba
-  $('#sheet').classList.add('peek');
-  if(typeof map!=='undefined' && map && !modoSVG){ try{
-    map.setView([c.f.lat, c.f.lng], 15.5, {animate:false});
-    map.panBy([0, Math.round(map.getSize().y*0.27)], {animate:false});
-    darMarcar(c.f.lat, c.f.lng);
-  }catch(e){} }
+    <button type="button" class="alt-link" id="gs-alt" ${gCand.length>1?'':'hidden'}>
+      ${gIdx+1 < gCand.length ? `Ver la siguiente de ${gCand.length} opciones cerca ›` : '‹ Volver a la mejor opción'}</button>
+    <button type="button" class="alt-link" id="gs-entregue" style="color:#5FBE8A">Ya lo entregué — registrarlo</button>
+  `;
+  const alt = document.getElementById('gs-alt');
+  if(alt) alt.onclick = ()=>{ gIdx = (gIdx+1) % gCand.length; gMatch(); };
+  document.getElementById('gs-entregue').onclick = ()=>{
+    gCerrar();
+    abrirEntrega(c.z.id, c.match.map(x=>x.k), {z:c.z.id, lat:c.f.lat, lng:c.f.lng});
+  };
+  const wa = document.querySelector('#gs-match [data-wa]');
+  if(wa) wa.onclick = ()=>{ const d=wa.dataset.wa; window.open(`https://wa.me/${d.startsWith('57')||d.startsWith('1')?d:'57'+d}`,'_blank','noopener'); };
+  gGo(3);
+  gRutaPintar(c);
+}
+function gVacio(){
+  document.getElementById('gs-match').innerHTML = `
+    <div class="match" style="text-align:center;padding:18px 14px">
+      <b style="font-size:15px">Por ahora eso está cubierto</b>
+      <p class="muted" style="margin:8px 0 0;font-size:12.8px;line-height:1.45">No hay puntos pendientes que necesiten
+      justo lo que traes${gKm<20?' a ese alcance':''}. También sirve llevarlo a un albergue o centro de acopio.</p>
+    </div>
+    <button type="button" class="alt-link" id="gs-otra">Elegir otra cosa</button>`;
+  document.getElementById('gs-otra').onclick = ()=>gGo(1);
+  document.getElementById('gs-title').textContent = 'Sin pendientes';
+  gs.querySelectorAll('.gstep').forEach(x=>x.classList.toggle('active', +x.dataset.g===3));
+  const cta=document.getElementById('gs-next'); cta.textContent='Cerrar'; cta.className='cta soft'; gStep=3.9;
+  gRutaQuitar();
 }
 
-/* pin grande de destino: se ve a dónde hay que llevar lo que se trae */
-let darMk = null;
-function darMarcar(la, lo){
-  darQuitar();
-  darMk = L.marker([la,lo],{zIndexOffset:1500, icon:L.divIcon({className:'', iconSize:[44,52], iconAnchor:[22,48],
-    html:`<svg viewBox="0 0 24 24" width="44" height="52" style="filter:drop-shadow(0 4px 8px rgba(0,0,0,.4))">
-      <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" fill="#C81E1E" stroke="#fff" stroke-width="1.7"/>
-      <circle cx="12" cy="10" r="3" fill="#fff"/></svg>`})}).addTo(map);
+/* ruta punteada verde de mi pin al destino; encuadre que respeta la hoja */
+function gRutaPintar(c){
+  if(!map || modoSVG) return;
+  try{
+    gRutaQuitar();
+    gRuta = L.polyline([[c.org.lat,c.org.lng],[c.f.lat,c.f.lng]],
+      {color:'#16A34A', weight:3.5, dashArray:'7 8', opacity:.9}).addTo(map);
+    gMk = L.marker([c.f.lat,c.f.lng],{zIndexOffset:1500, icon:L.divIcon({className:'',iconSize:[38,38],iconAnchor:[19,19],
+      html:`<div class="mpin" style="width:38px;height:38px;background:linear-gradient(160deg,#22C55E,#15803D)">${ico('pin')}</div>`})}).addTo(map);
+    const sheetH = gs.offsetHeight || 300;
+    map.fitBounds(L.latLngBounds([[c.org.lat,c.org.lng],[c.f.lat,c.f.lng]]),
+      {paddingTopLeft:[46,70], paddingBottomRight:[46, sheetH+24], animate:false});
+  }catch(e){}
 }
-window.darQuitar = function(){ if(darMk){ try{ map.removeLayer(darMk); }catch(e){} darMk=null; } };
+function gRutaQuitar(){
+  try{ if(gRuta){ map.removeLayer(gRuta); gRuta=null; }
+       if(gMk){ map.removeLayer(gMk); gMk=null; } }catch(e){}
+}
+window.darQuitar = gRutaQuitar;   // limpieza también al cerrar otros modales
 
-/* botón verde en la hoja del mapa */
+/* ---- armar la hoja ---- */
 (function(){
-  const b = document.getElementById('fab-dar');
-  if(b) b.onclick = ()=>abrirDar();
+  if(!gs) return;
+  document.getElementById('gs-cats').innerHTML = DAR_CATS.map(c=>
+    `<button type="button" class="mini-chip" data-cat="${c.id}" aria-pressed="false">
+      <span class="mi">${ico(c.ic)}</span>${esc(c.n)}</button>`).join('');
+  gs.querySelectorAll('.mini-chip').forEach(b=>b.onclick=()=>{
+    const id=b.dataset.cat; gSel.has(id)?gSel.delete(id):gSel.add(id);
+    b.setAttribute('aria-pressed', gSel.has(id)?'true':'false');
+  });
+  document.querySelectorAll('#gs-qty button').forEach(b=>b.onclick=()=>{
+    gQty=Math.max(1,Math.min(999,gQty+(+b.dataset.d)));
+    document.getElementById('gs-qn').textContent=gQty;
+  });
+  document.querySelectorAll('#gs-range button').forEach(b=>b.onclick=()=>{
+    document.querySelectorAll('#gs-range button').forEach(x=>x.setAttribute('aria-checked','false'));
+    b.setAttribute('aria-checked','true'); gKm=+b.dataset.km;
+  });
+  document.getElementById('gs-close').onclick = gCerrar;
+  document.getElementById('gs-next').onclick = ()=>{
+    if(gStep===1){
+      if(!gSel.size) return toast('Marca al menos una cosa que traes.');
+      gGo(2);
+    }
+    else if(gStep===2){ gCerrar(); }
+    else if(gStep===3){
+      const c=gCand[gIdx]; if(!c) return;
+      const ios = /iPhone|iPad|iPod/.test(navigator.userAgent);
+      const u = ios ? `https://maps.apple.com/?daddr=${c.f.lat},${c.f.lng}&dirflg=d`
+                    : `https://www.google.com/maps/dir/?api=1&destination=${c.f.lat},${c.f.lng}`;
+      const w=window.open(u,'_blank','noopener'); if(!w) location.href=u;
+    }
+    else { gCerrar(); }   // estado "sin pendientes"
+  };
+  const fab = document.getElementById('fab-dar');
+  if(fab) fab.onclick = gAbrir;
 })();

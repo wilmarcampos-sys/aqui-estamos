@@ -23,7 +23,7 @@
 <meta name="twitter:description" content="Coordinación abierta de ayuda para el terremoto de Pereira.">
 <meta name="twitter:image" content="https://aquiestamos.co/img/hero-donar.jpg">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
-<link rel="stylesheet" href="css/app.css?v=1.32.1">
+<link rel="stylesheet" href="css/app.css?v=1.33.0">
 <script>
 /* URL sin ".html" en el sitio publicado (en localhost la extensión hace falta). */
 (function(){ var h=location.hostname; if(h==='localhost'||h==='127.0.0.1'||h==='') return;
@@ -157,6 +157,46 @@ document.documentElement.setAttribute('data-eff', window.temaEfectivo());
           <div id="msheet-list"></div>
         </div>
       </div>
+
+      <!-- HOJA "DAR": match automático; el mapa nunca desaparece -->
+      <div class="gsheet" id="gsheet">
+        <div class="gs-head">
+          <span class="gs-dot"></span>
+          <h3 id="gs-title">¿Qué traes?</h3>
+          <button class="icon-btn" id="gs-close" type="button" aria-label="Cerrar">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>
+          </button>
+        </div>
+        <div class="gs-body">
+          <div class="gstep active" data-g="1">
+            <p class="gs-sub">Marca lo que tienes. Buscamos solo dónde falta <b>eso</b>.</p>
+            <div class="chips3" id="gs-cats"></div>
+            <div class="qty-row">
+              <span class="qty-lbl">¿Cuánto?</span>
+              <div class="stepr mini" id="gs-qty">
+                <button type="button" data-d="-1" aria-label="Menos"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M5 12h14"/></svg></button>
+                <div class="val"><b id="gs-qn">1</b><small>unidades</small></div>
+                <button type="button" data-d="1" aria-label="Más"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
+              </div>
+            </div>
+            <span class="qty-lbl" style="display:block;margin:12px 0 7px">¿Hasta dónde puedes llegar?</span>
+            <div class="range-row" id="gs-range">
+              <button type="button" data-km="1" aria-checked="false"><b>A pie</b><small>1 km</small></button>
+              <button type="button" data-km="5" aria-checked="true"><b>En moto</b><small>5 km</small></button>
+              <button type="button" data-km="20" aria-checked="false"><b>En carro</b><small>20 km</small></button>
+            </div>
+          </div>
+          <div class="gstep" data-g="2">
+            <div class="searching">
+              <span class="radar"><i></i><i></i><i></i></span>
+              <b id="gs-busca-t">Buscando dónde falta…</b>
+              <small id="gs-busca-s">Cruzando los reportes abiertos con tu ubicación</small>
+            </div>
+          </div>
+          <div class="gstep" data-g="3"><div id="gs-match"></div></div>
+        </div>
+        <div class="gs-foot"><button type="button" class="cta green" id="gs-next">Buscar dónde falta</button></div>
+      </div>
     </section>
 
     <!-- ZONAS -->
@@ -253,15 +293,15 @@ document.documentElement.setAttribute('data-eff', window.temaEfectivo());
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="js/config.js?v=1.32.1"></script>
-<script src="js/version.js?v=1.32.1"></script>
-<script src="js/data.js?v=1.32.1"></script>
-<script src="js/estado.js?v=1.32.1"></script>
-<script src="js/calc.js?v=1.32.1"></script>
-<script src="js/mapa.js?v=1.32.1"></script>
-<script src="js/hojas.js?v=1.32.1"></script>
-<script src="js/cuenta.js?v=1.32.1"></script>
-<script src="js/ui.js?v=1.32.1"></script>
-<script src="js/dar.js?v=1.32.1"></script>
+<script src="js/config.js?v=1.33.0"></script>
+<script src="js/version.js?v=1.33.0"></script>
+<script src="js/data.js?v=1.33.0"></script>
+<script src="js/estado.js?v=1.33.0"></script>
+<script src="js/calc.js?v=1.33.0"></script>
+<script src="js/mapa.js?v=1.33.0"></script>
+<script src="js/hojas.js?v=1.33.0"></script>
+<script src="js/cuenta.js?v=1.33.0"></script>
+<script src="js/ui.js?v=1.33.0"></script>
+<script src="js/dar.js?v=1.33.0"></script>
 </body>
 </html>
