@@ -22,7 +22,10 @@ document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{
 function abrirSheet(html){
   if(pickMap){ try{pickMap.remove();}catch(e){} pickMap=null; }
   $('#sheet').classList.remove('peek');
-  $('#sheet-body').innerHTML=html; $('#sheet').classList.add('on'); $('.panel').scrollTop=0;
+  // X de cerrar en TODAS las hojas que suben — siempre en el mismo sitio
+  $('#sheet-body').innerHTML = `<button type="button" class="sheet-x" data-close-btn aria-label="Cerrar">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>` + html;
+  $('#sheet').classList.add('on'); $('.panel').scrollTop=0;
 }
 function cerrarSheet(){ $('#sheet').classList.remove('on','peek');
   if(typeof window.darQuitar==='function') window.darQuitar(); }
