@@ -375,6 +375,9 @@
   .sheet{position:fixed;inset:0;z-index:1200;display:none}
   .sheet.on{display:block}
   .sheet .scrim{position:absolute;inset:0;background:rgba(2,6,18,.68);z-index:0}
+  /* modo "peek": el panel deja ver el mapa arriba (destino visible) */
+  .sheet.peek .scrim{background:transparent}
+  .sheet.peek .panel{max-height:54%}
   .sheet .panel{
     position:absolute;left:0;right:0;bottom:0;max-height:92%;overflow-y:auto;z-index:1;
     background:var(--bg2);border-radius:22px 22px 0 0;border-top:1px solid var(--line);

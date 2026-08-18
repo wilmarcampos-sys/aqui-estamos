@@ -21,9 +21,11 @@ document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{
 
 function abrirSheet(html){
   if(pickMap){ try{pickMap.remove();}catch(e){} pickMap=null; }
+  $('#sheet').classList.remove('peek');
   $('#sheet-body').innerHTML=html; $('#sheet').classList.add('on'); $('.panel').scrollTop=0;
 }
-function cerrarSheet(){ $('#sheet').classList.remove('on'); }
+function cerrarSheet(){ $('#sheet').classList.remove('on','peek');
+  if(typeof window.darQuitar==='function') window.darQuitar(); }
 $('#sheet').addEventListener('click', e=>{ if(e.target.hasAttribute('data-close')) cerrarSheet(); });
 
 /* ---------- ficha de zona ---------- */

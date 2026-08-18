@@ -138,9 +138,25 @@ function darDestino(iAlt){
   `);
   $('#dar-entregue').onclick = ()=>abrirEntrega(c.z.id, c.match.map(x=>x.k), {z:c.z.id, lat:c.f.lat, lng:c.f.lng});
   const otro = $('#dar-otro'); if(otro) otro.onclick = ()=>darDestino(i+1);
-  // enfocar el destino en el mapa de fondo, para ubicarse
-  if(typeof map!=='undefined' && map && !modoSVG){ try{ map.flyTo([c.f.lat,c.f.lng], 15.5, {duration:.8}); }catch(e){} }
+  // el mapa manda: panel a media pantalla, el destino queda visible arriba
+  $('#sheet').classList.add('peek');
+  if(typeof map!=='undefined' && map && !modoSVG){ try{
+    map.setView([c.f.lat, c.f.lng], 15.5, {animate:false});
+    map.panBy([0, Math.round(map.getSize().y*0.27)], {animate:false});
+    darMarcar(c.f.lat, c.f.lng);
+  }catch(e){} }
 }
+
+/* pin grande de destino: se ve a dónde hay que llevar lo que se trae */
+let darMk = null;
+function darMarcar(la, lo){
+  darQuitar();
+  darMk = L.marker([la,lo],{zIndexOffset:1500, icon:L.divIcon({className:'', iconSize:[44,52], iconAnchor:[22,48],
+    html:`<svg viewBox="0 0 24 24" width="44" height="52" style="filter:drop-shadow(0 4px 8px rgba(0,0,0,.4))">
+      <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" fill="#C81E1E" stroke="#fff" stroke-width="1.7"/>
+      <circle cx="12" cy="10" r="3" fill="#fff"/></svg>`})}).addTo(map);
+}
+window.darQuitar = function(){ if(darMk){ try{ map.removeLayer(darMk); }catch(e){} darMk=null; } };
 
 /* botón verde en la hoja del mapa */
 (function(){
