@@ -169,6 +169,22 @@
   .count-chip .ic{width:13px;height:13px}
   :root[data-eff="light"] .count-chip{color:#C11B1B}
   .actions{display:grid;grid-template-columns:1fr auto;gap:9px;padding:0 14px 6px}
+  .sbtn-need{grid-column:1 / -1}
+  .sbtn-dar{background:linear-gradient(160deg,#22C55E,#15803D);box-shadow:0 8px 18px rgba(0,0,0,.38);padding:0 14px;min-width:0;height:52px}
+  .sbtn-dar span{font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  :root[data-eff="light"] .sbtn-dar{box-shadow:0 6px 14px rgba(15,23,41,.16)}
+  /* rejilla "¿qué tienes para dar?": dibujos grandes, un toque */
+  .dar-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .dar-tile{border:1.5px solid var(--line);border-radius:16px;background:var(--surf);color:var(--txt);
+    font-family:inherit;cursor:pointer;padding:16px 8px;display:flex;flex-direction:column;
+    align-items:center;gap:7px;transition:transform .16s var(--ease)}
+  .dar-tile:active{transform:scale(.96)}
+  .dar-tile .ic.lg{width:30px;height:30px;color:var(--dim)}
+  .dar-tile span{font-weight:700;font-size:13px;text-align:center}
+  .dar-tile.sel{border-color:#2f7d4f;background:rgba(63,143,95,.12)}
+  .dar-tile.sel .ic.lg{color:#3f8f5f}
+  :root[data-eff="light"] .dar-tile.sel{background:#EAF7EF;border-color:#26714A}
+  :root[data-eff="light"] .dar-tile.sel .ic.lg{color:#26714A}
   .sbtn{border:0;font-family:inherit;cursor:pointer;color:#fff;border-radius:18px;height:60px;
     display:flex;align-items:center;justify-content:center;gap:9px;letter-spacing:-.2px;
     position:relative;overflow:hidden;text-decoration:none;
