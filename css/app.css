@@ -158,7 +158,7 @@
   .msheet.dragging{transition:none}
   .handle-zone{padding:9px 0 4px;display:grid;place-items:center;cursor:grab}
   .handle{width:38px;height:5px;border-radius:99px;background:var(--line2)}
-  .msheet-head{padding:2px 14px 10px;display:flex;align-items:center;gap:9px}
+  .msheet-head{padding:2px 14px 10px;display:flex;align-items:center;gap:9px;position:relative}
   .loc-chip{flex:1;min-width:0;display:flex;align-items:center;gap:6px;height:38px;padding:0 13px;
     border-radius:999px;background:var(--chip);border:1px solid var(--line);
     font-size:13.5px;font-weight:700;color:var(--txt);white-space:nowrap;overflow:hidden}
@@ -215,6 +215,43 @@
   :root[data-eff="light"] .sbadge.b2{color:#8A5A07}
   :root[data-eff="light"] .sbadge.b1{color:#8A6508}
   .scard .smeta{line-height:1.7}
+  /* stepper numerico (cuantas personas) */
+  .stepr{display:flex;align-items:center;gap:12px;padding:9px 12px;margin:4px 0 2px;
+    background:var(--surf);border:1.5px solid var(--line);border-radius:16px}
+  .stepr button{width:42px;height:42px;border-radius:50%;border:0;flex:0 0 auto;
+    background:var(--chip);color:var(--txt);cursor:pointer;display:grid;place-items:center;
+    font-family:inherit;transition:transform .16s var(--ease)}
+  .stepr button:active{transform:scale(.88)}
+  .stepr button .ic{width:17px;height:17px}
+  .stepr .val{flex:1;text-align:center;font-variant-numeric:tabular-nums;line-height:1.1}
+  .stepr .val b{font-size:26px;font-weight:800;letter-spacing:-1px}
+  .stepr .val small{display:block;font-size:11px;font-weight:650;color:var(--dim)}
+  /* fila con interruptor (prioridad, preferencias) */
+  .srow{display:flex;align-items:center;gap:12px;width:100%;padding:12px 14px;margin-bottom:8px;
+    background:var(--surf);border:1px solid var(--line);border-radius:15px;
+    font-family:inherit;text-align:left;cursor:pointer;color:var(--txt)}
+  .srow .st{flex:1;min-width:0}
+  .srow .st b{display:block;font-size:14px;font-weight:680;letter-spacing:-.2px}
+  .srow .st small{display:block;font-size:11.8px;color:var(--dim);font-weight:600;margin-top:1px}
+  .srow .sw{width:46px;height:28px;border-radius:99px;background:var(--line2);flex:0 0 auto;
+    position:relative;transition:background .25s var(--ease)}
+  .srow .sw::after{content:"";position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;
+    background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.3);transition:transform .28s var(--ease)}
+  .srow.on .sw{background:#2f9e5f}
+  .srow.on .sw::after{transform:translateX(18px)}
+  /* dropdown de zona en el chip de la hoja */
+  .loc-chip{cursor:pointer}
+  .loc-chip .chev{margin-left:auto;flex:0 0 auto;width:13px;height:13px;color:var(--dim)}
+  .zmenu{position:absolute;left:14px;right:14px;bottom:calc(100% + 6px);z-index:30;
+    background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:8px;
+    backdrop-filter:saturate(160%) blur(18px);-webkit-backdrop-filter:saturate(160%) blur(18px);
+    box-shadow:0 -6px 24px rgba(2,8,23,.3);max-height:280px;overflow-y:auto}
+  .zmenu[hidden]{display:none}
+  .zmenu button{display:flex;align-items:center;gap:8px;width:100%;padding:10px 10px;border:0;
+    background:none;border-radius:10px;font-family:inherit;font-size:13.5px;font-weight:650;
+    color:var(--txt);cursor:pointer;text-align:left}
+  .zmenu button:hover{background:var(--chip)}
+  .zmenu button .muted{margin-left:auto;font-size:11.5px}
   .scard{display:flex;align-items:center;gap:11px;padding:11px 12px;margin-bottom:8px;
     background:var(--surf);border:1px solid var(--line);border-radius:14px}
   .scard.toca{cursor:pointer;transition:transform .16s var(--ease)}

@@ -370,7 +370,7 @@ function guiar(q){
 }
 
 /* Indicador de pasos: el usuario siempre ve dónde va y qué sigue. */
-const PASOS_R = ['Dónde', 'Qué falta', 'Urgencia'];
+const PASOS_R = ['Dónde', 'Qué falta', 'Personas', 'Contacto'];
 function pasosHTML(n){
   return `<div class="pasos">${PASOS_R.map((t,i)=>{
     const k = i+1, st = k<n ? 'done' : k===n ? 'now' : '';
@@ -386,15 +386,15 @@ function abrirReporte(zid, pt, refPrev){
   let paso = 1;
   let punto = pt || ptDe(zid) || null;
   let ref = refPrev || '';
-  let persRango = '';
+  let pers = 0;                   // 0 = no dijo cuántas
   let nota = '';
+  let frase = '';
   let prioridad = new Set();      // niños <5, mayores, discapacidad, embarazo
-  let cNombre = '', cTel = '';    // contacto OPCIONAL: nunca se publica
-  const PERSNUM = {'1-3':2, '4-8':6, '8+':15, '':0};
+  let cNombre = '', cTel = '', prefWA = true;   // contacto OPCIONAL: nunca se publica
   const zonaNom = z => ZONAS.find(x=>x.id===z)?.n || '';
   const irA = p => { paso = p; pintarPaso(); };
 
-  function pintarPaso(){ paso===1 ? pasoDonde() : paso===2 ? pasoQue() : pasoUrg(); }
+  function pintarPaso(){ paso===1 ? pasoDonde() : paso===2 ? pasoQue() : paso===3 ? pasoPersonas() : pasoContacto(); }
 
   /* ---- Paso 1: ¿dónde es? ---- */
   function pasoDonde(){
@@ -450,33 +450,14 @@ function abrirReporte(zid, pt, refPrev){
   /* ---- Paso 2: ¿qué hace falta? ---- */
   function pasoQue(){
     abrirSheet(`
-      <div class="pasohead"><button class="volver" id="r-back2">‹</button><h3>¿Qué hace falta?</h3></div>
+      <div class="pasohead"><button class="volver" id="r-back2">‹</button><h3>¿Qué necesitas?</h3></div>
       ${pasosHTML(2)}
-      <p class="pasosub">Elija <b>al menos una cosa</b> que se necesita. Lo demás es opcional.</p>
-      <details class="fold" ${persRango?'open':''} style="margin-top:2px">
-        <summary>¿Para cuántas personas? · ayuda a priorizar la ayuda</summary>
-        <div class="foldbody">
-          <div class="urg" id="r-pers">
-            <button data-p="1-3">1 a 3</button>
-            <button data-p="4-8">4 a 8</button>
-            <button data-p="8+">Más de 8</button>
-          </div>
-        </div>
-      </details>
-      <details class="fold" ${prioridad.size?'open':''}>
-        <summary>¿Hay alguien que necesite prioridad? · niños, embarazo, discapacidad</summary>
-        <div class="foldbody">
-          <div class="urg" id="r-prio">
-            <button data-pr="ninos5">Niños menores de 5</button>
-            <button data-pr="mayores">Adultos mayores</button>
-            <button data-pr="discapacidad">Discapacidad</button>
-            <button data-pr="embarazo">Embarazo o lactancia</button>
-          </div>
-        </div>
-      </details>
+      <p class="pasosub">Puedes marcar varias. Entre más claro sea el pedido, más rápido llega la brigada correcta.</p>
       <div class="sec">¿Qué se necesita? <span class="tag req">necesario</span></div>
       <input id="r-busca" type="search" placeholder="Buscar: gasas, pañales, linterna, agua…">
       <div id="r-items"></div>
+      <label class="f" style="margin-top:14px">Cuéntanos en una frase <span class="muted">(opcional)</span></label>
+      <textarea id="r-frase" placeholder="Ej: llevamos 3 días sin agua, hay 2 bebés en la casa.">${esc(frase)}</textarea>
       <div class="selbar">
         <span class="grow" id="r-cnt">Falta: qué se necesita</span>
         <button class="btn" id="r-next2" disabled>Siguiente</button>
@@ -505,61 +486,55 @@ function abrirReporte(zid, pt, refPrev){
       const k=o.dataset.k; sel.has(k)?sel.delete(k):sel.add(k);
       body.querySelectorAll(`.opt[data-k="${k}"]`).forEach(x=>x.classList.toggle('sel', sel.has(k)));
       conteos(); barra(); };
-    body.querySelectorAll('#r-pers button').forEach(b=>{
-      if(b.dataset.p===persRango) b.classList.add('sel');
-      b.onclick = ()=>{ const era=b.classList.contains('sel');
-        body.querySelectorAll('#r-pers button').forEach(x=>x.classList.remove('sel'));
-        if(!era){ b.classList.add('sel'); persRango=b.dataset.p; } else persRango=''; };
-    });
-    body.querySelectorAll('#r-prio button').forEach(b=>{
-      if(prioridad.has(b.dataset.pr)) b.classList.add('sel');
-      b.onclick = ()=>{ const k=b.dataset.pr;
-        prioridad.has(k) ? prioridad.delete(k) : prioridad.add(k);
-        b.classList.toggle('sel', prioridad.has(k)); };
-    });
     repintar(); barra();
     $('#r-back2').onclick = ()=>irA(1);
-    $('#r-next2').onclick = ()=>{ if(!sel.size) return toast('Escoja al menos una cosa.'); irA(3); };
+    $('#r-next2').onclick = ()=>{ if(!sel.size) return toast('Escoja al menos una cosa.');
+      frase = ($('#r-frase')?.value||'').trim(); irA(3); };
   }
 
-  /* ---- Paso 3: ¿qué tan urgente? + resumen ---- */
-  function pasoUrg(){
-    const needList = [...sel].map(k=>NEED[k]?.n||k).join(', ');
-    const persTxt = persRango ? ` · ${persRango==='8+'?'más de 8':persRango.replace('-',' a ')} personas` : '';
+  /* ---- Paso 3: ¿para cuántas personas? + prioridad + urgencia ---- */
+  function pasoPersonas(){
     abrirSheet(`
-      <div class="pasohead"><button class="volver" id="r-back3">‹</button><h3>¿Qué tan urgente?</h3></div>
+      <div class="pasohead"><button class="volver" id="r-back3">‹</button><h3>¿Para cuántas personas?</h3></div>
       ${pasosHTML(3)}
-      <p class="pasosub"><b>Último paso.</b> Elija una opción y ya se envía. Sea realista: si todo es urgente, nadie sabe adónde ir primero.</p>
+      <p class="pasosub">Esto define el tamaño de la entrega. Cuenta a todos los que están contigo.</p>
+      <div class="stepr" id="r-step">
+        <button type="button" data-d="-1" aria-label="Menos">${ico('close').replace('M18 6 6 18M6 6l12 12','M5 12h14')}</button>
+        <div class="val"><b id="r-pn">${pers||'—'}</b><small>${pers===1?'persona':'personas'}</small></div>
+        <button type="button" data-d="1" aria-label="Más">${ico('plus')}</button>
+      </div>
+      <div class="sec">¿Hay alguien que necesite prioridad?</div>
+      <div id="r-prio">
+        <button type="button" class="srow" data-pr="ninos5"><span class="st"><b>Niños menores de 5 años</b></span><span class="sw"></span></button>
+        <button type="button" class="srow" data-pr="mayores"><span class="st"><b>Adultos mayores</b><small>más de 65 años</small></span><span class="sw"></span></button>
+        <button type="button" class="srow" data-pr="discapacidad"><span class="st"><b>Personas con discapacidad</b><small>o movilidad reducida</small></span><span class="sw"></span></button>
+        <button type="button" class="srow" data-pr="embarazo"><span class="st"><b>Embarazo o lactancia</b></span><span class="sw"></span></button>
+      </div>
+      <div class="sec">¿Qué tan urgente es?</div>
       <div class="urg col" id="r-urg">
-        <button data-u="3">Hoy mismo<span>Hay riesgo para alguien ahora</span></button>
-        <button data-u="2">En 24 horas<span>Se puede aguantar el día</span></button>
-        <button data-u="1">Puede esperar<span>Esta semana está bien</span></button>
+        <button data-u="1">Podemos esperar<span>Nos alcanza para hoy</span></button>
+        <button data-u="2">Urgente<span>Necesitamos ayuda hoy mismo</span></button>
+        <button data-u="3">Crítico · riesgo de vida<span>Hay heridos o personas atrapadas</span></button>
       </div>
       <p class="telhint bad" style="margin-top:10px">${ico('alert')} Si hay una emergencia médica en curso, llame al <b>&nbsp;123&nbsp;</b> antes de enviar este reporte.</p>
-      <details class="fold" ${(cNombre||cTel)?'open':''}>
-        <summary>¿Quiere que un coordinador le escriba? (opcional)</summary>
-        <div class="foldbody">
-          <p class="muted" style="margin:0 0 8px">Su teléfono <b>no se publica</b> en el mapa ni en ninguna lista.
-            Solo lo ve el equipo que coordina la ayuda, para avisarle.</p>
-          <input id="r-cnom" placeholder="Su nombre" autocomplete="name" value="${esc(cNombre)}">
-          <input id="r-ctel" inputmode="tel" autocomplete="tel" placeholder="Celular / WhatsApp" value="${esc(cTel)}" style="margin-top:8px">
-        </div>
-      </details>
-      <div class="sec">Antes de enviar</div>
-      <div class="resumen">
-        <div class="resline"><span>${ico('pin')} <b>${esc(zonaNom(punto.z))}</b>${ref?' · '+esc(ref):''}</span><button class="lnk" id="r-edit1">Editar</button></div>
-        <div class="resline"><span>${ico('bolt')} ${esc(needList)}${persTxt}</span><button class="lnk" id="r-edit2">Editar</button></div>
-      </div>
       <div class="selbar">
-        <span class="grow" id="r-cnt">Falta: qué tan urgente</span>
-        <button class="btn green" id="r-send" disabled>Enviar reporte</button>
+        <span class="grow" id="r-cnt"></span>
+        <button class="btn" id="r-next3">Continuar</button>
       </div>
     `);
     const body = $('#sheet-body');
-    const barra = ()=>{ $('#r-cnt').textContent = urg==null?'Falta: qué tan urgente':'Todo listo';
-      $('#r-cnt').classList.toggle('falta', urg==null);
-      $('#r-send').disabled = urg==null;
-      guiar(urg!=null ? '#r-send' : '#r-urg'); };
+    const pintaN = ()=>{ $('#r-pn').textContent = pers||'—';
+      body.querySelector('#r-step small').textContent = pers===1?'persona':'personas'; };
+    body.querySelectorAll('#r-step button').forEach(b=>b.onclick=()=>{
+      pers = Math.max(0, Math.min(99, pers + (+b.dataset.d))); pintaN(); });
+    body.querySelectorAll('#r-prio .srow').forEach(b=>{
+      b.classList.toggle('on', prioridad.has(b.dataset.pr));
+      b.onclick = ()=>{ const k=b.dataset.pr;
+        prioridad.has(k) ? prioridad.delete(k) : prioridad.add(k);
+        b.classList.toggle('on', prioridad.has(k)); };
+    });
+    const barra = ()=>{ $('#r-cnt').textContent = urg==null?'Falta: qué tan urgente':'';
+      $('#r-cnt').classList.toggle('falta', urg==null); };
     body.querySelectorAll('#r-urg button').forEach(b=>{
       if(+b.dataset.u===urg) b.classList.add('sel');
       b.onclick=()=>{ body.querySelectorAll('#r-urg button').forEach(x=>x.classList.remove('sel'));
@@ -567,28 +542,65 @@ function abrirReporte(zid, pt, refPrev){
     });
     barra();
     $('#r-back3').onclick = ()=>irA(2);
+    $('#r-next3').onclick = ()=>{ if(urg==null) return toast('Diga qué tan urgente es.'); irA(4); };
+  }
+
+  /* ---- Paso 4: ¿con quién hablamos? + resumen ---- */
+  function pasoContacto(){
+    const needList = [...sel].map(k=>NEED[k]?.n||k).join(' · ');
+    const PRIO_TXT = {ninos5:'niños', mayores:'adultos mayores', discapacidad:'discapacidad', embarazo:'embarazo'};
+    const prioTxt = [...prioridad].map(k=>PRIO_TXT[k]).join(' y ');
+    const URG_TXT = {1:'Puede esperar', 2:'<b style="color:#d97706">Urgente · hoy mismo</b>', 3:'<b style="color:#dc2626">Crítico · riesgo de vida</b>'};
+    abrirSheet(`
+      <div class="pasohead"><button class="volver" id="r-back4">‹</button><h3>¿Con quién hablamos?</h3></div>
+      ${pasosHTML(4)}
+      <p class="pasosub">Opcional. Su teléfono <b>nunca se publica</b> en el mapa: solo lo ve el equipo que coordina la ayuda, para avisarle.</p>
+      <label class="f">Nombre de quien reporta</label>
+      <input id="r-cnom" placeholder="Su nombre (opcional)" autocomplete="name" value="${esc(cNombre)}">
+      <label class="f">Celular / WhatsApp</label>
+      <input id="r-ctel" inputmode="tel" autocomplete="tel" placeholder="Ej: 310 555 4821 (opcional)" value="${esc(cTel)}">
+      <button type="button" class="srow ${prefWA?'on':''}" id="r-wa" style="margin-top:10px">
+        <span class="st"><b>Prefiero WhatsApp</b><small>No siempre hay señal para llamadas</small></span><span class="sw"></span></button>
+      <div class="sec">Resumen</div>
+      <div class="resumen">
+        <div class="resline"><span>${ico('bolt')} ${esc(needList)}</span><button class="lnk" id="r-edit2">Editar</button></div>
+        <div class="resline"><span>${ico('users')} ${pers?`${pers} persona${pers>1?'s':''}`:'Personas: sin decir'}${prioTxt?` · con ${esc(prioTxt)}`:''}</span><button class="lnk" id="r-edit3">Editar</button></div>
+        <div class="resline"><span>${ico('clock')} ${URG_TXT[urg]||''}</span><button class="lnk" id="r-edit3b">Editar</button></div>
+        <div class="resline"><span>${ico('pin')} <b>${esc(zonaNom(punto.z))}</b>${ref?' · '+esc(ref):''}</span><button class="lnk" id="r-edit1">Editar</button></div>
+      </div>
+      <div class="selbar">
+        <span class="grow" id="r-cnt">Todo listo</span>
+        <button class="btn green" id="r-send">Enviar reporte</button>
+      </div>
+    `);
+    const wa = $('#r-wa');
+    wa.onclick = ()=>{ prefWA=!prefWA; wa.classList.toggle('on', prefWA); };
+    guiar('#r-send');
+    $('#r-back4').onclick = ()=>irA(3);
     $('#r-edit1').onclick = ()=>irA(1);
     $('#r-edit2').onclick = ()=>irA(2);
+    $('#r-edit3').onclick = ()=>irA(3);
+    $('#r-edit3b').onclick = ()=>irA(3);
     $('#r-send').onclick = ()=>{
-      if(urg==null) return toast('Escoja qué tan urgente es.');
       cNombre = ($('#r-cnom')?.value||'').trim();
       cTel = ($('#r-ctel')?.value||'').trim();
       const firma = punto.z+'|'+ref+'|'+[...sel].sort().join(',');
       if(repetido(firma)) return confirmar(true);
-      const p = PERSNUM[persRango] || 0;
+      const p = pers || 0;
       // folio: para que la persona pueda preguntar por su pedido después
       const folio = 'AY-' + Math.random().toString(36).slice(2,6).toUpperCase();
       const prio = [...prioridad];
+      const notaFull = [frase, nota].filter(Boolean).join(' · ');
       sel.forEach(k=>guardar('reportes',
         {zona:punto.z, necesidad:k, urgencia:urg, lat:punto.lat, lng:punto.lng,
-         referencia:ref, personas:p, nota, device:DEVICE, folio, prioridad:prio},
-        {id:uid(), z:punto.z, lat:punto.lat, lng:punto.lng, k, u:urg, ts:now(), personas:p, nota, ref}));
+         referencia:ref, personas:p, nota:notaFull, device:DEVICE, folio, prioridad:prio},
+        {id:uid(), z:punto.z, lat:punto.lat, lng:punto.lng, k, u:urg, ts:now(), personas:p, nota:notaFull, ref}));
       // contacto opcional: va a una tabla PRIVADA (solo escritura con la clave
       // pública; la lee únicamente el equipo verificado). Nunca al mapa.
       if(cTel){
         const dig = cTel.replace(/\D/g,'');
         const e164 = dig.startsWith('57')||dig.startsWith('1') ? '+'+dig : (dig.length===10 ? '+57'+dig : '+'+dig);
-        guardar('reportes_contacto', {folio, zona:punto.z, nombre:cNombre, tel_e164:e164, whatsapp:true, device:DEVICE}, null);
+        guardar('reportes_contacto', {folio, zona:punto.z, nombre:cNombre, tel_e164:e164, whatsapp:prefWA, device:DEVICE}, null);
       }
       try{ const fs=JSON.parse(localStorage.getItem('ae_folios')||'[]');
         fs.unshift({folio, z:punto.z, ts:now()}); localStorage.setItem('ae_folios', JSON.stringify(fs.slice(0,20))); }catch(e){}
@@ -628,7 +640,7 @@ function abrirReporte(zid, pt, refPrev){
       </div>
       <div class="sec">Mis reportes</div>
       <p class="muted" style="margin:0 0 4px">Quedan guardados en este teléfono, sin cuenta y sin su nombre. Lleva <b>${mios}</b> en total.</p>
-      <button class="btn flat" data-close-btn>Volver al mapa</button>
+      <button class="btn red" data-close-btn>Ver en el mapa</button>
     `);
   }
 

@@ -173,7 +173,8 @@ function setMainPt(la, lo){
   if(mainMk) mainMk.setLatLng([la, lo]);
   const bar = document.getElementById('pinbar');
   if(bar) bar.innerHTML = `${ico('pin')} <b>${esc(z.n)}</b>${z.t==='corregimiento'?' (rural)':''}
-    <span class="muted">· toque el mapa o arrastre el pin para corregir</span>`;
+    <span class="muted">· toque para cambiar de zona</span>
+    <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>`;
   if(typeof window.sheetPintar === 'function') window.sheetPintar();
 }
 function initMainPin(){          // se llama al final: PIN y esc ya existen

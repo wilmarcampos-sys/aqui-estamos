@@ -23,7 +23,7 @@
 <meta name="twitter:description" content="Coordinación abierta de ayuda para el terremoto de Pereira.">
 <meta name="twitter:image" content="https://aquiestamos.co/img/hero-donar.jpg">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
-<link rel="stylesheet" href="css/app.css?v=1.30.1">
+<link rel="stylesheet" href="css/app.css?v=1.31.0">
 <script>
 /* URL sin ".html" en el sitio publicado (en localhost la extensión hace falta). */
 (function(){ var h=location.hostname; if(h==='localhost'||h==='127.0.0.1'||h==='') return;
@@ -131,7 +131,8 @@ document.documentElement.setAttribute('data-eff', window.temaEfectivo());
       <div class="msheet" id="msheet">
         <div class="handle-zone" id="msheet-handle" role="button" aria-label="Mostrar u ocultar reportes cercanos"><div class="handle"></div></div>
         <div class="msheet-head">
-          <div class="loc-chip" id="pinbar">Toque el mapa donde está, o arrastre el pin</div>
+          <button type="button" class="loc-chip" id="pinbar" aria-haspopup="true">Toque el mapa donde está, o arrastre el pin</button>
+          <div class="zmenu" id="zmenu" hidden></div>
           <div class="count-chip" id="msheet-count" hidden>
             <svg class="ic" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2 1 21h22L12 2Zm0 6.5 6.5 11h-13L12 8.5Z"/></svg>
             <b id="msheet-count-n">0</b><span class="clab">abiertos</span>
@@ -252,15 +253,15 @@ document.documentElement.setAttribute('data-eff', window.temaEfectivo());
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="js/config.js?v=1.30.1"></script>
-<script src="js/version.js?v=1.30.1"></script>
-<script src="js/data.js?v=1.30.1"></script>
-<script src="js/estado.js?v=1.30.1"></script>
-<script src="js/calc.js?v=1.30.1"></script>
-<script src="js/mapa.js?v=1.30.1"></script>
-<script src="js/hojas.js?v=1.30.1"></script>
-<script src="js/cuenta.js?v=1.30.1"></script>
-<script src="js/ui.js?v=1.30.1"></script>
-<script src="js/dar.js?v=1.30.1"></script>
+<script src="js/config.js?v=1.31.0"></script>
+<script src="js/version.js?v=1.31.0"></script>
+<script src="js/data.js?v=1.31.0"></script>
+<script src="js/estado.js?v=1.31.0"></script>
+<script src="js/calc.js?v=1.31.0"></script>
+<script src="js/mapa.js?v=1.31.0"></script>
+<script src="js/hojas.js?v=1.31.0"></script>
+<script src="js/cuenta.js?v=1.31.0"></script>
+<script src="js/ui.js?v=1.31.0"></script>
+<script src="js/dar.js?v=1.31.0"></script>
 </body>
 </html>

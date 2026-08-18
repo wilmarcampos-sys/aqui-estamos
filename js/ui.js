@@ -533,6 +533,31 @@ pintarTema();
 /* Reportes cercanos dentro de la hoja: primero los de la zona del pin,
    luego el resto, siempre lo más nuevo arriba. Datos anónimos que ya son
    públicos en el mapa — aquí solo se leen más fácil. */
+/* Chip de zona = dropdown: lista las zonas ordenadas por cercania al pin.
+   Elegir una mueve el mapa y el pin al centro de esa zona. */
+(function(){
+  const chip=document.getElementById('pinbar'), menu=document.getElementById('zmenu');
+  if(!chip||!menu) return;
+  function pintar(){
+    const o=(typeof mainPt!=='undefined'&&mainPt)?mainPt:{lat:4.8133,lng:-75.6961};
+    const zs=ZONAS.map(z=>({z, d:dist(o.lat,o.lng,z.lat,z.lng)})).sort((a,b)=>a.d-b.d);
+    menu.innerHTML = zs.map(x=>`<button type="button" data-z="${x.z.id}">
+      ${x.z.n}${x.z.t==='corregimiento'?' <span class="muted">(rural)</span>':''}
+      <span class="muted">${x.d<1000?Math.round(x.d)+' m':(x.d/1000).toFixed(1)+' km'}</span></button>`).join('');
+  }
+  chip.addEventListener('click', ()=>{ if(menu.hidden){ pintar(); menu.hidden=false; } else menu.hidden=true; });
+  document.addEventListener('click', e=>{
+    if(!menu.hidden && !e.target.closest('#zmenu') && !e.target.closest('#pinbar')) menu.hidden=true;
+  });
+  menu.addEventListener('click', e=>{
+    const b=e.target.closest('[data-z]'); if(!b) return;
+    const z=ZONAS.find(x=>x.id===b.dataset.z); if(!z) return;
+    menu.hidden=true;
+    if(map && !modoSVG){ map.flyTo([z.lat,z.lng], 14.6, {duration:.7}); }
+    if(typeof setMainPt==='function') setMainPt(z.lat, z.lng);
+    toast('Zona: '+z.n);
+  });
+})();
 (function(){ const v=document.getElementById('ver-todos');
   if(v) v.onclick=e=>{ e.preventDefault(); document.querySelector('nav button[data-v="zonas"]').click(); };
 })();
