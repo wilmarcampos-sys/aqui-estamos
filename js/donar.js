@@ -58,14 +58,19 @@ function renderTabs(){
     <button data-t="persona" aria-selected="${DTAB==='persona'}">${pinIcon()}<span>${esc(t(DONAR_UI.tab_persona))}</span></button>`;
 }
 function renderGuia(){
+  // el boton manda; la explicacion se abre solo si se quiere
   $('#d-guia').innerHTML = `
-    <p class="dhint">${arrowRight()} <b>${esc(t(DONAR_UI.guia_hint))}</b></p>
-    <div class="sec">${esc(t(DONAR_UI.guia_t))}</div>
-    <ol class="dhow">
-      <li>${t(DONAR_UI.paso1)}</li><li>${t(DONAR_UI.paso2)}</li>
-      <li>${t(DONAR_UI.paso3)}</li><li>${t(DONAR_UI.paso4)}</li>
-    </ol>
-    <button type="button" class="damz-big" id="d-guia-amz">${amzIcon()} ${esc(t(DONAR_UI.abrir_lista))}</button>`;
+    <button type="button" class="damz-big" id="d-guia-amz" style="margin-top:12px">${amzIcon()} ${esc(t(DONAR_UI.abrir_lista))}</button>
+    <details class="fold">
+      <summary>${esc(t(DONAR_UI.guia_t))} · ${LANG==='en'?'takes 1 minute':'te toma 1 minuto'}</summary>
+      <div class="foldbody">
+        <p class="dhint" style="margin-top:0">${arrowRight()} <b>${esc(t(DONAR_UI.guia_hint))}</b></p>
+        <ol class="dhow">
+          <li>${t(DONAR_UI.paso1)}</li><li>${t(DONAR_UI.paso2)}</li>
+          <li>${t(DONAR_UI.paso3)}</li><li>${t(DONAR_UI.paso4)}</li>
+        </ol>
+      </div>
+    </details>`;
   const b=$('#d-guia-amz'); if(b) b.onclick=()=>irAmazon();
 }
 function aplicarTab(){
