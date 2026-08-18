@@ -18,7 +18,7 @@ const DICONS = {
 };
 
 const DONAR_CAT = [
-  { key:'medico', es:'Equipo médico y dispositivos', en:'Medical equipment & devices', items:[
+  { key:'medico', es:'Equipo médico y dispositivos', en:'Medical equipment & devices', sub:{es:'La categoría más urgente', en:'The most urgent category'}, items:[
     {es:'Equipos de venoclisis completos (macro y microgotero)', en:'Complete IV infusion sets (macro & micro drip)'},
     {es:'Catéteres IV (18G, 20G, 22G)', en:'IV catheters (18G, 20G, 22G)'},
     {es:'Jeringas desechables (3, 5, 10, 20 ml)', en:'Disposable syringes (3, 5, 10, 20 ml)'},
@@ -40,7 +40,7 @@ const DONAR_CAT = [
     {es:'Esterilización / autoclave (indicadores químicos)', en:'Sterilization / autoclave (chemical indicators)'},
     {es:'Bolsas para desechos médicos', en:'Medical waste bags'},
   ]},
-  { key:'medicamentos', es:'Medicamentos y primeros auxilios', en:'Medications & first aid', items:[
+  { key:'medicamentos', es:'Medicamentos y primeros auxilios', en:'Medications & first aid', sub:{es:'Sin abrir y con empaque original', en:'Unopened, in original packaging'}, items:[
     {es:'Analgésicos: acetaminofén, ibuprofeno', en:'Pain relievers: acetaminophen, ibuprofen', r:1},
     {es:'Antibióticos de amplio espectro (según disponibilidad)', en:'Broad-spectrum antibiotics (as available)'},
     {es:'Antidiarreicos', en:'Anti-diarrheals', r:1},
@@ -59,7 +59,7 @@ const DONAR_CAT = [
     {es:'Pinzas de curación', en:'Dressing forceps'},
     {es:'Dexametasona / Prednisona (con fórmula)', en:'Dexamethasone / Prednisone (with prescription)'},
   ]},
-  { key:'higiene', es:'Higiene y cuidado personal', en:'Hygiene & personal care', items:[
+  { key:'higiene', es:'Higiene y cuidado personal', en:'Hygiene & personal care', sub:{es:'Pañales, toallas, jabón', en:'Diapers, pads, soap'}, items:[
     {es:'Pañales desechables (bebé y adultos)', en:'Disposable diapers (baby & adult)', r:1},
     {es:'Toallas higiénicas', en:'Sanitary pads', r:1},
     {es:'Toallas húmedas', en:'Wet wipes', r:1},
@@ -79,7 +79,7 @@ const DONAR_CAT = [
     {es:'Talco para pies', en:'Foot powder'},
     {es:'Toallas de manos (desechables)', en:'Hand towels (disposable)'},
   ]},
-  { key:'herramientas', es:'Equipos y herramientas de respuesta', en:'Response equipment & tools', items:[
+  { key:'herramientas', es:'Equipos y herramientas de respuesta', en:'Response equipment & tools', sub:{es:'Rescate y remoción', en:'Rescue & debris removal'}, items:[
     {es:'Guantes de trabajo (alta resistencia)', en:'Work gloves (heavy-duty)', r:1},
     {es:'Botas de caucho (todas las tallas)', en:'Rubber boots (all sizes)', r:1},
     {es:'Cascos de seguridad', en:'Safety helmets', r:1},
@@ -98,7 +98,7 @@ const DONAR_CAT = [
     {es:'Equipo de rescate vertical (arnés, cuerda, mosquetón)', en:'Vertical rescue gear (harness, rope, carabiner)'},
     {es:'Silbatos', en:'Whistles'},
   ]},
-  { key:'emergencia', es:'Artículos básicos de emergencia', en:'Basic emergency items', items:[
+  { key:'emergencia', es:'Artículos básicos de emergencia', en:'Basic emergency items', sub:{es:'Carpas, cobijas, colchonetas', en:'Tents, blankets, sleeping pads'}, items:[
     {es:'Linternas de baterías o recargables', en:'Flashlights (battery or rechargeable)', r:1},
     {es:'Pilas AA, AAA, D y 9V', en:'Batteries AA, AAA, D and 9V', r:1},
     {es:'Baterías externas (power banks)', en:'Power banks', r:1},
@@ -123,17 +123,17 @@ const DONAR_NO = [
 
 /* textos de la interfaz */
 const DONAR_UI = {
-  nav_donar:   {es:'Cómo donar', en:'How to donate'},
-  nav_centro:  {es:'Registrar centro', en:'Register a center'},
-  nav_mapa:    {es:'Mapa de ayuda', en:'Help map'},
+  nav_donar:   {es:'Donar', en:'Donate'},
+  nav_centro:  {es:'Ser centro', en:'Be a center'},
+  nav_mapa:    {es:'Mapa', en:'Map'},
   kick:        {es:'Unidos por Pereira', en:'United for Pereira'},
   art:         {es:'artículos', en:'items'},
   cat:         {es:'categorías', en:'categories'},
   cen:         {es:'centros', en:'centers'},
   cen1:        {es:'centro', en:'center'},
-  titulo:      {es:'Cómo donar para Pereira', en:'How to donate for Pereira'},
-  sub:         {es:'Nuestra ciudad atraviesa momentos difíciles tras la tragedia. Estas son las donaciones que de verdad se necesitan, dónde llevarlas y cómo deben llegar.',
-                en:'Our city is going through hard times after the tragedy. These are the donations that are truly needed, where to take them and how they should arrive.'},
+  titulo:      {es:'Lo que sí se necesita', en:'What is truly needed'},
+  sub:         {es:'Estos son los artículos que de verdad hacen falta hoy, y a dónde deben llegar.',
+                en:'These are the items truly needed today, and where they should go.'},
   buscar:      {es:'Buscar: gasas, pañales, linterna…', en:'Search: gauze, diapers, flashlight…'},
   modo_todo:   {es:'Todo', en:'Everything'},
   modo_facil:  {es:'Fácil de conseguir', en:'Easy to find'},
@@ -200,4 +200,5 @@ const DONAR_UI = {
   abrir_lista: {es:'Abrir la lista en Amazon', en:'Open the Amazon list'},
   ser_t:       {es:'¿Puedes ser centro de acopio?', en:'Can you host a drop-off center?'},
   ser_s:       {es:'Regístralo y aparece en esta lista', en:'Register it and it shows up in this list'},
+  catlab:      {es:'Qué se necesita hoy', en:'What is needed today'},
 };

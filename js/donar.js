@@ -71,7 +71,7 @@ function renderGuia(){
 function aplicarTab(){
   const amz = DTAB==='amazon';
   const show=(id,v)=>{ const e=$(id); if(e) e.hidden=!v; };
-  show('#d-guia', amz); show('#d-modo', amz); show('#d-cats', amz);
+  show('#d-guia', amz); show('#d-modo', amz); show('#d-cats', amz); show('#d-busca-wrap', amz); show('#d-catlab', amz);
   show('#d-ubicame', !amz); show('#d-centros-h', !amz); show('#d-centros', !amz);
   const sub=$('#d-centros-sub'); if(sub) sub.hidden=amz;
 }
@@ -88,6 +88,9 @@ function renderModo(){
 }
 
 /* ---- categorías (colapsables + seleccionables) ---- */
+const DCAT_GRAD = {medico:'linear-gradient(155deg,#F87171,#DC2626)', medicamentos:'linear-gradient(155deg,#FBBF24,#F59E0B)',
+  higiene:'linear-gradient(155deg,#60A5FA,#2563EB)', herramientas:'linear-gradient(155deg,#34D399,#059669)',
+  emergencia:'linear-gradient(155deg,#A78BFA,#6D28D9)'};
 function renderCats(q){
   const nqn = norm((q||'').trim());
   const searching = !!nqn;
@@ -105,8 +108,8 @@ function renderCats(q){
     }).join('');
     html += `<section class="dcat dcat--${c.key}${open?' open':''}">
       <button class="dcat-h" data-cat="${c.key}" aria-expanded="${open}">
-        <span class="dcat-ic">${dico(c.key)}</span>
-        <span class="dcat-t">${esc(t(c))}</span>
+        <span class="dcat-ic" style="background:${DCAT_GRAD[c.key]||'var(--chip)'};color:#fff">${dico(c.key)}</span>
+        <span class="dcat-t">${esc(t(c))}${c.sub?`<small>${esc(t(c.sub))}</small>`:''}</span>
         <span class="dcat-n">${its.length}</span>${chev()}
       </button>
       <div class="dgrid">${rows}
@@ -184,9 +187,11 @@ function renderStat(){
   const nItems = DONAR_CAT.reduce((n,c)=>n+c.items.length,0);
   const nCats  = DONAR_CAT.length, nCen = CENTROS.length;
   const cenLbl = nCen===1 ? t(DONAR_UI.cen1) : t(DONAR_UI.cen);
+  const cl=$('#d-catlab'); if(cl) cl.textContent = `${t(DONAR_UI.catlab)} · ${nItems} ${t(DONAR_UI.art)}`;
   $('#d-stat').innerHTML =
-    `<b>${nItems}</b> ${esc(t(DONAR_UI.art))}<i></i><b>${nCats}</b> ${esc(t(DONAR_UI.cat))}` +
-    (nCen?`<i></i><b>${nCen}</b> ${esc(cenLbl)}`:'');
+    `<div class="hstat"><b>${nItems}</b><small>${esc(t(DONAR_UI.art))}</small></div>
+     <div class="hstat"><b>${nCats}</b><small>${esc(t(DONAR_UI.cat))}</small></div>
+     ${nCen?`<div class="hstat"><b>${nCen}</b><small>${esc(cenLbl)}</small></div>`:''}`;
 }
 
 /* ---- Mi lista (barra flotante) ---- */
@@ -370,8 +375,8 @@ function pintarTextos(){
   $('#d-titulo').textContent      = t(DONAR_UI.titulo);
   $('#d-sub').textContent         = t(DONAR_UI.sub);
   $('#d-busca').placeholder       = t(DONAR_UI.buscar);
-  $('#d-amazon-hero').innerHTML   = amzIcon()+'<span>'+esc(t(DONAR_UI.donar_amazon))+'</span>';
-  $('#d-ir-centros').innerHTML    = boxIcon()+'<span>'+esc(t(DONAR_UI.llevar))+'</span>';
+  const ah=$('#d-amazon-hero'); if(ah) ah.innerHTML = amzIcon()+'<span>'+esc(t(DONAR_UI.donar_amazon))+'</span>';
+  const ic2=$('#d-ir-centros'); if(ic2) ic2.innerHTML = boxIcon()+'<span>'+esc(t(DONAR_UI.llevar))+'</span>';
   $('#d-ubicame').innerHTML       = locIcon()+'<span>'+esc(t(DONAR_UI.ubicame))+'</span>';
   $('#d-centros-h').textContent   = t(DONAR_UI.centros);
   $('#d-centros-sub').textContent = t(DONAR_UI.centros_sub);
@@ -462,9 +467,9 @@ function openAmazon(){
   const sh=$('#d-amazon'); sh.hidden=false; requestAnimationFrame(()=>sh.classList.add('on'));
 }
 function closeAmazon(){ const sh=$('#d-amazon'); sh.classList.remove('on'); setTimeout(()=>sh.hidden=true,220); }
-$('#d-ir-centros').onclick  = irCentros;
+{ const b=$('#d-ir-centros'); if(b) b.onclick = irCentros; }
 $('#d-ubicame').onclick     = ubicame;
-$('#d-amazon-hero').onclick = irAmazon;
+{ const b=$('#d-amazon-hero'); if(b) b.onclick = irAmazon; }
 
 /* bienvenida: agradecer y elegir cómo ayudar (una vez por dispositivo) */
 function showBienvenida(){
