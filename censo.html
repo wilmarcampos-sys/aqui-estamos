@@ -2,14 +2,14 @@
 <html lang="es">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
 <meta name="theme-color" content="#0f172a">
 <link rel="icon" type="image/svg+xml" href="logo/marca.svg">
-<title>Censo de necesidades · Aquí Estamos</title>
-<meta name="description" content="Registro de personas y familias afectadas por el terremoto de Pereira, para coordinar y verificar la entrega de ayudas.">
-<link rel="stylesheet" href="css/app.css">
-<link rel="stylesheet" href="css/donar.css">
-<link rel="stylesheet" href="css/centro.css">
+<title>Censo de vivienda · Aquí Estamos</title>
+<meta name="description" content="Registro de viviendas y familias afectadas por el terremoto de Pereira, para coordinar y verificar la entrega de ayudas.">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<link rel="stylesheet" href="css/app.css?v=1.32.0">
+<link rel="stylesheet" href="css/censo.css?v=1.32.0">
 <script>
 window.temaEfectivo = function(){
   try{ var p = localStorage.getItem('ae_tema');
@@ -20,75 +20,138 @@ window.temaEfectivo = function(){
 document.documentElement.setAttribute('data-eff', window.temaEfectivo());
 </script>
 </head>
-<body>
-<div id="app">
-  <header>
-    <a class="marcabtn" href="/" aria-label="Aquí Estamos">
-      <svg class="mark" viewBox="0 0 24 24" aria-hidden="true"><defs>
-      <clipPath id="ae-pin"><path d="M12 1.6c-4.6 0-8.3 3.7-8.3 8.3 0 5.9 8.3 12.5 8.3 12.5s8.3-6.6 8.3-12.5c0-4.6-3.7-8.3-8.3-8.3z"/></clipPath></defs>
-      <g clip-path="url(#ae-pin)"><rect x="0" y="0" width="12" height="24" fill="#F2B705"/><rect x="12" y="0" width="12" height="24" fill="#D62828"/></g>
-      <path d="M5.9 9.1h6.4a1.35 1.35 0 0 1 0 2.7H5.9z" fill="#fff"/><path d="M18.1 12.2h-6.4a1.35 1.35 0 0 0 0 2.7h6.4z" fill="#fff"/></svg>
-      <div class="grow" style="text-align:left"><h1>Aquí<span>&nbsp;Estamos</span></h1><p class="pais">Ayuda del terremoto · <b>Pereira</b></p></div>
+<body class="censo-body">
+<div class="wiz" id="wiz">
+
+  <div class="snav">
+    <a class="icon-btn" id="w-back" href="/" aria-label="Atrás">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m15 6-6 6 6 6"/></svg>
     </a>
-  </header>
+    <h2 class="nav-t">Censo de vivienda</h2>
+    <span class="step-count" id="w-count">1/4</span>
+  </div>
+  <div class="progress"><i id="w-prog"></i></div>
 
-  <nav class="dnav">
-    <a href="/">Mapa de ayuda</a>
-    <a href="/censo" class="on">Censo de necesidades</a>
-  </nav>
+  <div class="sbody" id="w-body">
 
-  <main><div class="view on"><div class="pad">
-    <section class="dhero">
-      <div class="dhero-in">
-        <span class="dkick">Censo oficial</span>
-        <h2>Censo de necesidades</h2>
-        <p>Registra a una persona o familia afectada. Estos datos son privados y sirven para <b>verificar que la ayuda llegue</b> y reportar a las autoridades. No se muestran en el mapa con tu nombre.</p>
+    <!-- PASO 1: la vivienda (mapa primero) -->
+    <section class="step active" data-step="1">
+      <h3 class="q">¿Qué vivienda estás registrando?</h3>
+      <p class="qs">El censo evita que una casa reciba tres veces y la de al lado ninguna. Marca el punto exacto en el mapa.</p>
+
+      <div class="cmapwrap"><div id="cmap"></div><div class="cmap-hint" id="cmap-hint">Toca el mapa sobre la vivienda</div></div>
+      <button type="button" class="cta soft" id="q-ubic">
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.2"/><circle cx="12" cy="12" r="8"/><path d="M12 1.5v3M12 19.5v3M1.5 12h3M19.5 12h3"/></svg>
+        Estoy parado frente a la vivienda
+      </button>
+
+      <div class="field"><label class="label">Barrio o vereda</label><input class="input" id="q-barrio" placeholder="Ej. Cuba · Villa Santana · Centro"></div>
+      <div class="field"><label class="label">Dirección</label><input class="input" id="q-dir" autocomplete="street-address" placeholder="Cra 12 #14-30"></div>
+      <div class="field"><label class="label">Cómo identificarla <span>(seña particular)</span></label><input class="input" id="q-sena" placeholder="Casa de reja verde, al lado de la tienda"></div>
+
+      <label class="label" style="margin:18px 0 8px 3px">Estado de la vivienda</label>
+      <div id="q-estado">
+        <button type="button" class="opt lv1" data-ev="habitable"><span class="dotr"></span><span class="ot"><b>Habitable</b><small>Sin daños estructurales visibles</small></span><span class="oi oi1"></span></button>
+        <button type="button" class="opt lv2" data-ev="danos"><span class="dotr"></span><span class="ot"><b>Con daños</b><small>Fisuras, se puede habitar con precaución</small></span><span class="oi oi2"></span></button>
+        <button type="button" class="opt lv3" data-ev="inhabitable"><span class="dotr"></span><span class="ot"><b>Inhabitable</b><small>La familia está durmiendo fuera</small></span><span class="oi oi3"></span></button>
+      </div>
+      <p class="hint" id="h-inhab" hidden>Si marcas <b>inhabitable</b>, la vivienda entra a la cola de evaluación estructural.</p>
+    </section>
+
+    <!-- PASO 2: el hogar -->
+    <section class="step" data-step="2">
+      <h3 class="q">¿Quiénes viven aquí?</h3>
+      <p class="qs">Es lo que define el tamaño de cada entrega. Sin esto, los mercados llegan mal calculados.</p>
+
+      <div class="row2">
+        <div class="field"><label class="label">Nombres del jefe de hogar</label><input class="input" id="q-nombre" autocomplete="given-name" placeholder="Nombres"></div>
+        <div class="field"><label class="label">Apellidos</label><input class="input" id="q-apellido" autocomplete="family-name" placeholder="Apellidos"></div>
+      </div>
+      <div class="row2">
+        <div class="field"><label class="label">Cédula</label><input class="input" id="q-cedula" inputmode="numeric" placeholder="Número"></div>
+        <div class="field"><label class="label">Celular</label><input class="input" id="q-tel" inputmode="tel" autocomplete="tel" placeholder="300 000 0000"></div>
+      </div>
+
+      <label class="label" style="margin:6px 0 8px 3px">Personas en la vivienda</label>
+      <div class="stepr" id="q-step">
+        <button type="button" data-d="-1" aria-label="Menos"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M5 12h14"/></svg></button>
+        <div class="val"><b id="q-pn">1</b><small>en total</small></div>
+        <button type="button" data-d="1" aria-label="Más"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
+      </div>
+
+      <div class="row2" style="margin-top:12px">
+        <div class="field"><label class="label">Menores de 5</label><input class="input" id="q-men5" inputmode="numeric" placeholder="0"></div>
+        <div class="field"><label class="label">Mayores de 65</label><input class="input" id="q-may65" inputmode="numeric" placeholder="0"></div>
+      </div>
+
+      <label class="label" style="margin:6px 0 8px 3px">Condiciones especiales</label>
+      <div id="q-cond">
+        <button type="button" class="srow" data-c="discapacidad"><span class="st"><b>Persona con discapacidad</b><small>o movilidad reducida</small></span><span class="sw"></span></button>
+        <button type="button" class="srow" data-c="embarazo"><span class="st"><b>Embarazo o lactancia</b></span><span class="sw"></span></button>
+        <button type="button" class="srow" data-c="cronica"><span class="st"><b>Enfermedad crónica</b><small>Diabetes, hipertensión, oxígeno</small></span><span class="sw"></span></button>
+        <button type="button" class="srow" data-c="mascotas"><span class="st"><b>Mascotas</b></span><span class="sw"></span></button>
       </div>
     </section>
 
-    <form id="cform" novalidate>
-      <div class="field"><label>Nombres</label><input id="q-nombre" autocomplete="given-name" placeholder="Nombres de pila"></div>
-      <div class="field"><label>Apellidos</label><input id="q-apellido" autocomplete="family-name" placeholder="Apellidos"></div>
-      <div class="field"><label>Cédula</label><input id="q-cedula" inputmode="numeric" autocomplete="off" placeholder="Número de cédula"></div>
-      <div class="field"><label>Teléfono / WhatsApp</label><input id="q-tel" inputmode="tel" autocomplete="tel" placeholder="Ej. 300 000 0000"></div>
-      <div class="field"><label>Dirección</label><input id="q-dir" autocomplete="street-address" placeholder="Dirección donde vive"></div>
-      <div class="field"><label>Barrio o zona</label><input id="q-barrio" placeholder="Ej. Cuba · El Oso · Centro"></div>
+    <!-- PASO 3: necesidades y entregas -->
+    <section class="step" data-step="3">
+      <h3 class="q">Qué necesitan y qué ya recibieron</h3>
+      <p class="qs">Marcar lo entregado es lo que hace útil el censo: la próxima brigada ve que aquí ya pasaron.</p>
 
-      <button type="button" id="q-ubic" class="qubi">Tomar mi ubicación para el mapa</button>
+      <label class="label" style="margin:6px 0 10px 3px">Necesidad pendiente</label>
+      <div class="chips" id="q-nec"></div>
 
-      <div class="field"><label>¿Cuántas personas en el hogar?</label><input id="q-personas" inputmode="numeric" placeholder="Ej. 4"></div>
+      <div class="field" style="margin-top:16px"><label class="label">Detalle <span>(opcional)</span></label><textarea class="input" id="q-detalle" placeholder="Cuéntanos con más detalle qué necesitan"></textarea></div>
 
-      <label class="clab">¿Qué necesitan?</label>
-      <div class="cchips" id="q-nec"></div>
+      <label class="label" style="margin:6px 0 8px 3px">Entregas ya registradas cerca de este punto</label>
+      <div id="q-ents"><p class="muted" style="font-size:13px;margin:2px 3px">Marca primero el punto en el mapa (paso 1) para revisar qué ha llegado ahí.</p></div>
+      <p class="hint warn" id="h-dup" hidden></p>
+    </section>
 
-      <div class="field" style="margin-top:16px"><label>Detalle (opcional)</label><textarea id="q-detalle" placeholder="Cuéntanos con más detalle qué necesitan"></textarea></div>
+    <!-- PASO 4: autorizaciones y resumen -->
+    <section class="step" data-step="4">
+      <h3 class="q">Autorización y resumen</h3>
+      <p class="qs">Los datos personales quedan privados: en el mapa solo sale la necesidad y la zona, nunca el nombre ni la cédula.</p>
 
-      <div class="field"><label>Registrado por (si eres coordinador o brigada)</label><input id="q-por" placeholder="Tu nombre, si registras a otra persona"></div>
+      <div class="field"><label class="label">Registrado por <span>(si eres coordinador o brigada)</span></label><input class="input" id="q-por" placeholder="Tu nombre, si registras a otra persona"></div>
 
-      <label class="ccheck"><input type="checkbox" id="q-consent"><span id="q-consent-txt">Autorizo a los coordinadores de Aquí Estamos a tratar mis datos (nombre, cédula, teléfono y dirección) para coordinar y verificar la entrega de ayudas del terremoto de Pereira, y a compartirlos con las autoridades competentes para ese fin. Puedo pedir consultar, corregir o eliminar mis datos. <b>(Ley 1581 de 2012)</b></span></label>
+      <label class="label" style="margin:6px 0 8px 3px">Autorizaciones</label>
+      <button type="button" class="srow" id="q-consent"><span class="st"><b>Autoriza el uso de sus datos</b><small>Solo para coordinar y verificar la ayuda, y reportar a autoridades (Ley 1581 de 2012)</small></span><span class="sw"></span></button>
+      <button type="button" class="srow" id="q-pubtel"><span class="st"><b>Publicar solo su teléfono</b><small>Sin nombre ni cédula, para ser el contacto de su cuadra</small></span><span class="sw"></span></button>
 
-      <label class="ccheck"><input type="checkbox" id="q-pubtel"><span>Autorizo publicar <b>solo mi teléfono</b> (no mi nombre ni cédula) para que me contacten directamente. Seré el <b>contacto de mi cuadra</b>.</span></label>
+      <label class="label" style="margin:20px 0 8px 3px">Resumen de la ficha</label>
+      <div class="summary" id="q-resumen"></div>
+    </section>
 
-      <button type="submit" class="dcta" id="q-enviar">Registrar en el censo</button>
-      <p class="cprivx">Tus datos personales quedan <b>privados</b>. En el mapa solo se muestra la necesidad y la zona, nunca tu nombre ni tu cédula.</p>
-    </form>
+    <!-- ÉXITO -->
+    <section class="step" data-step="5">
+      <div class="done-wrap">
+        <div class="done-ic">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.8V20a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V9.8"/><path d="m9.5 14.5 1.8 1.8 3.5-3.5"/></svg>
+        </div>
+        <h3>Vivienda censada</h3>
+        <p id="ok-txt">Ya quedó en el censo. Cualquier brigada que llegue va a ver qué recibió y qué falta.</p>
+        <div class="folio"><small>FICHA</small>&nbsp;<span id="ok-ficha"></span></div>
+      </div>
+      <div class="summary" id="ok-resumen" style="margin-top:22px"></div>
+      <p class="hint" style="margin-top:14px">Guarda el número de la ficha: con él se puede registrar la próxima entrega en esta vivienda.</p>
+    </section>
+  </div>
 
-    <div class="cok" id="c-ok" hidden>
-      <span class="dw-mark"></span>
-      <h2>Registrado. Gracias</h2>
-      <p>Quedaste en el censo. Con esto podemos coordinar y verificar que la ayuda llegue. Que Dios te acompañe.</p>
-      <a class="dcta" id="ok-otro" href="/censo">Registrar a otra persona</a>
-      <a class="dregistrar" href="/" style="margin-top:10px">Volver al mapa</a>
-    </div>
-  </div></div></main>
+  <div class="sfoot">
+    <button type="button" class="cta ghost" id="w-prev" aria-label="Atrás">
+      <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m15 6-6 6 6 6"/></svg>
+    </button>
+    <button type="button" class="cta purple" id="w-next">Continuar</button>
+  </div>
 
-  <footer><div class="version" id="version"></div></footer>
   <div id="d-toast" class="dtoast" hidden></div>
 </div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="js/config.js"></script>
-<script src="js/version.js"></script>
-<script src="js/censo.js"></script>
+<script src="js/config.js?v=1.32.0"></script>
+<script src="js/version.js?v=1.32.0"></script>
+<script src="js/censo.js?v=1.32.0"></script>
 </body>
 </html>
