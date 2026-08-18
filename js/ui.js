@@ -227,17 +227,16 @@ function render(){
   // Una alerta accionable, no tres stat-cards decorativas: se lidera con lo más
   // grave y el resto queda como contexto en una línea.
   const persTxt = personas.toLocaleString('es-CO');
+  // resumen compacto: tres datos, cero parrafos
   let zAlert;
-  if(criticas){
-    zAlert = `<div class="zalert crit">${ico('alert')}<div class="grow">
-      <b>${criticas} zona${criticas>1?'s':''} en estado crítico</b>, sin ayuda todavía.
-      <div class="muted">${orf.length} punto${orf.length===1?'':'s'} sin coordinador · ${persTxt} personas sin cubrir</div></div></div>`;
-  } else if(orf.length || personas){
-    zAlert = `<div class="zalert warn">${ico('alert')}<div class="grow">
-      <b>${orf.length} punto${orf.length===1?'':'s'} sin coordinador</b>
-      <div class="muted">${persTxt} personas sin cubrir</div></div></div>`;
+  if(criticas || orf.length || personas){
+    zAlert = `<div class="zresumen">
+      ${criticas?`<span class="zr ${criticas?'crit':''}">${ico('alert')} <b>${criticas}</b> crítica${criticas>1?'s':''}</span>`:''}
+      ${orf.length?`<span class="zr warn">${ico('user')} <b>${orf.length}</b> sin coordinador</span>`:''}
+      ${personas?`<span class="zr">${ico('users')} <b>${persTxt}</b> personas</span>`:''}
+    </div>`;
   } else {
-    zAlert = `<div class="zalert ok">${ico('check')}<div class="grow"><b>Todo cubierto por ahora</b>: sin zonas críticas.</div></div>`;
+    zAlert = `<div class="zresumen"><span class="zr ok">${ico('check')} Todo cubierto por ahora</span></div>`;
   }
   $('#kpis').innerHTML = zAlert;
   $('#kpis').style.display = 'block';
@@ -264,7 +263,11 @@ function render(){
            <button type="button" class="mini go" data-cuenta>Ver y corregir</button>
          </div>
        </div>
-       <button type="button" class="btn" data-inscribir>${ico('plus')} Cubrir otro sector</button>`
+       <button type="button" class="promo-coord grad-azul" data-inscribir>
+         <span class="pi">${ico('plus')}</span>
+         <span class="pt"><b>Cubrir otro sector</b><small>Suma otra micro-zona a tu cargo</small></span>
+         <span class="pa"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg></span>
+       </button>`
     : `<button type="button" class="btn flat" data-cuenta style="margin-top:0">Ya me inscribí, quiero entrar</button>
        <p class="muted" style="margin:8px 2px 0;font-size:12.5px">El registro es con tu celular y un PIN — sin correo ni contraseñas largas.</p>`);
 
@@ -315,6 +318,11 @@ function render(){
       : vacio('Todavía nadie ha reportado',
               'Cuando alguien pida ayuda, aquí van a salir los sitios donde no hay quien responda.'));
 
+  // titulo de la lista segun el filtro
+  const zsec=$('#zonas-sec');
+  if(zsec) zsec.textContent = filtro==='censo' ? 'Viviendas del censo'
+    : filtro==='albergues' ? 'Albergues' : 'Menor cobertura de ayuda';
+
   // lista: censo, albergues o zonas según el filtro
   if(filtro==='censo'){
     const cs = (S.censo||[]).slice().sort((a,b)=>(b.ts||0)-(a.ts||0));
@@ -329,7 +337,11 @@ function render(){
             <div class="muted">${cn.personas?`${cn.personas} persona${cn.personas>1?'s':''} · `:''}censo</div></div></div>
         ${chips?`<div style="margin-top:8px">${chips}</div>`:''}</div>`;
     }).join('');
-    const regBtn = `<a class="btn" href="/censo" style="display:flex;align-items:center;justify-content:center;gap:8px;margin:0 0 14px;text-decoration:none;background:#7c3aed;color:#fff">${ico('plus')} Registrar una vivienda</a>`;
+    const regBtn = `<a class="promo-coord" href="/censo" style="text-decoration:none;margin-bottom:14px">
+      <span class="pi">${ico('user')}</span>
+      <span class="pt"><b>Registrar una vivienda</b><small>Censo privado: verifica que la ayuda llegue</small></span>
+      <span class="pa"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg></span>
+    </a>`;
     $('#lista-zonas').innerHTML = regBtn + ($('#lista-zonas').innerHTML || vacio('Sin censo todavía','Aún no hay viviendas registradas en el censo con ubicación.',''));
     document.querySelectorAll('#lista-zonas .card').forEach(c=>c.onclick=()=>abrirCenso(cs[+c.dataset.censo]));
     return;

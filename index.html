@@ -23,7 +23,7 @@
 <meta name="twitter:description" content="Coordinación abierta de ayuda para el terremoto de Pereira.">
 <meta name="twitter:image" content="https://aquiestamos.co/img/hero-donar.jpg">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
-<link rel="stylesheet" href="css/app.css?v=1.36.0">
+<link rel="stylesheet" href="css/app.css?v=1.36.1">
 <script>
 /* URL sin ".html" en el sitio publicado (en localhost la extensión hace falta). */
 (function(){ var h=location.hostname; if(h==='localhost'||h==='127.0.0.1'||h==='') return;
@@ -202,11 +202,6 @@ document.documentElement.setAttribute('data-eff', window.temaEfectivo());
     <!-- ZONAS -->
     <section class="view" id="v-zonas"><div class="pad">
       <div class="kpis" id="kpis"></div>
-      <div class="note" id="zonas-nota">
-        <button class="nota-x" id="zonas-nota-x" type="button" aria-label="Ocultar esta explicación">×</button>
-        Arriba están las zonas donde se pidió ayuda y <b>no ha llegado</b>.
-        Si tiene algo para entregar, empiece por ahí.<br>
-        La barra muestra <b>cuánta ayuda ha llegado</b> frente a lo que se pidió.</div>
       <div class="tabsub" id="filtros">
         <button data-f="todas" class="on">Todas</button>
         <button data-f="comuna">Comunas</button>
@@ -216,6 +211,7 @@ document.documentElement.setAttribute('data-eff', window.temaEfectivo());
         <button data-f="censo">Censo</button>
         <button data-f="albergues">Albergues</button>
       </div>
+      <div class="sec" id="zonas-sec">Menor cobertura de ayuda</div>
       <div id="lista-zonas"></div>
     </div></section>
 
@@ -300,15 +296,15 @@ document.documentElement.setAttribute('data-eff', window.temaEfectivo());
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="js/config.js?v=1.36.0"></script>
-<script src="js/version.js?v=1.36.0"></script>
-<script src="js/data.js?v=1.36.0"></script>
-<script src="js/estado.js?v=1.36.0"></script>
-<script src="js/calc.js?v=1.36.0"></script>
-<script src="js/mapa.js?v=1.36.0"></script>
-<script src="js/hojas.js?v=1.36.0"></script>
-<script src="js/cuenta.js?v=1.36.0"></script>
-<script src="js/ui.js?v=1.36.0"></script>
-<script src="js/dar.js?v=1.36.0"></script>
+<script src="js/config.js?v=1.36.1"></script>
+<script src="js/version.js?v=1.36.1"></script>
+<script src="js/data.js?v=1.36.1"></script>
+<script src="js/estado.js?v=1.36.1"></script>
+<script src="js/calc.js?v=1.36.1"></script>
+<script src="js/mapa.js?v=1.36.1"></script>
+<script src="js/hojas.js?v=1.36.1"></script>
+<script src="js/cuenta.js?v=1.36.1"></script>
+<script src="js/ui.js?v=1.36.1"></script>
+<script src="js/dar.js?v=1.36.1"></script>
 </body>
 </html>
