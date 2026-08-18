@@ -8,7 +8,7 @@
 <link rel="icon" type="image/svg+xml" href="logo/marca.svg">
 <title>Aquí Estamos · Administración</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
-<link rel="stylesheet" href="css/app.css?v=1.46.0">
+<link rel="stylesheet" href="css/app.css?v=1.46.1">
 <style>
   /* El panel es mobile-first: una columna, pestañas fijas abajo. En pantalla
      grande se centra en una franja de ancho de celular para no deformarse. */
@@ -250,9 +250,9 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="js/config.js?v=1.46.0"></script>
-<script src="js/version.js?v=1.46.0"></script>
-<script src="js/data.js?v=1.46.0"></script>
+<script src="js/config.js?v=1.46.1"></script>
+<script src="js/version.js?v=1.46.1"></script>
+<script src="js/data.js?v=1.46.1"></script>
 <script>
 /* ============================================================
    PANEL DE ADMINISTRACIÓN — Aquí Estamos
@@ -319,19 +319,11 @@ let CONTACTOS = {};  // folio -> {nombre, tel, whatsapp}  (tabla privada; requie
 let CENSO    = [];   // viviendas del censo (privado con clave; anónimo sin ella)
 let SEGP     = 'abiertos';   // segmento de Pedidos: abiertos | atendidos | censo
 
-/* Clave de administración: se pega UNA vez y vive solo en este teléfono.
-   Da lectura a las tablas privadas (contactos del reporte, censo completo).
-   Nunca va en el código ni en el repositorio. */
-const AKEY = ()=>{ try{ return localStorage.getItem('ae_admin_sk')||''; }catch(e){ return ''; } };
-async function sfetch(pathq){
-  const k=AKEY(); if(!k) return null;
-  try{
-    const r = await fetch(`${CONFIG.SUPABASE_URL}/rest/v1/${pathq}`,
-      {headers:{apikey:k, Authorization:'Bearer '+k}});
-    if(!r.ok) return null;
-    return await r.json();
-  }catch(e){ return null; }
-}
+/* Acceso a lo privado: por el MISMO correo con que entras al panel.
+   Si tu correo está en la lista de administradores (tabla `admins`),
+   la base te deja leer contactos y censo. Sin claves que pegar. */
+let PRIV = false;
+const AKEY = ()=> PRIV ? '1' : '';   // compatibilidad con los avisos
 let VISTA = 'inicio';
 let SEG   = 'esperando';
 let BUSCA = '';
@@ -525,9 +517,9 @@ const EV_TXT = {habitable:['Habitable','#22c55e'], danos:['Con daños','#f5a524'
 const PRIO_TXT = {ninos5:'niños <5', mayores:'adultos mayores', discapacidad:'discapacidad', embarazo:'embarazo'};
 
 function vPedidos(){
-  const sinClave = !AKEY() && !DEMO;
-  const aviso = sinClave ? `<div class="alert amber"><div class="ti">Sin clave de administración</div>
-    <div class="cx">Los teléfonos de contacto y el censo completo son privados. Pega tu clave en <b>Más → Clave de administración</b> para verlos aquí.</div></div>` : '';
+  const sinPriv = !AKEY() && !DEMO;
+  const aviso = sinPriv ? `<div class="alert amber"><div class="ti">Correo sin permiso de administración</div>
+    <div class="cx">Entraste como <b>${esc(YO.email||'—')}</b>. Los teléfonos y el censo solo se muestran a los correos autorizados.</div></div>` : '';
 
   if(SEGP==='censo'){ return vCensoLista(aviso); }
 
@@ -576,7 +568,7 @@ function vCensoLista(aviso){
       ${c.tel?`<a class="waq" href="${waLink(c.tel,'Hola, le escribo de Aquí Estamos por el censo '+c.ficha)}" target="_blank" rel="noopener">${WA_SVG}</a>`:''}
       <button class="chev" data-vivienda="${esc(c.id)}">›</button>
     </div>`;
-  }).join('') || `<div class="vacio"><b>Sin viviendas${AKEY()||DEMO?'':' visibles'}</b><p>${AKEY()||DEMO?'Cuando se registre una vivienda en el censo aparece aquí.':'Con la clave de administración ves el censo completo (nombres, teléfonos y fichas).'}</p></div>`;
+  }).join('') || `<div class="vacio"><b>Sin viviendas${AKEY()||DEMO?'':' visibles'}</b><p>${AKEY()||DEMO?'Cuando se registre una vivienda en el censo aparece aquí.':'Solo los correos autorizados ven el censo completo.'}</p></div>`;
 
   $('#v-pedidos').innerHTML = `${aviso}
     <div class="seg" id="segp">
@@ -605,7 +597,7 @@ function abrirPedido(id){
       <div class="prow"><div class="info"><div class="nm">${esc(cont.nombre||'Sin nombre')}</div>
         <div class="mt">${esc(telBonito(cont.tel))}${cont.whatsapp?' · prefiere WhatsApp':''}</div></div>
         <a class="waq" href="${waLink(cont.tel,'Hola, le escribo de Aquí Estamos por su pedido '+r.folio)}" target="_blank" rel="noopener">${WA_SVG}</a></div>`
-      : `<p class="muted" style="margin:8px 0">${AKEY()||DEMO?'Este pedido no dejó contacto.':'El contacto es privado: pega tu clave en Más → Clave de administración.'}</p>`}
+      : `<p class="muted" style="margin:8px 0">${AKEY()||DEMO?'Este pedido no dejó contacto.':'El contacto es privado: solo para correos autorizados.'}</p>`}
     ${at?`<div class="alert green" style="margin-top:10px"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
       <div><div class="ti">Atendido</div><div class="cx">Hay entrega registrada de esta necesidad en la zona.</div></div></div>`
     : `<button class="btn green" data-atender="${esc(r.id)}" style="margin-top:10px">Marcar atendido (registrar entrega)</button>`}
@@ -837,10 +829,11 @@ function vMas(){
         <span>${esc(YO.email||(DEMO?'modo demostración':''))}</span></div>
     </div>
     <div class="lbl">Acceso</div>
-    <button class="mitem" id="btn-clave">
+    <div class="mitem" style="cursor:default">
       <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10.5" width="16" height="10.5" rx="3"/><path d="M8 10.5V7a4 4 0 0 1 8 0v3.5"/></svg>
-      <div class="grow"><b>Clave de administración</b><span>${AKEY()?'Guardada en este teléfono · datos privados visibles':'Sin clave — contactos y censo ocultos'}</span></div><span class="chev">›</span>
-    </button>
+      <div class="grow"><b>Datos privados</b><span>${AKEY()||DEMO?'Tu correo está autorizado: contactos y censo visibles':'Tu correo no está en la lista de administradores'}</span></div>
+      <span style="color:${AKEY()||DEMO?'#22c55e':'#f5a524'};font-size:18px">${AKEY()||DEMO?'✓':'—'}</span>
+    </div>
     <div class="lbl">Datos</div>
     <button class="mitem" id="btn-export-censo">
       <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h9l5 5v13H6z"/><path d="M14 3v6h6M9 14h7M9 17.5h5"/></svg>
@@ -939,7 +932,7 @@ async function exportar(){
 }
 
 function exportarCenso(){
-  if(!CENSO.length){ toast(AKEY()||DEMO?'No hay viviendas en el censo.':'Necesitas la clave de administración.'); return; }
+  if(!CENSO.length){ toast(AKEY()||DEMO?'No hay viviendas en el censo.':'Tu correo no tiene permiso de administración.'); return; }
   const cab = ['ficha','nombre','cedula','telefono','barrio','direccion','sena','personas','menores5','mayores65','condiciones','estado_vivienda','necesidades','detalle','lat','lng','registrado'];
   const q = v => '"'+String(v??'').replace(/"/g,'""')+'"';
   const filas = CENSO.map(c=>[c.ficha,c.nombre,c.cedula,c.tel,c.barrio,c.dir,c.sena,c.personas,c.men5,c.may65,
@@ -1010,26 +1003,6 @@ document.addEventListener('click', e=>{
   if(e.target.closest('[data-cifras]')) return abrirCifras();
   if(e.target.closest('#btn-export')) return exportar();
   if(e.target.closest('#btn-export-censo')) return exportarCenso();
-  if(e.target.closest('#btn-clave')){
-    abrirSheet(`<div class="sec" style="margin-top:4px">Clave de administración</div>
-      <p class="muted" style="line-height:1.55">Pega aquí la clave secreta (service key). Se guarda <b>solo en este teléfono</b> y da acceso a los datos privados: contactos de pedidos y censo completo. No la compartas.</p>
-      <input id="clave-in" type="password" placeholder="Pega la clave…" value="${esc(AKEY())}" style="margin-top:10px">
-      <button class="btn" id="clave-ok">Guardar en este teléfono</button>
-      ${AKEY()?'<button class="btn flat" id="clave-borrar" style="width:100%">Borrar la clave de este teléfono</button>':''}`);
-    setTimeout(()=>{
-      const okb=$('#clave-ok'); if(okb) okb.onclick=async ()=>{
-        const v=$('#clave-in').value.trim();
-        if(!v){ toast('Pega la clave primero.'); return; }
-        try{ localStorage.setItem('ae_admin_sk', v); }catch(e){}
-        toast('Clave guardada. Cargando datos privados…'); cerrarSheet(); await cargar();
-      };
-      const bb=$('#clave-borrar'); if(bb) bb.onclick=async ()=>{
-        try{ localStorage.removeItem('ae_admin_sk'); }catch(e){}
-        CONTACTOS={}; CENSO=[]; toast('Clave borrada.'); cerrarSheet(); render();
-      };
-    },50);
-    return;
-  }
   const ped = e.target.closest('[data-pedido]');
   if(ped) return abrirPedido(ped.dataset.pedido);
   const viv = e.target.closest('[data-vivienda]');
@@ -1092,13 +1065,17 @@ async function cargar(){
   REPORTES = (r.data||[]).map(deRep);
   ENTREGAS = (e.data||[]).map(deEnt);
   COORDS   = (c.data||[]).map(deCoo);
-  // privadas: solo con la clave de administración
-  const [cont, cen] = await Promise.all([
-    sfetch('reportes_contacto?select=folio,nombre,tel_e164,whatsapp&order=creado.desc&limit=2000'),
-    sfetch('censo?select=*&order=creado.desc&limit=3000'),
-  ]);
-  CONTACTOS = {}; (cont||[]).forEach(x=>{ if(x.folio && !CONTACTOS[x.folio]) CONTACTOS[x.folio]={nombre:x.nombre,tel:x.tel_e164,whatsapp:x.whatsapp}; });
-  CENSO = (cen||[]).map(deCen);
+  // privadas: la base las suelta solo si el correo logueado es admin
+  const adm = await db.from('admins').select('email').limit(1);
+  PRIV = !!(adm.data && adm.data.length);
+  if(PRIV){
+    const [cont, cen] = await Promise.all([
+      db.from('reportes_contacto').select('folio,nombre,tel_e164,whatsapp').order('creado',{ascending:false}).limit(2000),
+      db.from('censo').select('*').order('creado',{ascending:false}).limit(3000),
+    ]);
+    CONTACTOS = {}; (cont.data||[]).forEach(x=>{ if(x.folio && !CONTACTOS[x.folio]) CONTACTOS[x.folio]={nombre:x.nombre,tel:x.tel_e164,whatsapp:x.whatsapp}; });
+    CENSO = (cen.data||[]).map(deCen);
+  } else { CONTACTOS={}; CENSO=[]; }
   render();
 }
 
@@ -1123,7 +1100,7 @@ $('#enviar').onclick = async ()=>{
 if(!DEMO) db = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
 
 async function arrancar(){
-  if(DEMO){ cargarDemo(); YO={email:''}; $('#panel').hidden=false; $('#login').hidden=true; render(); return; }
+  if(DEMO){ PRIV=true; cargarDemo(); YO={email:''}; $('#panel').hidden=false; $('#login').hidden=true; render(); return; }
   const {data:{session}} = await db.auth.getSession();
   if(!session){ $('#login').hidden=false; return; }
   YO = {email: session.user.email};
