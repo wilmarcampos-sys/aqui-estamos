@@ -215,6 +215,11 @@
   :root[data-eff="light"] .sbadge.bok{color:#26714A}
   .zbar{margin-top:10px}
   .zbar>span{background:linear-gradient(90deg,#F59E0B,#EF4444)}
+  /* ocupacion de albergues: verde con cupo, ambar llenandose, rojo lleno */
+  .abar{margin-top:10px}
+  .abar>span{background:linear-gradient(90deg,#34D399,#059669)}
+  .abar.media>span{background:linear-gradient(90deg,#FBBF24,#F59E0B)}
+  .abar.llena>span{background:linear-gradient(90deg,#EF4444,#C81E1E)}
   .zfoot{display:flex;justify-content:space-between;margin-top:7px;
     font-size:11.5px;color:var(--dim);font-weight:650}
   /* fila de estadisticas de coordinacion (diseño app) */

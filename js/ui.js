@@ -348,16 +348,39 @@ function render(){
   }
   if(filtro==='albergues'){
     const albs = S.coords.filter(c=>c.lat && (c.rol||'')==='Albergue');
-    $('#lista-zonas').innerHTML = albs.map((a,i)=>{
+    // resumen de cupos de toda la ciudad: capacidad vs ocupacion
+    const conCap = albs.filter(a=>a.cap!=null);
+    const capT = conCap.reduce((n,a)=>n+a.cap,0);
+    const ocuT = conCap.reduce((n,a)=>n+(a.ocup||0),0);
+    const libres = Math.max(0, capT-ocuT);
+    const pctT = capT ? Math.round(ocuT/capT*100) : 0;
+    const resumen = capT ? `
+      <div class="card zcard">
+        <div class="row" style="align-items:flex-start">
+          <div class="grow"><h3 style="margin:0;font-size:15px">Cupos de albergue en la ciudad</h3>
+            <div class="muted" style="font-size:12.5px;margin-top:2px">${conCap.length} albergue${conCap.length>1?'s':''} con capacidad reportada</div></div>
+          <span class="sbadge ${pctT>=90?'b3':pctT>=70?'b2':'bok'}">${pctT} % lleno</span>
+        </div>
+        <div class="bar abar ${pctT>=90?'llena':pctT>=70?'media':''}"><span style="width:${pctT}%"></span></div>
+        <div class="zfoot"><span>${ocuT.toLocaleString('es-CO')} ocupados</span><span><b style="color:#5FBE8A">${libres.toLocaleString('es-CO')} cupos libres</b></span></div>
+      </div>` : '';
+    $('#lista-zonas').innerHTML = resumen + albs.map((a,i)=>{
       let f=null,bd=1e9; focos(a.z).forEach(x=>{const d=dist(a.lat,a.lng,x.lat,x.lng); if(d<bd){bd=d;f=x;}});
       const pend = (f && bd<300) ? f.needs.filter(x=>{ const e=S.entregas.filter(y=>y.k===x.k && y.lat && dist(a.lat,a.lng,y.lat,y.lng)<400).sort((p,q)=>q.ts-p.ts)[0]; return !(e && (now()-e.ts)<7*24*H); }) : [];
       const chips = pend.slice(0,6).map(x=>`<span class="chip ${x.u===3?'u3':x.u===2?'u2':''}">${esc(NEED[x.k]?.n||x.k)}</span>`).join('');
-      const cap = (a.cap!=null) ? `${a.ocup!=null?a.ocup+'/':''}${a.cap} pers.` : '';
-      return `<div class="card" data-alb="${i}" style="cursor:pointer">
-        <div class="row"><div class="rank" style="background:#F2B705;color:#3a1500">${ico('tent')}</div>
-          <div class="grow"><div class="row"><h3 class="grow trunc">${esc(a.micro||a.nom)}</h3>
-            <span class="muted">${a.ver?'Verificado':''}</span></div>
-            <div class="muted">Albergue${cap?` · ${cap}`:''}${pend.length?` · ${pend.length} necesidad${pend.length>1?'es':''}`:''}</div></div></div>
+      // grafica de ocupacion por albergue: verde con cupo, ambar llenandose, rojo lleno
+      const pct = (a.cap!=null && a.cap>0) ? Math.min(100, Math.round((a.ocup||0)/a.cap*100)) : null;
+      const lib = (a.cap!=null) ? Math.max(0, a.cap-(a.ocup||0)) : null;
+      const grafica = pct!=null ? `
+        <div class="bar abar ${pct>=90?'llena':pct>=70?'media':''}"><span style="width:${pct}%"></span></div>
+        <div class="zfoot"><span>${a.ocup||0} de ${a.cap} ocupados</span>
+          <span>${pct>=100?'<b style="color:#F87171">Lleno</b>':`<b style="color:#5FBE8A">${lib} libre${lib===1?'':'s'}</b>`}</span></div>` : '';
+      return `<div class="card zcard" data-alb="${i}" style="cursor:pointer">
+        <div class="row" style="align-items:flex-start"><div class="rank" style="background:#F2B705;color:#3a1500">${ico('tent')}</div>
+          <div class="grow" style="margin-left:2px"><h3 class="trunc" style="margin:0">${esc(a.micro||a.nom)}</h3>
+            <div class="muted" style="font-size:12.5px;margin-top:2px">Albergue${a.ver?' · verificado':''}${pend.length?` · ${pend.length} necesidad${pend.length>1?'es':''}`:''}</div></div>
+          ${pct!=null?`<span class="sbadge ${pct>=90?'b3':pct>=70?'b2':'bok'}">${pct} %</span>`:''}</div>
+        ${grafica}
         ${chips?`<div style="margin-top:8px">${chips}</div>`:''}</div>`;
     }).join('') || vacio('Sin albergues','No hay albergues registrados todavía.','');
     document.querySelectorAll('#lista-zonas .card').forEach(c=>c.onclick=()=>abrirAlbergue(albs[+c.dataset.alb]));
