@@ -28,8 +28,9 @@ $('#sheet-body').addEventListener('click', e=>{
 function actualizarYaMulti(){
   const b=document.getElementById('ya-multi'); if(!b) return;
   const n=document.querySelectorAll('#sheet-body .nec-card.sel[data-nsel]').length;
-  b.disabled=n===0;
-  b.innerHTML=n ? `${ico('check')} Ya llegó (${n})` : 'Marque lo que llegó';
+  b.hidden = n===0;               // no existe hasta que haya algo marcado
+  b.disabled = n===0;
+  if(n) b.innerHTML = `${ico('check')} Ya llegó (${n})`;
 }
 
 /* focos y "hacerme cargo" funcionan igual dentro de la hoja o en la lista general */

@@ -22,9 +22,7 @@ document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{
 function abrirSheet(html){
   if(pickMap){ try{pickMap.remove();}catch(e){} pickMap=null; }
   $('#sheet').classList.remove('peek');
-  // X de cerrar en TODAS las hojas que suben — siempre en el mismo sitio
-  $('#sheet-body').innerHTML = `<button type="button" class="sheet-x" data-close-btn aria-label="Cerrar">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>` + html;
+  $('#sheet-body').innerHTML = html;
   $('#sheet').classList.add('on'); $('.panel').scrollTop=0;
 }
 function cerrarSheet(){ $('#sheet').classList.remove('on','peek');
@@ -164,27 +162,51 @@ function abrirFoco(zid, la, lo){
     return {e, ok: !!e && e.ts > ultRep - 2*H && (now()-e.ts) < 24*H};
   };
 
-  let hayPend = false;
+  // gestión/oficio (cupos, servicios): no se "entregan" — se resuelven con manos
+  const esGestion = k => (NEED[k]?.cat||'')==='Servicios y limpieza' || k==='albergue' || k==='estructural';
+  const waCoord = cb.length && telDigitos(cb[0].tel)
+    ? (k)=>`${waLink(cb[0].tel)}?text=${encodeURIComponent(`Hola, vi en Aquí Estamos el pendiente de ${f.ref||z.n}: ${NEED[k]?.n||k}. Yo puedo ayudar.`)}`
+    : null;
+  // "Prensa/Alcaldía… verificar en terreno" es jerga interna: se traduce
+  const notaHumana = n => /verificar en terreno|prensa\/alcald/i.test(n)
+    ? `Reportado por prensa <span class="pend">sin verificar en el sitio</span>` : null;
+
+  let nCosas = 0;
   const filas = f.needs.map(x=>{
     const {e, ok} = estadoDe(x.k);
-    if(!ok) hayPend = true;
-    const uName = x.u===3?'Urgente':x.u===2?'Prioritario':'Puede esperar';
     const sub = `${NEED[x.k]?.cat||''}${x.personas?` · ~${x.personas} personas`:''}`
       + (x.subio?' · ↑ subió por corroboración':'')
-      + (ok?` · entregado ${hace(e.ts)} por ${esc(e.quien)}`:' · pendiente');
+      + (ok?` · entregado ${hace(e.ts)} por ${esc(e.quien)}`:'');
     const nota = (f.reps.filter(r=>r.k===x.k).map(r=>r.nota).find(Boolean))||'';
-    return `<div class="nec-card ${ok?'ok':'u'+x.u+' nsel'}"${ok?'':` data-nsel="${x.k}"`}>
-      ${ok?'':'<span class="nchk" aria-hidden="true"></span>'}
+    const nh = nota ? notaHumana(nota) : null;
+    // la etiqueta solo cuando distingue
+    const urgPill = (!ok && x.u===3) ? `<span class="upill u3">Urgente</span>` : '';
+    if(ok) return `<div class="nec-card ok">
+      <div class="grow"><h4>${esc(NEED[x.k]?.n||x.k)}</h4><div class="nec-sub">${sub}</div></div>
+      <span class="chip ok">✓ Llegó</span>
+    </div>`;
+    if(esGestion(x.k)){
+      return `<div class="nec-card job u${x.u}">
+        <div class="grow">
+          <h4>${esc(NEED[x.k]?.n||x.k)}${urgPill}</h4>
+          <div class="nec-sub">${nh || sub}</div>
+          ${(nota && !nh)?`<details class="fold jfold"><summary>Ver detalles</summary>
+            <div class="foldbody muted" style="font-size:12.5px;line-height:1.45">${esc(nota)}</div></details>`:''}
+        </div>
+        ${waCoord?`<a class="mini wa" href="${waCoord(x.k)}" target="_blank" rel="noopener">${icoWA()} Yo puedo ayudar</a>`:''}
+      </div>`;
+    }
+    nCosas++;
+    return `<div class="nec-card u${x.u} nsel" data-nsel="${x.k}">
+      <span class="nchk" aria-hidden="true"></span>
       <div class="grow">
-        <h4>${esc(NEED[x.k]?.n||x.k)}${x.n>1?` <span class="u-alta">×${x.n}</span>`:''}${ok?'':`<span class="upill u${x.u}">${uName}</span>`}</h4>
-        <div class="nec-sub">${sub}</div>
-        ${nota?`<div class="nec-nota">${esc(nota)}</div>`:''}
+        <h4>${esc(NEED[x.k]?.n||x.k)}${x.n>1?` <span class="u-alta">×${x.n}</span>`:''}${urgPill}</h4>
+        <div class="nec-sub">${nh || sub || (NEED[x.k]?.cat||'')}</div>
+        ${(nota && !nh)?`<div class="nec-nota">${esc(nota)}</div>`:''}
       </div>
-      ${ok ? '<span class="chip ok">✓ Llegó</span>' : ''}
     </div>`;
   }).join('')
-  + (hayPend ? `<button type="button" class="btn green" id="ya-multi" data-z="${zid}" data-pt="${f.lat},${f.lng}" disabled>Marque lo que llegó</button>
-     <p class="muted" style="font-size:12px;margin:5px 0 0">Toque las que ya llegaron y regístrelas juntas.</p>` : '');
+  + (nCosas ? `<button type="button" class="btn green yastick" id="ya-multi" data-z="${zid}" data-pt="${f.lat},${f.lng}" hidden>Ya llegó</button>` : '');
 
   abrirSheet(`
     <div class="zhead">
@@ -196,11 +218,10 @@ function abrirFoco(zid, la, lo){
             ${f.n} reporte${f.n>1?'s':''}${f.personas?` · ~${f.personas} personas`:''} · ${hace(f.ts)}</div>
         </div>
       </div>
-      <button class="btn green" data-delivpt="${f.lat},${f.lng}">${ico('check')} Registrar entrega</button>
-      <div class="fbtns"><button type="button" class="mini" data-newpt="${f.lat},${f.lng}" data-ref="${esc(f.ref||'')}">${ico('plus')} Otra necesidad aquí</button></div>
     </div>
 
     <div class="sec">Lo que se necesita en este punto (${f.needs.length})</div>
+    ${nCosas>1?`<p class="muted secsub">Toca las que ya llegaron y regístralas juntas.</p>`:''}
     ${filas}
 
     <div class="sec">Quién responde por este punto</div>
@@ -214,13 +235,14 @@ function abrirFoco(zid, la, lo){
         </div>
         <a class="mini wa" href="${waLink(c.tel)}" target="_blank" rel="noopener">${icoWA()} WhatsApp</a>
       </div>`).join('')
-      : `<div class="foco orf"><b class="u-alta">${ico('alert')} Nadie responde por este punto.</b>
-         <div class="cnt" style="margin-top:6px">Si usted está por acá, puede quedar como referencia del sector.</div>
-         <div class="fbtns"><button type="button" class="mini" data-coordpt="${f.lat},${f.lng}">Hacerme cargo de este sector</button></div></div>`}
+      : `<p class="muted" style="margin:0 0 8px">Este punto aún no tiene a nadie a cargo. Si estás por acá, puedes quedar como referencia del sector.</p>
+         <button type="button" class="btn violeta" data-coordpt="${f.lat},${f.lng}">${ico('user')} Hacerme cargo de este sector</button>`}
 
-    <div class="fbtns" style="margin-top:14px">
+    ${nCosas ? `<button class="btn green" style="margin-top:14px" data-delivpt="${f.lat},${f.lng}">${ico('check')} Registrar entrega</button>` : ''}
+    <div class="fbtns" style="margin-top:10px">
+      <button type="button" class="mini rojo" data-newpt="${f.lat},${f.lng}" data-ref="${esc(f.ref||'')}">${ico('plus')} Otra necesidad</button>
       <button type="button" class="mini" data-verpt="${f.lat},${f.lng}">${ico('zoom')} Ver en el mapa</button>
-      <button type="button" class="mini" data-zona="${zid}">Ver toda la zona ${esc(z.n)}</button>
+      <button type="button" class="mini" data-zona="${zid}">Zona ${esc(z.n)}</button>
     </div>
   `);
 }
@@ -231,8 +253,12 @@ function abrirAlbergue(a){
   // necesidades en el punto del albergue (mismo foco)
   let f=null,bd=1e9; focos(a.z).forEach(x=>{const d=dist(a.lat,a.lng,x.lat,x.lng); if(d<bd){bd=d;f=x;}});
   const nec = (f && bd<300) ? f : null;
+  // oficios (manos) vs cosas: un electricista no se "entrega"
+  const esOficio = k => (NEED[k]?.cat||'') === 'Servicios y limpieza';
+  const waAyudo = k => telDigitos(a.tel)
+    ? `${waLink(a.tel)}?text=${encodeURIComponent(`Hola, vi en Aquí Estamos que en ${a.micro||a.nom} necesitan: ${NEED[k]?.n||k}. Yo puedo ayudar.`)}`
+    : null;
   const cards = nec ? nec.needs.map(x=>{
-    const uName = x.u===3?'Urgente':x.u===2?'Prioritario':'Puede esperar';
     const nota = (nec.reps.filter(r=>r.k===x.k).map(r=>r.nota).find(Boolean))||'';
     // ¿ya llegó? entrega de esa misma necesidad, cerca del punto, en la última semana
     const e = S.entregas.filter(y=>y.k===x.k && y.lat && dist(a.lat,a.lng,y.lat,y.lng)<400)
@@ -245,12 +271,26 @@ function abrirAlbergue(a){
       </div>
       <span class="chip ok">✓ Llegó</span>
     </div>`;
+    // la etiqueta solo cuando distingue: nada de "prioritario" en todas
+    const urgTxt = x.u===3 ? ' · <b style="color:#F87171">urgente</b>' : '';
+    if(esOficio(x.k)){
+      const wa = waAyudo(x.k);
+      return `<div class="nec-card job u${x.u}">
+        <div class="grow">
+          <h4>${esc(NEED[x.k]?.n||x.k)}</h4>
+          <div class="nec-sub">Se necesita este oficio${urgTxt}</div>
+          ${nota?`<details class="fold jfold"><summary>Ver requisitos</summary>
+            <div class="foldbody muted" style="font-size:12.5px;line-height:1.45">${esc(nota)}</div></details>`:''}
+        </div>
+        ${wa?`<a class="mini wa" href="${wa}" target="_blank" rel="noopener">${icoWA()} Yo puedo ayudar</a>`
+            :`<span class="cnt">Coordinador por confirmar</span>`}
+      </div>`;
+    }
     return `<div class="nec-card u${x.u} nsel" data-nsel="${x.k}">
       <span class="nchk" aria-hidden="true"></span>
       <div class="grow">
-        <h4>${esc(NEED[x.k]?.n||x.k)}${x.n>1?` <span class="u-alta">×${x.n}</span>`:''}<span class="upill u${x.u}">${uName}</span></h4>
-        <div class="nec-sub">${esc(NEED[x.k]?.cat||'')} · pendiente</div>
-        ${nota?`<div class="nec-nota">${esc(nota)}</div>`:''}
+        <h4>${esc(NEED[x.k]?.n||x.k)}${x.n>1?` <span class="u-alta">×${x.n}</span>`:''}</h4>
+        <div class="nec-sub">${esc(NEED[x.k]?.cat||'')}${urgTxt}</div>
       </div>
     </div>`;
   }).join('') : '';
@@ -266,7 +306,7 @@ function abrirAlbergue(a){
   let capHtml='';
   if(cap!=null && ocup!=null && cap>0){
     const pct=Math.round(ocup/cap*100), dash=Math.min(100,pct);
-    const col=pct>=100?'var(--c4)':pct>=90?'var(--c3)':pct>=70?'var(--c2)':'var(--c0)';
+    const col=pct>=100?'var(--c3)':pct>=85?'var(--c2)':pct>=60?'var(--c1)':'var(--c0)';
     capHtml=`<div class="capmini">
       <div class="capnums"><span class="caplabel">Capacidad</span><b>${ocup}<span class="capsl">/${cap}</span></b><span>${cap-ocup} libres</span></div>
       <svg class="capring" viewBox="0 0 36 36" aria-hidden="true">
@@ -282,7 +322,7 @@ function abrirAlbergue(a){
   abrirSheet(`
     <div class="zhead">
       <div class="row">
-        <div class="rank" style="background:#F2B705;color:#3a1500">${ico('tent')}</div>
+        <div class="rank" style="background:#F2B705;color:#3a1500"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.8V20h14V9.8"/><path d="M10 20v-5h4v5"/></svg></div>
         <div class="grow">
           <h3 style="margin:0">${esc(a.micro||a.nom)}</h3>
           <div class="muted">Albergue · ${esc(z?z.n:'')}${a.ver?' · <span class="verif">verificado</span>':''}</div>
@@ -291,9 +331,9 @@ function abrirAlbergue(a){
       </div>
     </div>
 
-    ${nec ? `<div class="sec">Lo que se necesita (${pendCount})</div>${cards}
-      <button type="button" class="btn green" id="ya-multi" data-z="${a.z}" data-pt="${a.lat},${a.lng}" disabled>Marque lo que llegó</button>
-      <p class="muted" style="font-size:12px;margin:5px 0 0">Toque las que ya llegaron y regístrelas juntas.</p>`
+    ${nec ? `<div class="sec">Lo que se necesita (${pendCount})</div>
+      ${nec.needs.filter(x=>!esOficio(x.k)).length>1?`<p class="muted secsub">Toca las que ya llegaron y regístralas juntas.</p>`:''}${cards}
+      <button type="button" class="btn green yastick" id="ya-multi" data-z="${a.z}" data-pt="${a.lat},${a.lng}" hidden>Ya llegó</button>`
           : `<div class="sec">Necesidades</div><p class="muted" style="margin:0">Sin necesidades reportadas todavía en este albergue.</p>`}
 
     <div class="sec">Coordinador del albergue</div>
@@ -302,23 +342,23 @@ function abrirAlbergue(a){
       <div class="grow">
         <div style="font-size:14px;font-weight:700">${esc(a.nom)}</div>
         ${telDigitos(a.tel)
-          ? `<div class="telcopia"><span class="telnum">${esc(telEnmascarado(a.tel))}</span>
-              <button type="button" class="tcopy" data-copiar-tel="+${esc(telDigitos(a.tel))}">Copiar número</button></div>`
+          ? `<div class="telcopia"><span class="telnum">${esc(telEnmascarado(a.tel))}</span></div>
+             <div class="telacts">
+               <a class="mini wa" href="${waLink(a.tel)}" target="_blank" rel="noopener">${icoWA()} WhatsApp</a>
+               <button type="button" class="tcopy" data-copiar-tel="+${esc(telDigitos(a.tel))}">Copiar número</button>
+             </div>`
           : `<div class="cnt">Contacto por confirmar</div>`}
       </div>
-      ${telDigitos(a.tel) ? `<a class="mini wa" href="${waLink(a.tel)}" target="_blank" rel="noopener">${icoWA()} WhatsApp</a>` : ''}
     </div>
 
     ${a.nota?`<div class="sec">Servicios y notas</div>
       <p class="muted" style="line-height:1.5;margin:0">${esc(a.nota)}</p>`:''}
 
-    <div class="btn2" style="margin-top:14px">
-      <button class="btn red" data-newpt="${a.lat},${a.lng}" data-ref="${esc(a.micro||'')}">${ico('plus')} Reportar necesidad</button>
-      <button class="btn green" data-delivpt="${a.lat},${a.lng}">${ico('check')} Registrar entrega</button>
-    </div>
-    <div class="fbtns" style="margin-top:12px">
+    <button class="btn green" style="margin-top:14px" data-delivpt="${a.lat},${a.lng}">${ico('check')} Registrar entrega</button>
+    <div class="fbtns" style="margin-top:10px">
+      <button type="button" class="mini rojo" data-newpt="${a.lat},${a.lng}" data-ref="${esc(a.micro||'')}">${ico('plus')} Reportar necesidad</button>
       <button type="button" class="mini" data-verpt="${a.lat},${a.lng}">${ico('zoom')} Ver en el mapa</button>
-      <button type="button" class="mini" data-zona="${a.z}">Ver la zona ${esc(z?z.n:'')}</button>
+      <button type="button" class="mini" data-zona="${a.z}">Zona ${esc(z?z.n:'')}</button>
     </div>
   `);
 }
