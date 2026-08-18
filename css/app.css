@@ -138,6 +138,7 @@
 
   main{flex:1;position:relative;overflow:hidden}
   .view{position:absolute;inset:0;display:none;overflow-y:auto;-webkit-overflow-scrolling:touch}
+  #v-map.view{overflow:hidden}
   .view.on{display:block}
   .pad{padding:14px 14px calc(28px + var(--safe))}
   /* En escritorio ancho, que una fila no se estire de lado a lado: cada
@@ -514,7 +515,7 @@
   .gs-foot .cta.blue{background:linear-gradient(160deg,#3B82F6,#1D4ED8);box-shadow:0 8px 18px rgba(0,0,0,.35)}
   .gs-foot .cta.soft{background:var(--chip);color:var(--txt);box-shadow:none}
   /* mientras la hoja Dar esta abierta, la hoja normal se esconde */
-  .msheet.tucked{transform:translateY(110vh)!important;pointer-events:none}
+  .msheet.tucked{visibility:hidden;pointer-events:none}
 
   /* panel compacto de "Llévalo aquí": todo cabe en un pantallazo */
   .darc h2{margin:0 0 2px;font-size:19px;letter-spacing:-.4px}
