@@ -509,11 +509,12 @@
     display:flex;align-items:center;justify-content:center;gap:8px;
     transition:transform .16s var(--ease),filter .2s}
   .gs-foot .cta:active{transform:scale(.975);filter:brightness(.94)}
+  .gs-foot .cta[hidden]{display:none}
   .gs-foot .cta.green{background:linear-gradient(160deg,#22C55E,#15803D);box-shadow:0 8px 18px rgba(0,0,0,.35)}
   .gs-foot .cta.blue{background:linear-gradient(160deg,#3B82F6,#1D4ED8);box-shadow:0 8px 18px rgba(0,0,0,.35)}
   .gs-foot .cta.soft{background:var(--chip);color:var(--txt);box-shadow:none}
   /* mientras la hoja Dar esta abierta, la hoja normal se esconde */
-  .msheet.tucked{transform:translateY(110%)!important}
+  .msheet.tucked{transform:translateY(110vh)!important;pointer-events:none}
 
   /* panel compacto de "Llévalo aquí": todo cabe en un pantallazo */
   .darc h2{margin:0 0 2px;font-size:19px;letter-spacing:-.4px}

@@ -585,7 +585,9 @@ pintarTema();
     sheet.classList.toggle('open', v < collapsed/2); }
   function medir(){
     const acts=sheet.querySelector('.actions'); if(!acts) return;
-    const colH=acts.offsetTop+acts.offsetHeight+14;
+    const link=sheet.querySelector('.censar-link');
+    const ref=link||acts;
+    const colH=ref.offsetTop+ref.offsetHeight+10;
     collapsed=Math.max(0, sheet.offsetHeight-colH);
     setY(sheet.classList.contains('open')?0:collapsed);
   }
