@@ -10,7 +10,7 @@ if(!modoSVG){
     // sin animación: responde siempre, hasta en teléfonos lentos
     if(zin) zin.onclick = ()=>map.setZoom(map.getZoom()+1, {animate:false});
     if(zout) zout.onclick = ()=>map.setZoom(map.getZoom()-1, {animate:false});
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:18, opacity:.72}).addTo(map);
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',{maxZoom:19, subdomains:'abcd'}).addTo(map);
     capa = L.layerGroup().addTo(map);
   }catch(e){ modoSVG = true; }
 }
@@ -50,6 +50,7 @@ function pintarSVG(){
 }
 
 const UCOL = {3:'#dc2626', 2:'#d97706', 1:'#c9a227'};
+const UGRAD = {3:'linear-gradient(160deg,#EF4444,#C81E1E)', 2:'linear-gradient(160deg,#F59E0B,#C2600A)', 1:'linear-gradient(160deg,#D4AC2B,#8A6508)'};
 const CENSO_NEED = {agua:'Agua', alimentos:'Alimentos', medicamentos:'Medicamentos',
   albergue:'Albergue', aseo:'Aseo e higiene', ropa:'Ropa y cobijas', bebes:'Bebés y pañales', otra:'Otra'};
 
@@ -73,9 +74,8 @@ function pintarMapa(){
     }).length : 0;
     const badge = nnec ? `<span style="position:absolute;top:-7px;right:-7px;min-width:18px;height:18px;padding:0 3px;
       border-radius:9px;background:#dc2626;border:2px solid #fff;color:#fff;font:800 11px/15px system-ui;text-align:center">${nnec}</span>` : '';
-    L.marker([a.lat,a.lng],{zIndexOffset:900,icon:L.divIcon({className:'',iconSize:[30,30],iconAnchor:[15,15],
-      html:`<div style="position:relative;width:30px;height:30px;border-radius:10px;background:#F2B705;border:2px solid #7a1616;
-        display:grid;place-items:center;color:#3a1500;box-shadow:0 2px 8px rgba(0,0,0,.55)">${ico('tent')}${badge}</div>`})}).addTo(capa)
+    L.marker([a.lat,a.lng],{zIndexOffset:900,icon:L.divIcon({className:'',iconSize:[34,34],iconAnchor:[17,17],
+      html:`<div class="mpin mpin-alb" style="width:34px;height:34px">${ico('tent')}${badge}</div>`})}).addTo(capa)
       .bindTooltip(`<b>${esc(a.micro||a.nom)}</b><br>Albergue${a.ver?' · verificado':''}${nnec?` · <b>${nnec} necesidad${nnec>1?'es':''}</b>`:''}<br><i>Toque para ver</i>`,{direction:'top'})
       .on('click',()=>abrirAlbergue(a));
   });
@@ -91,8 +91,7 @@ function pintarMapa(){
     const badge = atendido ? `<span style="position:absolute;bottom:-4px;right:-4px;width:14px;height:14px;border-radius:50%;
       background:#3f8f5f;border:2px solid #fff;display:grid;place-items:center;color:#fff">${ico('check')}</span>` : '';
     L.marker([cn.lat,cn.lng],{zIndexOffset:atendido?590:600,icon:L.divIcon({className:'',iconSize:[24,24],iconAnchor:[12,12],
-      html:`<div style="position:relative;width:20px;height:20px;border-radius:50%;background:#7c3aed;
-        border:2px solid ${atendido?'#3f8f5f':'#fff'};display:grid;place-items:center;color:#fff;box-shadow:0 2px 8px rgba(0,0,0,.5)">${ico('user')}${badge}</div>`})}).addTo(capa)
+      html:`<div class="mpin mpin-cen" style="width:24px;height:24px${atendido?';border-color:#3f8f5f':''}">${ico('user')}${badge}</div>`})}).addTo(capa)
       .bindTooltip(`<b>Censo</b>${cn.personas?` · ${cn.personas} persona${cn.personas>1?'s':''}`:''}`
         +`${atendido?'<br><b style="color:#86efac">Atendido</b>':(necTxt?`<br>${esc(necTxt)}`:'')}${cn.barrio?`<br>${esc(cn.barrio)}`:''}<br><i>Toque para ver</i>`,{direction:'top'})
       .on('click',()=>abrirCenso(cn));
@@ -104,9 +103,9 @@ function pintarMapa(){
       if(CAPAS.soloaltas && f.u!==3) return;
       const rad = 14 + Math.min(14, f.n*2.2);
       L.marker([f.lat,f.lng],{icon:L.divIcon({className:'', iconSize:[rad*2,rad*2], iconAnchor:[rad,rad],
-        html:`<div style="width:${rad*2}px;height:${rad*2}px;border-radius:50%;
-          background:${UCOL[f.u]};opacity:.9;border:2px solid #0f172a;display:grid;place-items:center;
-          color:#fff;font:800 ${11+Math.min(4,f.n/2)}px system-ui;box-shadow:0 0 0 ${f.subio?'4px rgba(220,38,38,.28)':'0 transparent'}">${f.n}</div>`
+        html:`<div class="mpin" style="width:${rad*2}px;height:${rad*2}px;border-radius:${Math.round(rad*.68)}px;
+          background:${UGRAD[f.u]||UCOL[f.u]};font:800 ${11+Math.min(4,f.n/2)}px system-ui;
+          box-shadow:0 3px 10px rgba(0,0,0,.3)${f.subio?',0 0 0 4px rgba(220,38,38,.28)':''}">${f.n}</div>`
       })}).addTo(capa)
         .bindTooltip(`<b>${esc(f.ref||'Punto sin nombre')}</b><br>${f.n} reporte${f.n>1?'s':''} · ${f.needs.slice(0,3).map(x=>esc(NEED[x.k]?.n||x.k)).join(', ')}${f.subio?'<br><b>Urgencia elevada por corroboración</b>':''}<br><i>Toque para ver y reportar</i>`,{direction:'top'})
         .on('click',()=>abrirFoco(zz.id, f.lat, f.lng));
@@ -114,8 +113,7 @@ function pintarMapa(){
     if(CAPAS.entregas) S.entregas.forEach(e=>{
       if(!e.lat) return;
       L.marker([e.lat,e.lng],{icon:L.divIcon({className:'',iconSize:[20,20],iconAnchor:[10,10],
-        html:`<div style="width:18px;height:18px;border-radius:5px;background:#3f8f5f;border:2px solid #0f172a;
-          display:grid;place-items:center;color:#fff">${ico('check')}</div>`})}).addTo(capa)
+        html:`<div class="mpin mpin-ent" style="width:20px;height:20px;border-radius:7px">${ico('check')}</div>`})}).addTo(capa)
         .bindTooltip(`Entregado: ${NEED[e.k]?.n||e.k} · ${e.quien}`,{direction:'top'});
     });
     /* micro-zonas de los coordinadores (los albergues ya van con su carpa) */
@@ -236,7 +234,7 @@ function pickerInit(id, zid, pt, onMove){
   pickMap = L.map(id,{zoomControl:false, attributionControl:false, tap:true})
              .setView([c0.lat,c0.lng], pt?16.5:15);
   L.control.zoom({position:'bottomright'}).addTo(pickMap);
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19}).addTo(pickMap);
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',{maxZoom:19, subdomains:'abcd'}).addTo(pickMap);
 
   // pin real: se puede arrastrar, y tocando el mapa se mueve solo
   pickMk = L.marker([c0.lat,c0.lng],{draggable:true, autoPan:true, icon:PIN}).addTo(pickMap);

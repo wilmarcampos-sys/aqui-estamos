@@ -9,7 +9,7 @@
     --c0:#3f8f5f; --c1:#c9a227; --c2:#d97706; --c3:#dc2626; --c4:#8b1a1a;
     --safe:env(safe-area-inset-bottom,0px);
     /* lenguaje app móvil: chip activo del nav y curva de movimiento */
-    --seg:#2b3341;
+    --seg:#2b3341; --glass:rgba(15,23,42,.72);
     --ease:cubic-bezier(.32,.72,0,1);
   }
   /* TEMA CLARO — se activa cuando data-eff="light" (lo pone el script del
@@ -22,9 +22,10 @@
     --txt:#0E1729; --dim:#5B6B87; --acc:#1A62C8; --link:#1A62C8;
     /* escala de desatención recalculada para fondo claro (contrastes AA) */
     --c0:#26714A; --c1:#8A6508; --c2:#B45309; --c3:#C11B1B; --c4:#7A1616;
-    --seg:#FFFFFF;
+    --seg:#FFFFFF; --glass:rgba(255,255,255,.72);
   }
-  :root[data-eff="light"] .leaflet-tile{opacity:1!important;filter:saturate(.92)}
+  :root[data-eff="light"] .leaflet-tile{filter:saturate(.95)}
+  :root:not([data-eff="light"]) #map .leaflet-tile{filter:invert(1) hue-rotate(180deg) brightness(.86) contrast(.92)}
   :root[data-eff="light"] header h1 span{color:#B8860B}
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
   /* En iOS el viewport cambia con la barra de Safari. Si body va con 100%
@@ -214,7 +215,7 @@
     100%{opacity:0;transform:translateY(-74px) scale(.97)}
   }
 
-  .legend{position:absolute;top:12px;left:12px;z-index:600;background:var(--panel);
+  .legend{position:absolute;top:12px;left:12px;z-index:600;background:var(--glass);backdrop-filter:saturate(160%) blur(18px);-webkit-backdrop-filter:saturate(160%) blur(18px);
     border:1px solid var(--line);border-radius:16px;padding:12px 14px;font-size:13px;color:var(--dim);
     backdrop-filter:blur(10px);max-width:184px;
     box-shadow:0 3px 10px rgba(2,8,23,.28)}
@@ -234,19 +235,29 @@
   .legend.min .lchip{display:inline-flex}
   .legend.min .lcar{transform:rotate(-90deg)}
 
+  /* marcadores del mapa: cuadrado redondeado, borde blanco, gradiente */
+  .mpin{position:relative;display:grid;place-items:center;color:#fff;
+    border:2.5px solid #fff;border-radius:11px;box-shadow:0 3px 10px rgba(0,0,0,.3)}
+  .mpin .ic{width:17px;height:17px}
+  .mpin-alb{background:linear-gradient(160deg,#FBBF24,#F59E0B);color:#3a1500}
+  .mpin-ent{background:linear-gradient(160deg,#22C55E,#15803D)}
+  .mpin-ent .ic{width:12px;height:12px}
+  .mpin-cen{background:linear-gradient(160deg,#8B5CF6,#6D28D9);border-radius:50%;border-width:2px}
+  .mpin-cen .ic{width:12px;height:12px}
+
   /* columna de controles del mapa (arriba derecha, estilo app móvil):
      zoom agrupado + capas + ubícame, todos del mismo tamaño y alineados */
   .mapctl{position:absolute;top:12px;right:12px;z-index:600;
     display:flex;flex-direction:column;gap:8px;align-items:flex-end}
-  .ctl{width:44px;height:44px;background:var(--panel);border:0;color:var(--txt);
+  .ctl{width:44px;height:44px;background:var(--glass);border:0;color:var(--txt);
     display:grid;place-items:center;cursor:pointer;font-family:inherit;padding:0;
     transition:transform .12s}
   .ctl .ic{width:20px;height:20px}
   .ctl:active{transform:scale(.94)}
-  .ctl.solo{border:1px solid var(--line);border-radius:14px;backdrop-filter:blur(10px);
+  .ctl.solo{border:1px solid var(--line);border-radius:14px;backdrop-filter:saturate(160%) blur(18px);-webkit-backdrop-filter:saturate(160%) blur(18px);
     box-shadow:0 2px 8px rgba(2,8,23,.3)}
   .ctlgrp{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:14px;
-    overflow:hidden;backdrop-filter:blur(10px);box-shadow:0 2px 8px rgba(2,8,23,.3)}
+    overflow:hidden;backdrop-filter:saturate(160%) blur(18px);-webkit-backdrop-filter:saturate(160%) blur(18px);box-shadow:0 2px 8px rgba(2,8,23,.3)}
   .ctlgrp .ctl+.ctl{border-top:1px solid var(--line)}
 
   /* control de capas del mapa (filtrar qué se ve) */

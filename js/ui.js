@@ -524,7 +524,8 @@ pintarTema();
   window.addEventListener('mouseup',up);
   window.addEventListener('touchend',up);
   handle.addEventListener('click',()=>setY(current<collapsed/2?collapsed:0));
-  window.addEventListener('resize',medir);
+  // al rotar o cambiar de tamaño, medir cuando el layout ya esté quieto
+  let mT; window.addEventListener('resize',()=>{ clearTimeout(mT); mT=setTimeout(medir,180); });
   window.sheetMedir=medir;
   window.addEventListener('load',()=>setTimeout(medir,120));
   setTimeout(medir,300);
