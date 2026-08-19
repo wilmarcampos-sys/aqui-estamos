@@ -287,6 +287,47 @@ function render(){
     <div class="stat"><b style="color:#FBBF24">${S.coords.filter(c=>!c.anulado).length}</b><small>Coordinadores</small></div>
     <div class="stat"><b style="color:#5FBE8A">${S.entregas.length}</b><small>Entregas</small></div>`;
 
+  // ofertas disponibles (inventario en pie): quien tiene algo, cuanto y como contactarlo
+  (function(){
+    const w=$('#lista-ofertas'), bl=document.getElementById('b-ofertas'), pw=document.getElementById('ofrecer-wrap');
+    if(!w) return;
+    const OF_CAT = {agua:['droplet','#2563EB'], comida:['utensils','#d97706'], medic:['pill','#dc2626'],
+      bebes:['bottle','#7c3aed'], abrigo:['tent','#8B5CF6'], ropa:['shirt','#0d9488'], aseo:['soap','#2563EB'],
+      herr:['wrench','#059669'], otra:['plus','#64748b']};
+    const CAT_N = {agua:'Agua', comida:'Mercado', medic:'Medicinas y salud', bebes:'Bebés', abrigo:'Cobijas y dormir',
+      ropa:'Ropa', aseo:'Aseo', herr:'Herramientas', otra:'Otros'};
+    if(bl) bl.style.display = (S.ofertas||[]).length ? '' : 'none';
+    w.innerHTML = (S.ofertas||[]).slice(0,20).map(o=>{
+      const [icn,col] = OF_CAT[o.cat]||OF_CAT.otra;
+      return `<div class="card zcard">
+        <div class="row" style="align-items:flex-start">
+          <div class="rank" style="background:${col};color:#fff">${ico(icn)}</div>
+          <div class="grow" style="margin-left:2px">
+            <h3 style="margin:0;font-size:15px">${esc(o.cant||CAT_N[o.cat]||'Disponible')}</h3>
+            <div class="muted" style="font-size:12.5px;margin-top:2px">${esc(o.desc||CAT_N[o.cat]||'')}</div>
+            <div class="muted" style="font-size:12px;margin-top:4px">Lo tiene: <b style="color:var(--txt)">${esc(o.quien)}</b>${o.ciudad?` · ${esc(o.ciudad)}`:''}</div>
+            ${o.cond?`<div class="ofcond">${ico('help')} ${esc(o.cond)}</div>`:''}
+            <div style="margin-top:9px;display:flex;gap:7px;flex-wrap:wrap">
+              ${o.enlace?`<a class="mini" style="background:#2563EB;color:#fff;text-decoration:none;flex:0 1 auto;padding:0 13px" href="${esc(o.enlace)}" target="_blank" rel="noopener">Abrir formulario</a>`:''}
+              ${o.tel?`<button type="button" class="mini wa" style="flex:0 1 auto;padding:0 13px" data-wa-of="${esc(String(o.tel).replace(/\D/g,''))}">WhatsApp</button>`:''}
+              ${o.tel?`<button type="button" class="mini" style="flex:0 1 auto;padding:0 13px" data-copiar-tel="+${esc(String(o.tel).replace(/\D/g,''))}">Copiar tel.</button>`:''}
+            </div>
+          </div>
+          <span class="sbadge bok">Disponible</span>
+        </div>
+      </div>`;
+    }).join('');
+    w.querySelectorAll('[data-wa-of]').forEach(b=>b.onclick=()=>{
+      const d=b.dataset.waOf; window.open(`https://wa.me/${d.startsWith('57')||d.startsWith('1')?d:'57'+d}?text=${encodeURIComponent('Hola, vi en Aquí Estamos que tienes ayuda disponible. ¿Cómo coordinamos?')}`,'_blank','noopener');
+    });
+    if(pw) pw.innerHTML = `<button type="button" class="promo-coord" id="btn-ofrecer" style="background:linear-gradient(140deg,#16A34A,#15803D 60%,#166534)">
+      <span class="pi">${ico('box')}</span>
+      <span class="pt"><b>Tengo algo disponible</b><small>Publícalo con cantidad y condiciones — te contactan</small></span>
+      <span class="pa"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg></span>
+    </button>`;
+    const bo=document.getElementById('btn-ofrecer'); if(bo) bo.onclick=()=>abrirOferta();
+  })();
+
   // necesidades mas pedidas en toda la ciudad, con barra relativa
   (function(){
     const w=$('#lista-pedidas'), bl=document.getElementById('b-pedidas');

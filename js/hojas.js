@@ -68,6 +68,61 @@ function abrirCensoGrupo(barrio, arr, soloUrg){
   });
 }
 
+/* Publicar una oferta disponible: categoria, cantidad estimada, condiciones
+   y contacto. El WhatsApp se publica con consentimiento explicito. */
+function abrirOferta(){
+  const CATS=[['agua','Agua'],['comida','Mercado'],['medic','Medicinas'],['bebes','Bebés'],
+    ['abrigo','Cobijas'],['ropa','Ropa'],['aseo','Aseo'],['herr','Herramientas'],['otra','Otra']];
+  let cat=null, consent=false;
+  abrirSheet(`
+    <div class="pasohead"><h3>Tengo algo disponible</h3></div>
+    <p class="pasosub">Publica lo que tienes para que quien lo necesite te contacte y coordinen.</p>
+    <div class="sec">¿Qué es? <span class="tag req">necesario</span></div>
+    <div class="urg" id="of-cat">${CATS.map(c=>`<button type="button" data-c="${c[0]}">${c[1]}</button>`).join('')}</div>
+    <label class="f">Descríbelo</label>
+    <input id="of-desc" placeholder="Ej: sillas de ruedas para adultos y niños">
+    <label class="f">Cantidad estimada <span class="tag req">necesario</span></label>
+    <input id="of-cant" placeholder="Ej: 60 sillas · 40 mercados · 200 botellas">
+    <label class="f">Condiciones para recibirlo (opcional)</label>
+    <textarea id="of-cond" placeholder="Ej: llenar este formulario, solo fundaciones, recoger en el sitio…"></textarea>
+    <label class="f">Enlace de formulario o información (opcional)</label>
+    <input id="of-link" inputmode="url" placeholder="https://…">
+    <label class="f">¿Quién lo tiene? <span class="tag req">necesario</span></label>
+    <input id="of-quien" placeholder="Tu nombre o el de la organización" autocomplete="name">
+    <label class="f">WhatsApp de contacto</label>
+    <input id="of-tel" inputmode="tel" placeholder="Ej: 310 555 4821" autocomplete="tel">
+    <button type="button" class="srow" id="of-consent" style="margin-top:12px">
+      <span class="st"><b>Autorizo publicar este contacto</b><small>El WhatsApp o enlace será visible para coordinar entregas</small></span><span class="sw"></span></button>
+    <div class="selbar">
+      <span class="grow muted" style="font-size:12.5px">Se publica en “Disponible para recoger”.</span>
+      <button class="btn green" id="of-enviar">Publicar</button>
+    </div>
+  `);
+  document.querySelectorAll('#of-cat button').forEach(b=>b.onclick=()=>{
+    document.querySelectorAll('#of-cat button').forEach(x=>x.classList.remove('sel'));
+    b.classList.add('sel'); cat=b.dataset.c; });
+  const sw=$('#of-consent'); sw.onclick=()=>{ consent=!consent; sw.classList.toggle('on',consent); };
+  $('#of-enviar').onclick = async ()=>{
+    const cant=$('#of-cant').value.trim(), quien=$('#of-quien').value.trim();
+    const telRaw=$('#of-tel').value.trim(), link=$('#of-link').value.trim();
+    if(!cat) return toast('Marca qué es lo que tienes.');
+    if(!cant) return toast('Di la cantidad estimada.');
+    if(!quien) return toast('Di quién lo tiene.');
+    if(!telRaw && !link) return toast('Deja un WhatsApp o un enlace para contactarte.');
+    if(link && !/^https?:\/\//.test(link)) return toast('El enlace debe empezar por https://');
+    if(!consent) return toast('Falta autorizar la publicación del contacto.');
+    const dig=telRaw.replace(/\D/g,'');
+    const fila={categoria:cat, descripcion:$('#of-desc').value.trim(), cantidad:cant,
+      condiciones:$('#of-cond').value.trim(), quien,
+      tel_e164: dig ? (dig.startsWith('57')||dig.startsWith('1')?dig:(dig.length===10?'57'+dig:dig)) : null,
+      enlace: link||null, consentimiento:true, device:DEVICE};
+    const b=$('#of-enviar'); b.disabled=true; b.textContent='Publicando…';
+    const okd = await guardar('ofertas', fila, null);
+    if(okd){ toast('Publicado. Ya aparece en Ayudar.'); cerrarSheet(); dbCargar(); }
+    else { b.disabled=false; b.textContent='Publicar'; }
+  };
+}
+
 /* ---------- ficha de zona ---------- */
 /* Hoja del censo: cualquiera puede ver la NECESIDAD (anónima) de una vivienda
    registrada. Nunca muestra identidad — eso queda privado en la base. */

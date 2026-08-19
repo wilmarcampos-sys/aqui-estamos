@@ -2,7 +2,7 @@
    3. ESTADO
    ============================================================ */
 const H = 3600e3;
-let S = {reportes:[], entregas:[], coords:[], censo:[]};
+let S = {reportes:[], entregas:[], coords:[], censo:[], ofertas:[]};
 const uid = () => Math.random().toString(36).slice(2,9);
 const now = () => Date.now();
 
@@ -120,6 +120,12 @@ async function dbCargar(){
   try{ const cs = await recientes(db.from('censo_publico').select('*'));
        S.censo = cs.error ? [] : (cs.data||[]).map(deCenso); }
   catch(_){ S.censo = []; }
+  // Ofertas disponibles (inventario en pie). Tampoco bloquea si falla.
+  try{ const of = await db.from('ofertas').select('*').eq('activo',true).order('creado',{ascending:false}).limit(200);
+    S.ofertas = of.error ? [] : (of.data||[]).map(o=>({id:o.id, cat:o.categoria, desc:o.descripcion||'',
+      cant:o.cantidad||'', cond:o.condiciones||'', quien:o.quien||'', tel:o.tel_e164||'',
+      enlace:o.enlace||'', ciudad:o.ciudad||'', ts:+new Date(o.creado)})); }
+  catch(_){ S.ofertas = []; }
   render();
 }
 

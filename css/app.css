@@ -1045,3 +1045,14 @@ input.pin{letter-spacing:9px;font-size:20px;text-align:center;font-weight:700}
   background:rgba(124,58,237,.22);border:2.5px dashed #7c3aed;color:#fff;
   font:800 13px/1 system-ui;text-shadow:0 1px 3px rgba(0,0,0,.5)}
 :root[data-eff="light"] .mpin-cengrp{color:#5B21B6;text-shadow:none}
+
+/* ofertas disponibles */
+.ofcond{margin-top:7px;padding:8px 11px;border-radius:11px;background:rgba(217,119,6,.1);
+  color:#FBBF24;font-size:12.3px;font-weight:600;line-height:1.4}
+:root[data-eff="light"] .ofcond{color:#8A5A07}
+.ofcond .ic{width:13px;height:13px}
+.sbadge.bok{background:rgba(47,158,95,.14);color:#5FBE8A}
+:root[data-eff="light"] .sbadge.bok{color:#26714A}
+.mini{height:38px;border:0;border-radius:12px;font:750 12.5px/38px inherit;cursor:pointer;
+  display:inline-flex;align-items:center;background:var(--chip);color:var(--txt)}
+.mini.wa{background:#25D366;color:#fff}
