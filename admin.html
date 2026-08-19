@@ -8,7 +8,7 @@
 <link rel="icon" type="image/svg+xml" href="logo/marca.svg">
 <title>Aquí Estamos · Administración</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
-<link rel="stylesheet" href="css/app.css?v=1.48.5">
+<link rel="stylesheet" href="css/app.css?v=1.48.6">
 <style>
   /* El panel es mobile-first: una columna, pestañas fijas abajo. En pantalla
      grande se centra en una franja de ancho de celular para no deformarse. */
@@ -252,9 +252,9 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="js/config.js?v=1.48.5"></script>
-<script src="js/version.js?v=1.48.5"></script>
-<script src="js/data.js?v=1.48.5"></script>
+<script src="js/config.js?v=1.48.6"></script>
+<script src="js/version.js?v=1.48.6"></script>
+<script src="js/data.js?v=1.48.6"></script>
 <script>
 /* ============================================================
    PANEL DE ADMINISTRACIÓN — Aquí Estamos
@@ -558,11 +558,13 @@ function vPedidos(){
 let CFIL = {u:0, ubicar:false, red:''};
 function vCensoLista(aviso){
   const inhab = CENSO.filter(c=>c.ev==='inhabitable');
-  const porUbicar = CENSO.filter(c=>!c.lat || c.aprox);
+  const sinUbicar = CENSO.filter(c=>!c.lat);
+  const aproxN = CENSO.filter(c=>c.lat && c.aprox);
   const redes = [...new Set(CENSO.map(c=>c.red).filter(Boolean))].sort();
   let lista = CENSO.slice();
   if(CFIL.u) lista = lista.filter(c=>c.urg===CFIL.u);
-  if(CFIL.ubicar) lista = lista.filter(c=>!c.lat || c.aprox);
+  if(CFIL.ubicar==='sin') lista = lista.filter(c=>!c.lat);
+  if(CFIL.ubicar==='aprox') lista = lista.filter(c=>c.lat && c.aprox);
   if(CFIL.red) lista = lista.filter(c=>c.red===CFIL.red);
   const filas = lista.sort((a,b)=> (b.urg||0)-(a.urg||0) || (a.ev==='inhabitable'?-1:0)-(b.ev==='inhabitable'?-1:0) || b.ts-a.ts)
     .slice(0,200).map(c=>{
@@ -594,14 +596,16 @@ function vCensoLista(aviso){
       <div class="cx">Familias durmiendo fuera — en cola de evaluación estructural.</div></div>`:''}
     <div class="seg" id="cfil" style="margin-top:10px">
       <button data-cf="u3" class="${CFIL.u===3?'on':''}">Urgentes</button>
-      <button data-cf="ubicar" class="${CFIL.ubicar?'on':''}">Por ubicar <span class="c">${porUbicar.length}</span></button>
+      <button data-cf="sin" class="${CFIL.ubicar==='sin'?'on':''}">Sin ubicar <span class="c">${sinUbicar.length}</span></button>
+      <button data-cf="aprox" class="${CFIL.ubicar==='aprox'?'on':''}">Aprox. <span class="c">${aproxN.length}</span></button>
       ${redes.length?`<select id="cfil-red" class="selred"><option value="">Toda red/iglesia</option>
         ${redes.map(r=>`<option ${CFIL.red===r?'selected':''}>${esc(r)}</option>`).join('')}</select>`:''}
     </div>
     ${filas}`;
   document.querySelectorAll('#cfil [data-cf]').forEach(b=>b.onclick=()=>{
     if(b.dataset.cf==='u3') CFIL.u = CFIL.u===3?0:3;
-    if(b.dataset.cf==='ubicar') CFIL.ubicar = !CFIL.ubicar;
+    if(b.dataset.cf==='sin') CFIL.ubicar = CFIL.ubicar==='sin'?false:'sin';
+    if(b.dataset.cf==='aprox') CFIL.ubicar = CFIL.ubicar==='aprox'?false:'aprox';
     render();
   });
   const sr=document.getElementById('cfil-red');
