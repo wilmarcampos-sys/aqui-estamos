@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+<meta name="theme-color" content="#0f172a">
+<link rel="icon" type="image/svg+xml" href="logo/marca.svg">
+<title>Ubica tu vivienda · Aquí Estamos</title>
+<meta name="robots" content="noindex">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<link rel="stylesheet" href="css/app.css?v=1.47.0">
+<link rel="stylesheet" href="css/censo.css?v=1.47.0">
+<script>
+window.temaEfectivo = function(){
+  try{ var p = localStorage.getItem('ae_tema');
+    if(p==='claro') return 'light'; if(p==='oscuro') return 'dark';
+    return matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+  }catch(e){ return 'dark'; }
+};
+document.documentElement.setAttribute('data-eff', window.temaEfectivo());
+</script>
+<style>
+  .uwrap{display:flex;flex-direction:column;height:100vh;height:100dvh;background:var(--bg)}
+  .ubody{flex:1;overflow-y:auto;padding:18px 16px calc(24px + var(--safe))}
+  .ubody>div{max-width:520px;margin:0 auto}
+  .umapa{position:relative;height:46vh;min-height:260px;border-radius:18px;overflow:hidden;
+    border:1px solid var(--line);margin:14px 0 10px}
+  #umap{position:absolute;inset:0;background:var(--map-bg)}
+  .ficha-in{display:flex;gap:8px;margin-top:10px}
+  .ficha-in .input{flex:1;text-transform:uppercase;letter-spacing:2px;font-weight:800;text-align:center}
+</style>
+</head>
+<body class="censo-body">
+<div class="uwrap">
+  <div class="snav">
+    <a class="icon-btn" href="/" aria-label="Ir al mapa">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m15 6-6 6 6 6"/></svg>
+    </a>
+    <h2 class="nav-t">Ubica tu vivienda</h2>
+    <span class="step-count"></span>
+  </div>
+  <div class="progress"><i style="width:100%"></i></div>
+
+  <div class="ubody"><div>
+    <div id="u-pide">
+      <h3 class="q">Ayúdanos a llegar hasta ti</h3>
+      <p class="qs">Estás en el censo de ayuda del terremoto. Marca dónde queda tu vivienda
+      para que las brigadas puedan llegar. <b>No se muestra tu nombre ni tus datos</b> — solo el punto.</p>
+
+      <div class="field" id="u-ficha-wrap" hidden>
+        <label class="label">Número de ficha (te lo enviamos por WhatsApp, ej. CV-A2B4)</label>
+        <div class="ficha-in"><input class="input" id="u-ficha" maxlength="7" placeholder="CV-____"></div>
+      </div>
+
+      <div class="umapa"><div id="umap"></div></div>
+      <button type="button" class="cta soft" id="u-gps">
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.2"/><circle cx="12" cy="12" r="8"/><path d="M12 1.5v3M12 19.5v3M1.5 12h3M19.5 12h3"/></svg>
+        Estoy en mi casa ahora — usar mi ubicación
+      </button>
+      <p class="qs" style="margin:0 0 10px">…o toca el mapa sobre tu casa y ajusta el pin.</p>
+      <button type="button" class="cta purple" id="u-guardar" disabled style="width:100%">Guardar mi ubicación</button>
+    </div>
+
+    <div id="u-ok" hidden>
+      <div class="done-wrap">
+        <div class="done-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="m4 12.5 5.5 5.5L20 7"/></svg></div>
+        <h3>Ubicación guardada</h3>
+        <p>Gracias. Tu vivienda ya quedó en el mapa del censo (como punto anónimo) y las brigadas pueden llegar.</p>
+      </div>
+    </div>
+  </div></div>
+  <div id="d-toast" class="dtoast" hidden></div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+<script src="js/config.js?v=1.47.0"></script>
+<script>
+(function(){
+  const $=s=>document.querySelector(s);
+  let LAT=null, LNG=null, mk=null;
+  function toast(m){ const e=$('#d-toast'); e.textContent=m; e.hidden=false; e.classList.add('on');
+    clearTimeout(toast._t); toast._t=setTimeout(()=>{e.classList.remove('on'); setTimeout(()=>e.hidden=true,250);},2800); }
+
+  // la ficha llega en el enlace (?f=CV-XXXX); si no, se pide a mano
+  const qf = new URLSearchParams(location.search).get('f') || '';
+  if(!qf) $('#u-ficha-wrap').hidden = false;
+  else { const w=$('#u-ficha-wrap'); w.hidden=false; $('#u-ficha').value=qf.toUpperCase(); }
+
+  const map = L.map('umap',{zoomControl:true, attributionControl:false, tap:true}).setView([4.8133,-75.6961], 13);
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',{maxZoom:19, subdomains:'abcd'}).addTo(map);
+  const PIN = L.divIcon({className:'', iconSize:[34,42], iconAnchor:[17,38], html:
+    `<svg viewBox="0 0 24 24" width="34" height="42" style="filter:drop-shadow(0 3px 6px rgba(0,0,0,.35))">
+      <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" fill="#7C3AED" stroke="#fff" stroke-width="1.6"/>
+      <circle cx="12" cy="10" r="3" fill="#fff"/></svg>`});
+  function fijar(la,lo){ LAT=la; LNG=lo;
+    if(mk) mk.setLatLng([la,lo]);
+    else { mk=L.marker([la,lo],{draggable:true,icon:PIN}).addTo(map);
+      mk.on('dragend',e=>{const p=e.target.getLatLng(); LAT=p.lat; LNG=p.lng;}); }
+    $('#u-guardar').disabled=false; }
+  map.on('click', e=>fijar(e.latlng.lat, e.latlng.lng));
+
+  $('#u-gps').onclick = ()=>{
+    if(!navigator.geolocation) return toast('Este navegador no permite ubicación. Toca el mapa.');
+    const b=$('#u-gps'); b.disabled=true; b.textContent='Tomando ubicación…';
+    navigator.geolocation.getCurrentPosition(
+      p=>{ b.disabled=false; b.classList.add('ok'); b.textContent='Ubicación tomada ✓';
+        map.setView([p.coords.latitude,p.coords.longitude],17); fijar(p.coords.latitude,p.coords.longitude); },
+      ()=>{ b.disabled=false; b.textContent='Estoy en mi casa ahora — usar mi ubicación';
+        toast('No se pudo. Toca el mapa sobre tu casa.'); },
+      {enableHighAccuracy:true, timeout:12000});
+  };
+
+  $('#u-guardar').onclick = async ()=>{
+    const f=($('#u-ficha').value||'').trim().toUpperCase();
+    if(!/^CV-[A-Z0-9]{4}$/.test(f)) return toast('Revisa el número de ficha (ej. CV-A2B4).');
+    if(LAT==null) return toast('Primero marca el punto en el mapa.');
+    const b=$('#u-guardar'); b.disabled=true; b.textContent='Guardando…';
+    try{
+      const r = await fetch(`${CONFIG.SUPABASE_URL}/rest/v1/rpc/ubicar_ficha`,{
+        method:'POST', headers:{apikey:CONFIG.SUPABASE_ANON_KEY, Authorization:'Bearer '+CONFIG.SUPABASE_ANON_KEY, 'Content-Type':'application/json'},
+        body: JSON.stringify({p_ficha:f, p_lat:LAT, p_lng:LNG})});
+      const ok = await r.json();
+      if(ok===true){ $('#u-pide').hidden=true; $('#u-ok').hidden=false; window.scrollTo(0,0); }
+      else { toast('No encontramos esa ficha, o el punto quedó fuera de la zona.'); b.disabled=false; b.textContent='Guardar mi ubicación'; }
+    }catch(e){ toast('Sin conexión. Intenta de nuevo.'); b.disabled=false; b.textContent='Guardar mi ubicación'; }
+  };
+})();
+</script>
+</body>
+</html>

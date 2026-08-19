@@ -56,7 +56,8 @@ function pintarSVG(){
 const UCOL = {3:'#dc2626', 2:'#d97706', 1:'#c9a227'};
 const UGRAD = {3:'linear-gradient(160deg,#EF4444,#C81E1E)', 2:'linear-gradient(160deg,#F59E0B,#C2600A)', 1:'linear-gradient(160deg,#D4AC2B,#8A6508)'};
 const CENSO_NEED = {agua:'Agua', alimentos:'Alimentos', medicamentos:'Medicamentos',
-  albergue:'Albergue', aseo:'Aseo e higiene', ropa:'Ropa y cobijas', bebes:'Bebés y pañales', otra:'Otra'};
+  albergue:'Albergue', aseo:'Aseo e higiene', ropa:'Ropa y cobijas', bebes:'Bebés y pañales',
+  arriendo:'Subsidio de arriendo', estructural:'Evaluación estructural', otra:'Otra'};
 
 /* Capas visibles del mapa (control de filtros). soloaltas = solo urgencia alta. */
 const CAPAS = {zonas:true, albergues:true, censo:true, entregas:true, soloaltas:false};
@@ -88,8 +89,24 @@ function pintarMapa(){
 
   // Censo de necesidades: puntos anónimos (necesidad + nº personas), visibles a
   // cualquier zoom. Nunca traen identidad — vienen de la vista pública anónima.
+  // Aproximados (importados con barrio pero sin GPS): NO se pintan uno a uno
+  // apilados — se agrupan en un solo círculo punteado por barrio con contador.
+  if(CAPAS.censo){
+    const grupos = {};
+    (S.censo||[]).forEach(cn=>{
+      if(cn.aprox && cn.lat && cn.lng) (grupos[cn.barrio||'zona'] = grupos[cn.barrio||'zona'] || []).push(cn);
+    });
+    Object.entries(grupos).forEach(([b, arr])=>{
+      const la = arr.reduce((s,x)=>s+x.lat,0)/arr.length, lo = arr.reduce((s,x)=>s+x.lng,0)/arr.length;
+      const urg = arr.filter(x=>x.urg===3).length;
+      L.marker([la,lo],{zIndexOffset:610,icon:L.divIcon({className:'',iconSize:[40,40],iconAnchor:[20,20],
+        html:`<div class="mpin-cengrp">≈${arr.length}</div>`})}).addTo(capa)
+        .bindTooltip(`<b>${esc(b)}</b> · ${arr.length} vivienda${arr.length>1?'s':''} por ubicar${urg?`<br><b style="color:#fca5a5">${urg} urgente${urg>1?'s':''}</b>`:''}<br><i>Ubicación aproximada · toque para ver</i>`,{direction:'top'})
+        .on('click',()=>abrirCensoGrupo(b, arr));
+    });
+  }
   if(CAPAS.censo) (S.censo||[]).forEach(cn=>{
-    if(!cn.lat || !cn.lng) return;
+    if(!cn.lat || !cn.lng || cn.aprox) return;
     const necTxt = (cn.needs||[]).map(k=>CENSO_NEED[k]||k).slice(0,3).join(', ');
     // "Atendido" automático: si hay una entrega reciente cerca (≤300 m, ≤7 días).
     const ent = S.entregas.filter(y=>y.lat && dist(cn.lat,cn.lng,y.lat,y.lng)<300).sort((p,q)=>q.ts-p.ts)[0];

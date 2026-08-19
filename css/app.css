@@ -1037,3 +1037,9 @@ input.pin{letter-spacing:9px;font-size:20px;text-align:center;font-weight:700}
 .msheet-min:active{transform:scale(.88)}
 .msheet-min svg{width:14px;height:14px}
 .msheet.open .msheet-min{display:grid}
+
+/* grupo del censo "por ubicar": circulo violeta punteado con contador */
+.mpin-cengrp{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;
+  background:rgba(124,58,237,.22);border:2.5px dashed #7c3aed;color:#fff;
+  font:800 13px/1 system-ui;text-shadow:0 1px 3px rgba(0,0,0,.5)}
+:root[data-eff="light"] .mpin-cengrp{color:#5B21B6;text-shadow:none}

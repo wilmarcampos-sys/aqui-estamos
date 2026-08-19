@@ -16,6 +16,7 @@ const NECS = [
   {k:'bebes',       t:'Pañales',         ic:'<path d="M8 3v4M16 3v4M4 11h16"/><rect x="3" y="5" width="18" height="16" rx="4"/>'},
   {k:'aseo',        t:'Aseo e higiene',  ic:'<path d="M7 9h8a2 2 0 0 1 2 2v9a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1v-9a2 2 0 0 1 2-2Z"/><path d="M9 9V5h4v4"/>'},
   {k:'albergue',    t:'Albergue / techo',ic:'<path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.8V20h14V9.8"/>'},
+  {k:'arriendo',    t:'Subsidio de arriendo', ic:'<path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.8V20h14V9.8"/><path d="M9 15h6M12 12v6"/>'},
   {k:'estructural', t:'Evaluación estructural', ic:'<path d="m14 7 3-3 3 3-3 3M5 21l7-7M3 13l4 4"/>'},
 ];
 const COND_TXT = {discapacidad:'discapacidad', embarazo:'embarazo', cronica:'enfermedad crónica', mascotas:'mascotas'};

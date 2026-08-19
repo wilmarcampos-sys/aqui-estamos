@@ -8,7 +8,7 @@
 <link rel="icon" type="image/svg+xml" href="logo/marca.svg">
 <title>Aquí Estamos · Administración</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
-<link rel="stylesheet" href="css/app.css?v=1.46.1">
+<link rel="stylesheet" href="css/app.css?v=1.47.0">
 <style>
   /* El panel es mobile-first: una columna, pestañas fijas abajo. En pantalla
      grande se centra en una franja de ancho de celular para no deformarse. */
@@ -175,6 +175,8 @@
 
   .avatar.big{width:52px;height:52px;font-size:20px}
   .estado.ejemplo{color:#fcd34d}
+.selred{flex:1;min-width:0;height:34px;border-radius:999px;border:1px solid var(--line);
+  background:var(--chip);color:var(--txt);font:650 12.5px/1 inherit;padding:0 10px;outline:none}
 </style>
 </head>
 <body>
@@ -250,9 +252,9 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="js/config.js?v=1.46.1"></script>
-<script src="js/version.js?v=1.46.1"></script>
-<script src="js/data.js?v=1.46.1"></script>
+<script src="js/config.js?v=1.47.0"></script>
+<script src="js/version.js?v=1.47.0"></script>
+<script src="js/data.js?v=1.47.0"></script>
 <script>
 /* ============================================================
    PANEL DE ADMINISTRACIÓN — Aquí Estamos
@@ -340,6 +342,7 @@ const deCen = c=>({ id:c.id, ficha:c.ficha||'', barrio:c.barrio||'', dir:c.direc
   nombre:[c.nombre,c.apellido].filter(Boolean).join(' '), cedula:c.cedula||'', tel:c.tel_e164||'',
   personas:c.personas||0, men5:c.menores5||0, may65:c.mayores65||0, cond:c.condiciones||[],
   ev:c.estado_vivienda||'', needs:c.necesidades||[], detalle:c.detalle||'', lat:c.lat?+c.lat:null, lng:c.lng?+c.lng:null,
+  urg:c.urgencia||0, aprox:!!c.ubicacion_aprox, red:c.fuente_detalle||'', ciudad:c.ciudad||'', fuente:c.fuente||'app',
   ts:+new Date(c.creado||Date.now()) });
 const deEnt = e=>({ id:e.id, z:e.zona, k:e.necesidad, quien:e.quien||'Anónimo',
   cant:e.cantidad||'', ts:+new Date(e.creado||Date.now()) });
@@ -552,10 +555,17 @@ function vPedidos(){
     ${filas}`;
 }
 
+let CFIL = {u:0, ubicar:false, red:''};
 function vCensoLista(aviso){
   const inhab = CENSO.filter(c=>c.ev==='inhabitable');
-  const filas = CENSO.slice().sort((a,b)=> (a.ev==='inhabitable'?-1:0)-(b.ev==='inhabitable'?-1:0) || b.ts-a.ts)
-    .slice(0,150).map(c=>{
+  const porUbicar = CENSO.filter(c=>!c.lat || c.aprox);
+  const redes = [...new Set(CENSO.map(c=>c.red).filter(Boolean))].sort();
+  let lista = CENSO.slice();
+  if(CFIL.u) lista = lista.filter(c=>c.urg===CFIL.u);
+  if(CFIL.ubicar) lista = lista.filter(c=>!c.lat || c.aprox);
+  if(CFIL.red) lista = lista.filter(c=>c.red===CFIL.red);
+  const filas = lista.sort((a,b)=> (b.urg||0)-(a.urg||0) || (a.ev==='inhabitable'?-1:0)-(b.ev==='inhabitable'?-1:0) || b.ts-a.ts)
+    .slice(0,200).map(c=>{
     const ev = EV_TXT[c.ev]||null;
     return `<div class="prow ${c.ev==='inhabitable'?'pendiente':''}">
       <div class="info" data-vivienda="${esc(c.id)}">
@@ -564,8 +574,12 @@ function vCensoLista(aviso){
         <div class="mt">${esc(c.barrio||'—')}${c.dir?` · ${esc(c.dir)}`:''} · ${hace(c.ts)}</div>
         <div class="mt">${esc((c.needs||[]).join(', ')||'sin necesidades')}</div>
         ${c.ficha?`<div class="cd">${esc(c.ficha)}</div>`:''}
+        ${c.urg?`<span class="sbadge ${c.urg===3?'b3':c.urg===2?'b2':'b1'}" style="margin-top:3px">${c.urg===3?'Urgente':c.urg===2?'Prioritaria':'Programable'}</span>`:''}
+        ${(!c.lat||c.aprox)?`<span class="sbadge" style="background:rgba(124,58,237,.15);color:#a78bfa;margin-top:3px">${c.lat?'ubicación aprox.':'sin ubicar'}</span>`:''}
       </div>
-      ${c.tel?`<a class="waq" href="${waLink(c.tel,'Hola, le escribo de Aquí Estamos por el censo '+c.ficha)}" target="_blank" rel="noopener">${WA_SVG}</a>`:''}
+      ${c.tel && (!c.lat||c.aprox) ? `<a class="waq" style="background:#7c3aed" title="Pedir ubicación"
+        href="${waLink(c.tel,'Hola '+(c.nombre.split(' ')[0]||'')+', somos Aquí Estamos (censo de ayuda del terremoto). Para que las brigadas lleguen a tu vivienda, marca el punto aquí: https://aquiestamos.co/ubicar?f='+c.ficha)}"
+        target="_blank" rel="noopener">${WA_SVG}</a>` : (c.tel?`<a class="waq" href="${waLink(c.tel,'Hola, le escribo de Aquí Estamos por el censo '+c.ficha)}" target="_blank" rel="noopener">${WA_SVG}</a>`:'')}
       <button class="chev" data-vivienda="${esc(c.id)}">›</button>
     </div>`;
   }).join('') || `<div class="vacio"><b>Sin viviendas${AKEY()||DEMO?'':' visibles'}</b><p>${AKEY()||DEMO?'Cuando se registre una vivienda en el censo aparece aquí.':'Solo los correos autorizados ven el censo completo.'}</p></div>`;
@@ -578,7 +592,20 @@ function vCensoLista(aviso){
     </div>
     ${inhab.length?`<div class="alert red"><div class="ti">${inhab.length} vivienda${inhab.length>1?'s':''} inhabitable${inhab.length>1?'s':''}</div>
       <div class="cx">Familias durmiendo fuera — en cola de evaluación estructural.</div></div>`:''}
+    <div class="seg" id="cfil" style="margin-top:10px">
+      <button data-cf="u3" class="${CFIL.u===3?'on':''}">Urgentes</button>
+      <button data-cf="ubicar" class="${CFIL.ubicar?'on':''}">Por ubicar <span class="c">${porUbicar.length}</span></button>
+      ${redes.length?`<select id="cfil-red" class="selred"><option value="">Toda red/iglesia</option>
+        ${redes.map(r=>`<option ${CFIL.red===r?'selected':''}>${esc(r)}</option>`).join('')}</select>`:''}
+    </div>
     ${filas}`;
+  document.querySelectorAll('#cfil [data-cf]').forEach(b=>b.onclick=()=>{
+    if(b.dataset.cf==='u3') CFIL.u = CFIL.u===3?0:3;
+    if(b.dataset.cf==='ubicar') CFIL.ubicar = !CFIL.ubicar;
+    render();
+  });
+  const sr=document.getElementById('cfil-red');
+  if(sr) sr.onchange=()=>{ CFIL.red=sr.value; render(); };
 }
 
 function abrirPedido(id){

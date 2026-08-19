@@ -29,6 +29,27 @@ function cerrarSheet(){ $('#sheet').classList.remove('on','peek');
   if(typeof window.darQuitar==='function') window.darQuitar(); }
 $('#sheet').addEventListener('click', e=>{ if(e.target.closest('[data-close]')) cerrarSheet(); });
 
+/* Grupo de censo "por ubicar": lista anónima de las viviendas de un barrio
+   cuya ubicación es aproximada. Uno a uno, sin apilar pines falsos. */
+function abrirCensoGrupo(barrio, arr){
+  const orden = [...arr].sort((a,b)=>(b.urg||0)-(a.urg||0));
+  abrirSheet(`
+    <div class="zhead"><div class="row">
+      <div class="rank" style="background:#7c3aed;color:#fff">≈</div>
+      <div class="grow"><h3 class="trunc" style="margin:0">${esc(barrio)} · por ubicar</h3>
+      <div class="muted">${arr.length} vivienda${arr.length>1?'s':''} del censo con ubicación aproximada</div></div>
+    </div></div>
+    <p class="muted" style="font-size:12.5px;margin:6px 0 10px">Se censaron con dirección escrita, sin punto GPS todavía. El punto exacto lo fija la persona, el coordinador o la brigada al visitar.</p>
+    ${orden.map((cn,i)=>`<div class="scard toca" data-cg="${i}">
+      <div class="sic" style="background:#7c3aed">${ico('user')}</div>
+      <div class="stx"><h4>${esc((cn.needs||[]).map(k=>CENSO_NEED[k]||k).slice(0,3).join(' · ')||'Censo')}</h4>
+        <p>${cn.personas?`${cn.personas} persona${cn.personas>1?'s':''}`:''}</p></div>
+      <div class="smeta">${cn.urg===3?'<span class="sbadge b3">Urgente</span>':cn.urg===2?'<span class="sbadge b2">Prioritaria</span>':''}</div>
+    </div>`).join('')}
+  `);
+  document.querySelectorAll('#sheet-body [data-cg]').forEach(el=>el.onclick=()=>abrirCenso(orden[+el.dataset.cg]));
+}
+
 /* ---------- ficha de zona ---------- */
 /* Hoja del censo: cualquiera puede ver la NECESIDAD (anónima) de una vivienda
    registrada. Nunca muestra identidad — eso queda privado en la base. */
