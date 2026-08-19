@@ -181,7 +181,8 @@ function gMatch(){
   document.getElementById('gs-match').innerHTML = `
     <div class="match">
       <div class="match-h">
-        <span class="mrank">${gIdx+1}</span>
+        <span class="mrank" style="background:${esCen?'#7c3aed':esAco?'#0d9488':(UCOL[c.u]||'#d97706')}">${
+          esCen?ico('user'):esAco?ico('box'):ico('alert')}</span>
         <div class="mt"><b>${esc(c.f.ref||c.z.n)}</b>
           <small>${esAco?'Acopio · ':esCen?'Vivienda censada · ':''}${esc(c.z.n)} · ${c.km<1?Math.round(c.km*1000)+' m':c.km.toFixed(1)+' km'} · ${min} min ${medio}</small></div>
         <span class="sbadge ${c.u===3?'b3':c.u===2?'b2':'b1'}">${c.u===3?'Urgencia alta':c.u===2?'Urgente':'Puede esperar'}</span>

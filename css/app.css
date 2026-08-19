@@ -482,7 +482,8 @@
   @keyframes radar{0%{transform:scale(.25);opacity:.9}100%{transform:scale(1);opacity:0}}
   .match{background:var(--surf);border:1px solid var(--line);border-radius:18px;padding:12px 13px}
   .match-h{display:flex;align-items:center;gap:10px;margin-bottom:9px}
-  .match-h .mrank{width:30px;height:30px;border-radius:10px;background:linear-gradient(160deg,#22C55E,#15803D);
+  .match-h .mrank .ic{width:17px;height:17px}
+  .mrank{width:30px;height:30px;border-radius:10px;background:linear-gradient(160deg,#22C55E,#15803D);
     color:#fff;display:grid;place-items:center;font:800 14px/1 inherit;flex:0 0 auto}
   .match-h .mt{flex:1;min-width:0}
   .match-h .mt b{display:block;font-size:17px;font-weight:820;letter-spacing:-.5px;line-height:1.15;color:var(--txt)}
