@@ -287,6 +287,23 @@ function render(){
     <div class="stat"><b style="color:#FBBF24">${S.coords.filter(c=>!c.anulado).length}</b><small>Coordinadores</small></div>
     <div class="stat"><b style="color:#5FBE8A">${S.entregas.length}</b><small>Entregas</small></div>`;
 
+  // atajos de Ayudar: saltar directo a cada seccion (lo que la gente busca)
+  (function(){
+    const a=document.getElementById('atajos'); if(!a) return;
+    const secs=[
+      ['b-ofertas','Disponible'],
+      ['zonas-sec','Lo más necesario'],
+      ['b-orf','Sin nadie a cargo'],
+      ['b-acopios','Acopios'],
+      ['b-pedidas','Más pedidas'],
+    ].filter(([id])=>{ const el=document.getElementById(id); return el && el.style.display!=='none'; });
+    a.innerHTML = secs.map(([id,n])=>`<button type="button" data-ir="${id}">${n}</button>`).join('');
+    a.querySelectorAll('[data-ir]').forEach(b=>b.onclick=()=>{
+      const el=document.getElementById(b.dataset.ir);
+      if(el) el.scrollIntoView({behavior:'smooth', block:'start'});
+    });
+  })();
+
   // ofertas disponibles (inventario en pie): quien tiene algo, cuanto y como contactarlo
   (function(){
     const w=$('#lista-ofertas'), bl=document.getElementById('b-ofertas'), pw=document.getElementById('ofrecer-wrap');
