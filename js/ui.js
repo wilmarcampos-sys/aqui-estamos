@@ -297,7 +297,18 @@ function render(){
     const CAT_N = {agua:'Agua', comida:'Mercado', medic:'Medicinas y salud', bebes:'Bebés', abrigo:'Cobijas y dormir',
       ropa:'Ropa', aseo:'Aseo', herr:'Herramientas', otra:'Otros'};
     if(bl) bl.style.display = (S.ofertas||[]).length ? '' : 'none';
-    w.innerHTML = (S.ofertas||[]).slice(0,20).map(o=>{
+    // filtros por categoria (solo las que existen en las ofertas)
+    window.OFIL = window.OFIL || '';
+    const cats = [...new Set((S.ofertas||[]).map(o=>o.cat))];
+    const fw = document.getElementById('of-filtros');
+    if(fw){
+      fw.innerHTML = `<button type="button" data-of="" class="${!OFIL?'on':''}">Todas</button>` +
+        cats.map(c=>`<button type="button" data-of="${c}" class="${OFIL===c?'on':''}">${CAT_N[c]||c}</button>`).join('');
+      fw.querySelectorAll('[data-of]').forEach(b=>b.onclick=()=>{ window.OFIL=b.dataset.of; render(); });
+      fw.style.display = cats.length>1 ? '' : 'none';
+    }
+    const lista = OFIL ? (S.ofertas||[]).filter(o=>o.cat===OFIL) : (S.ofertas||[]);
+    w.innerHTML = lista.slice(0,20).map(o=>{
       const [icn,col] = OF_CAT[o.cat]||OF_CAT.otra;
       return `<div class="card zcard">
         <div class="row" style="align-items:flex-start">
