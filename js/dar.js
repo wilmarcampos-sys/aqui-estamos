@@ -253,8 +253,11 @@ function gRutaPintar(c){
     if(typeof pintarMapa==='function') pintarMapa();
     gRuta = L.polyline([[c.org.lat,c.org.lng],[c.f.lat,c.f.lng]],
       {color:'#16A34A', weight:3.5, dashArray:'7 8', opacity:.9}).addTo(map);
+    // el destino en el mapa lleva el color e icono de su categoria (como el filtro)
+    const col = c.tipo==='censo' ? '#7c3aed' : c.tipo==='acopio' ? '#0d9488' : (UCOL[c.u]||'#d97706');
+    const icn = c.tipo==='censo' ? 'user' : c.tipo==='acopio' ? 'box' : 'alert';
     gMk = L.marker([c.f.lat,c.f.lng],{zIndexOffset:1500, icon:L.divIcon({className:'',iconSize:[38,38],iconAnchor:[19,19],
-      html:`<div class="mpin" style="width:38px;height:38px;background:linear-gradient(160deg,#22C55E,#15803D)">${ico('pin')}</div>`})}).addTo(map);
+      html:`<div class="mpin" style="width:38px;height:38px;background:${col}">${ico(icn)}</div>`})}).addTo(map);
     const sheetH = gs.offsetHeight || 300;
     map.fitBounds(L.latLngBounds([[c.org.lat,c.org.lng],[c.f.lat,c.f.lng]]),
       {paddingTopLeft:[46,70], paddingBottomRight:[46, sheetH+24], animate:false});
