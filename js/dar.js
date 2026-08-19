@@ -39,7 +39,7 @@ const DAR_CATS = [
   Object.values(porCat).flat().forEach(k=>{ if(!usadas.has(k)) g.keys.push(k); });
 })();
 
-let gSel = new Set(), gQty = 1, gKm = 5, gStep = 1, gCand = [], gIdx = 0, gTimer = null;
+let gSel = new Set(), gQty = 1, gKm = 5, gStep = 1, gCand = [], gIdx = 0, gTimer = null, gOrden = 'mejor', gDest = 'todos';
 let gRuta = null, gMk = null;
 
 const G_TITLES = {0:'¿Dónde estás?', 1:'¿Qué traes?', 2:'Buscando…', 3:'Llévalo aquí'};
@@ -83,6 +83,25 @@ function darCandidatos(){
     const puntaje = u*40 + Math.min(personas,25)*8 + (nadie?30:0) - km*6;
     out.push({f, z, match, u, personas, nadie, diasSin, km, puntaje, org});
   }));
+  // viviendas del CENSO con punto exacto y pendiente que calza: también son
+  // "pedir ayuda". Las de punto aproximado NO entran (no se manda a nadie a
+  // un punto inventado); entrarán cuando fijen su pin real.
+  const CENSO_DAR = {agua:'agua', alimentos:'comida', medicamentos:'medic', ropa:'abrigo', bebes:'bebes', aseo:'aseo'};
+  (S.censo||[]).forEach(cn=>{
+    if(!cn.lat || !cn.lng || cn.aprox) return;
+    const ent = S.entregas.filter(y=>y.lat && dist(cn.lat,cn.lng,y.lat,y.lng)<300).sort((p,q)=>q.ts-p.ts)[0];
+    if(ent && (now()-ent.ts) < 7*24*H) return;   // ya atendida
+    const match = (cn.needs||[]).filter(k=>{ const d=CENSO_DAR[k]; return d && gSel.has(d); });
+    if(!match.length) return;
+    const km = dist(org.lat,org.lng,cn.lat,cn.lng)/1000;
+    const u = cn.urg||2;
+    const zz = zonaDe(cn.lat,cn.lng);
+    const puntaje = u*40 + Math.min(cn.personas||0,25)*8 + 30 - km*6;
+    out.push({tipo:'censo', cn, f:{ref:cn.apellido?`Familia ${cn.apellido}`:'Vivienda censada', lat:cn.lat, lng:cn.lng},
+      z:{n:cn.barrio||zz.n, id:zz.id}, match, u, personas:cn.personas||0,
+      nadie:true, diasSin:null, km, puntaje, org});
+  });
+
   // acopios aliados con pendientes que calzan con lo que traes.
   // Sin el bono de "nadie ha llegado" y con un pequeño descuento: la gente
   // que pide directo va primero; el acopio es el segundo mejor destino.
@@ -96,8 +115,17 @@ function darCandidatos(){
       z:{n:a.ciudad||'', id:null}, match, u, personas:0, nadie:false,
       diasSin:null, km, puntaje, org});
   });
-  const dentro = out.filter(c=>c.km <= gKm);
-  return (dentro.length ? dentro : out).sort((a,b)=>b.puntaje-a.puntaje);
+  // filtro del destinatario: mismas clasificaciones del mapa
+  const pool = gDest==='viviendas' ? out.filter(c=>c.tipo==='censo')
+             : gDest==='acopios'   ? out.filter(c=>c.tipo==='acopio')
+             : gDest==='reportes'  ? out.filter(c=>!c.tipo)
+             : out;
+  const dentro = pool.filter(c=>c.km <= gKm);
+  const lista = dentro.length ? dentro : pool;
+  // el que da elige su prioridad: mejor destino (puntaje), cercanía o urgencia
+  if(gOrden==='cerca')   return lista.sort((a,b)=>a.km-b.km);
+  if(gOrden==='urgente') return lista.sort((a,b)=>b.u-a.u || b.puntaje-a.puntaje);
+  return lista.sort((a,b)=>b.puntaje-a.puntaje);
 }
 
 /* ---- la hoja ---- */
@@ -143,9 +171,10 @@ function gMatch(){
   const c = gCand[gIdx];
   const min = Math.max(1, Math.round(c.km / (gKm===1?4:gKm===5?20:30) * 60));
   const medio = gKm===1?'a pie':gKm===5?'en moto':'en carro';
-  const esAco = c.tipo==='acopio';
+  const esAco = c.tipo==='acopio', esCen = c.tipo==='censo';
   const piden = esAco
     ? [...new Set(c.match.map(n=>n.cat||'Otros'))].slice(0,3).join(' · ')
+    : esCen ? c.match.slice(0,3).map(k=>CENSO_NEED[k]||k).join(' · ')
     : c.match.slice(0,3).map(x=>NEED[x.k]?.n||x.k).join(' · ');
   const cb = esAco ? null : cubridores(c.f.lat, c.f.lng, c.z.id)[0];
   const traes = DAR_CATS.filter(x=>gSel.has(x.id)).map(x=>x.n.toLowerCase()).join(', ');
@@ -154,7 +183,7 @@ function gMatch(){
       <div class="match-h">
         <span class="mrank">${gIdx+1}</span>
         <div class="mt"><b>${esc(c.f.ref||c.z.n)}</b>
-          <small>${esAco?'Acopio · ':''}${esc(c.z.n)} · ${c.km<1?Math.round(c.km*1000)+' m':c.km.toFixed(1)+' km'} · ${min} min ${medio}</small></div>
+          <small>${esAco?'Acopio · ':esCen?'Vivienda censada · ':''}${esc(c.z.n)} · ${c.km<1?Math.round(c.km*1000)+' m':c.km.toFixed(1)+' km'} · ${min} min ${medio}</small></div>
         <span class="sbadge ${c.u===3?'b3':c.u===2?'b2':'b1'}">${c.u===3?'Urgencia alta':c.u===2?'Urgente':'Puede esperar'}</span>
       </div>
       <div class="match-line"><span class="ml-k">Piden</span><span class="ml-v">${esc(piden)}${c.personas?` · ${c.personas} personas`:''}</span></div>
@@ -165,7 +194,13 @@ function gMatch(){
         c.km<=gKm?'te queda a tu alcance':'es lo más cercano pendiente',
       ].filter(Boolean).join(' · ')}</span></div>
       ${c.nadie ? `<div class="match-line warn"><span class="ml-k">Ojo</span><span class="ml-v">${c.diasSin!=null?`Nadie ha llegado en ${c.diasSin} día${c.diasSin===1?'':'s'}`:'Aquí no ha llegado nadie todavía'}</span></div>` : ''}
-      ${cb ? `<div class="coord-mini">
+      ${esCen && c.cn.tel ? `<div class="coord-mini">
+        <span class="av2">${esc((c.cn.apellido||'F').trim().split(/\s+/).slice(0,2).map(x=>x[0]||'').join('').toUpperCase())}</span>
+        <span class="cn">${esc(c.f.ref)}<small>Contacto de la vivienda</small></span>
+        <button type="button" class="wa-mini" data-wa="${esc(String(c.cn.tel).replace(/\D/g,''))}" aria-label="WhatsApp">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 0 0-8.6 15L2 22l5.2-1.4A10 10 0 1 0 12 2Zm5.5 14.1c-.2.6-1.2 1.2-1.7 1.2-.5.1-1 .1-1.6-.1-.4-.1-.9-.3-1.5-.6a11 11 0 0 1-4.2-3.9c-.3-.5-.7-1.2-.7-1.9s.3-1.1.5-1.3c.2-.2.4-.3.6-.3h.4c.1 0 .3 0 .5.4l.7 1.6c0 .1.1.3 0 .4l-.3.4-.3.3c-.1.1-.2.2 0 .5.2.3.7 1.1 1.4 1.7.9.8 1.6 1 1.9 1.2.2.1.4.1.5-.1l.6-.8c.2-.2.3-.2.5-.1l1.6.8c.2.1.4.2.4.3v.5Z"/></svg>
+        </button>
+      </div>` : cb ? `<div class="coord-mini">
         <span class="av2">${esc((cb.nom||'?').trim().split(/\s+/).slice(0,2).map(x=>x[0]||'').join('').toUpperCase())}</span>
         <span class="cn">${esc(cb.nom)}<small>Coordina este sector</small></span>
         ${cb.tel?`<button type="button" class="wa-mini" data-wa="${esc(String(cb.tel).replace(/\D/g,''))}" aria-label="WhatsApp">
@@ -185,6 +220,7 @@ function gMatch(){
     // a un acopio no se le "registra entrega" en nuestros focos: la
     // confirmación vive en el centro (ficha con dirección y contacto)
     if(esAco){ abrirAcopio(c.a); return; }
+    if(esCen){ abrirEntrega(c.z.id, null, {z:c.z.id, lat:c.f.lat, lng:c.f.lng}); return; }
     abrirEntrega(c.z.id, c.match.map(x=>x.k), {z:c.z.id, lat:c.f.lat, lng:c.f.lng});
   };
   const wa = document.querySelector('#gs-match [data-wa]');
@@ -248,6 +284,14 @@ window.darQuitar = gRutaQuitar;   // limpieza también al cerrar otros modales
   document.querySelectorAll('#gs-range button').forEach(b=>b.onclick=()=>{
     document.querySelectorAll('#gs-range button').forEach(x=>x.setAttribute('aria-checked','false'));
     b.setAttribute('aria-checked','true'); gKm=+b.dataset.km;
+  });
+  document.querySelectorAll('#gs-dest button').forEach(b=>b.onclick=()=>{
+    document.querySelectorAll('#gs-dest button').forEach(x=>x.setAttribute('aria-checked','false'));
+    b.setAttribute('aria-checked','true'); gDest=b.dataset.de;
+  });
+  document.querySelectorAll('#gs-orden button').forEach(b=>b.onclick=()=>{
+    document.querySelectorAll('#gs-orden button').forEach(x=>x.setAttribute('aria-checked','false'));
+    b.setAttribute('aria-checked','true'); gOrden=b.dataset.o;
   });
   document.getElementById('gs-close').onclick = gCerrar;
   const gl=document.getElementById('gs-local'); if(gl) gl.onclick=()=>gGo(1);

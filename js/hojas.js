@@ -31,23 +31,41 @@ $('#sheet').addEventListener('click', e=>{ if(e.target.closest('[data-close]')) 
 
 /* Grupo de censo "por ubicar": lista anónima de las viviendas de un barrio
    cuya ubicación es aproximada. Uno a uno, sin apilar pines falsos. */
-function abrirCensoGrupo(barrio, arr){
-  const orden = [...arr].sort((a,b)=>(b.urg||0)-(a.urg||0));
+function abrirCensoGrupo(barrio, arr, soloUrg){
+  let orden = [...arr].sort((a,b)=>(b.urg||0)-(a.urg||0));
+  if(soloUrg) orden = orden.filter(x=>x.urg===3);
+  // otros grupos "por ubicar" para saltar sin volver al mapa
+  const otros = {};
+  (S.censo||[]).forEach(cn=>{ if(cn.aprox && cn.lat) (otros[cn.barrio||'zona']=otros[cn.barrio||'zona']||[]).push(cn); });
+  const urgN = arr.filter(x=>x.urg===3).length;
   abrirSheet(`
     <div class="zhead"><div class="row">
-      <div class="rank" style="background:#7c3aed;color:#fff">≈</div>
+      <div class="rank" style="background:rgba(124,58,237,.25);border:2.5px dashed #7c3aed;color:#a78bfa">≈</div>
       <div class="grow"><h3 class="trunc" style="margin:0">${esc(barrio)} · por ubicar</h3>
-      <div class="muted">${arr.length} vivienda${arr.length>1?'s':''} del censo con ubicación aproximada</div></div>
+      <div class="muted">${arr.length} vivienda${arr.length>1?'s':''} del censo</div></div>
     </div></div>
-    <p class="muted" style="font-size:12.5px;margin:6px 0 10px">Se censaron con dirección escrita, sin punto GPS todavía. El punto exacto lo fija la persona, el coordinador o la brigada al visitar.</p>
+    <p class="telhint" style="margin:8px 0 4px">${ico('help')} Este pin <b>&nbsp;violeta punteado&nbsp;</b> agrupa viviendas censadas con <b>&nbsp;ubicación aproximada&nbsp;</b> (dirección escrita, sin GPS). El punto exacto lo fija la persona, el coordinador o la brigada al visitar.</p>
+    <div class="tabsub" style="margin:10px 0 4px">
+      <button type="button" id="cg-urg" class="${soloUrg?'on':''}">Solo urgentes${urgN?` (${urgN})`:''}</button>
+      ${Object.entries(otros).filter(([b])=>b!==barrio).sort((a,b)=>b[1].length-a[1].length).slice(0,8)
+        .map(([b,a2])=>`<button type="button" data-cgb="${esc(b)}">${esc(b)} · ${a2.length}</button>`).join('')}
+    </div>
     ${orden.map((cn,i)=>`<div class="scard toca" data-cg="${i}">
       <div class="sic" style="background:#7c3aed">${ico('user')}</div>
       <div class="stx"><h4>${esc((cn.needs||[]).map(k=>CENSO_NEED[k]||k).slice(0,3).join(' · ')||'Censo')}</h4>
         <p>${cn.personas?`${cn.personas} persona${cn.personas>1?'s':''}`:''}</p></div>
       <div class="smeta">${cn.urg===3?'<span class="sbadge b3">Urgente</span>':cn.urg===2?'<span class="sbadge b2">Prioritaria</span>':''}</div>
-    </div>`).join('')}
+    </div>`).join('') || '<p class="muted" style="margin:8px 2px">Sin urgentes en este grupo.</p>'}
   `);
   document.querySelectorAll('#sheet-body [data-cg]').forEach(el=>el.onclick=()=>abrirCenso(orden[+el.dataset.cg]));
+  const bu=document.getElementById('cg-urg');
+  if(bu) bu.onclick=()=>abrirCensoGrupo(barrio, arr, !soloUrg);
+  document.querySelectorAll('#sheet-body [data-cgb]').forEach(el=>el.onclick=()=>{
+    const b=el.dataset.cgb;
+    abrirCensoGrupo(b, otros[b]||[], false);
+    const p=(otros[b]||[])[0];
+    if(p && map && !modoSVG) map.panTo([p.lat, p.lng]);
+  });
 }
 
 /* ---------- ficha de zona ---------- */

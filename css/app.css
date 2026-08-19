@@ -461,6 +461,7 @@
   .stepr.mini button{width:34px;height:34px}
   .stepr.mini .val b{font-size:19px}
   .range-row{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}
+  #gs-dest{grid-template-columns:1fr 1fr}
   .range-row button{padding:9px 4px;border-radius:14px;background:var(--surf);border:1.5px solid var(--line);
     cursor:pointer;font-family:inherit;text-align:center;transition:transform .16s var(--ease),border-color .2s}
   .range-row button:active{transform:scale(.96)}
