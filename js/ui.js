@@ -356,20 +356,33 @@ function render(){
     const bo=document.getElementById('btn-ofrecer'); if(bo) bo.onclick=()=>abrirOferta();
   })();
 
-  // necesidades mas pedidas en toda la ciudad, con barra relativa
+  // necesidades mas pedidas: reportes del mapa + viviendas del censo,
+  // agregadas por etiqueta (las claves de ambas fuentes difieren)
   (function(){
     const w=$('#lista-pedidas'), bl=document.getElementById('b-pedidas');
     if(!w) return;
+    // el censo usa claves propias; las que coinciden con el catalogo se funden
+    const CEN_LBL = {agua:'Agua potable', alimentos:'Mercado / no perecederos',
+      medicamentos:'Medicamentos', ropa:'Carpas y cobijas', bebes:'Pañales y bebés',
+      aseo:'Aseo e higiene', albergue:'Cupos de albergue', arriendo:'Subsidio de arriendo',
+      estructural:'Evaluación estructural', otra:'Otras'};
     const g={};
-    S.reportes.forEach(r=>{ const e=g[r.k]=g[r.k]||{k:r.k,n:0,u:0}; e.n++; e.u=Math.max(e.u,r.u); });
-    const top=Object.values(g).sort((a,b)=>b.n-a.n).slice(0,5);
+    const suma=(lbl,u)=>{ const e=g[lbl]=g[lbl]||{lbl,n:0,u:0}; e.n++; e.u=Math.max(e.u,u||0); };
+    S.reportes.forEach(r=>suma(NEED[r.k]?.n||r.k, r.u));
+    (S.censo||[]).forEach(cn=>{
+      // solo lo pendiente: si la vivienda ya fue atendida, no cuenta
+      const ent = S.entregas.filter(y=>y.lat && cn.lat && dist(cn.lat,cn.lng,y.lat,y.lng)<300).sort((p,q)=>q.ts-p.ts)[0];
+      if(ent && (now()-ent.ts) < 7*24*H) return;
+      (cn.needs||[]).forEach(k=>suma(CEN_LBL[k]||k, cn.urg||2));
+    });
+    const top=Object.values(g).sort((a,b)=>b.n-a.n).slice(0,8);
     if(bl) bl.style.display = top.length ? '' : 'none';
     const max=top.length?top[0].n:1;
-    w.innerHTML = top.map((x,i)=>`
+    w.innerHTML = top.map(x=>`
       <div class="card zcard">
         <div class="row" style="align-items:flex-start">
-          <div class="grow"><h3 class="trunc" style="margin:0;font-size:15px">${esc(NEED[x.k]?.n||x.k)}</h3>
-            <div class="muted" style="font-size:12px;margin-top:2px">Prioridad ${x.u===3?'1':x.u===2?'2':'3'}</div></div>
+          <div class="grow"><h3 class="trunc" style="margin:0;font-size:15px">${esc(x.lbl)}</h3>
+            <div class="muted" style="font-size:12px;margin-top:2px">Reportes y censo · prioridad ${x.u===3?'1':x.u===2?'2':'3'}</div></div>
           <span class="sbadge ${x.u===3?'b3':'b2'}">${x.n} pedido${x.n>1?'s':''}</span>
         </div>
         <div class="bar zbar"><span style="width:${Math.round(x.n/max*100)}%"></span></div>
