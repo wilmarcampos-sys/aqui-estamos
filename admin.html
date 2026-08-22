@@ -8,7 +8,7 @@
 <link rel="icon" type="image/svg+xml" href="logo/marca.svg">
 <title>Aquí Estamos · Administración</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
-<link rel="stylesheet" href="css/app.css?v=1.55.2">
+<link rel="stylesheet" href="css/app.css?v=1.55.3">
 <style>
   /* El panel es mobile-first: una columna, pestañas fijas abajo. En pantalla
      grande se centra en una franja de ancho de celular para no deformarse. */
@@ -365,9 +365,9 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="js/config.js?v=1.55.2"></script>
-<script src="js/version.js?v=1.55.2"></script>
-<script src="js/data.js?v=1.55.2"></script>
+<script src="js/config.js?v=1.55.3"></script>
+<script src="js/version.js?v=1.55.3"></script>
+<script src="js/data.js?v=1.55.3"></script>
 <script>
 /* ============================================================
    PANEL DE ADMINISTRACIÓN — Aquí Estamos
@@ -1357,6 +1357,13 @@ function vDespachos(){
           <div class="us no">
             <b>${sinPunto}</b><span>por verificar</span><small>Sin punto en el mapa: no pueden entrar a una ruta</small></div>
         </div>
+        <div class="desglose" style="margin-top:8px">
+          <div class="cl ok"><b>${ubicables}</b><span>se pueden enrutar${DP.incluirAprox
+            ? ` — ${exactas} exactas + ${aproxN} parciales`
+            : ` — solo las ${exactas} exactas; toca “ubicación parcial” para sumar ${aproxN} más`}</span></div>
+          ${atendidas>0?`<div class="cl"><b>${atendidas}</b><span>de esas, ya recibieron esto hace menos de una semana</span></div>
+          <div class="cl"><b>${cand}</b><span>quedan por atender</span></div>`:''}
+        </div>
 
         <div class="totalbox" style="margin-top:18px">
           <b>${alcanzan}</b>
@@ -1392,7 +1399,7 @@ function vDespachos(){
         <div class="desglose" style="margin-top:8px">
           <div class="cl ${entran===cupo?'ok':''}"><b>${cupo}</b><span>cupos de los equipos — ${DP.equipos} × ${DP.tope} paradas</span></div>
           <div class="cl ${entran===DP.unidades?'ok':''}"><b>${DP.unidades}</b><span>ayudas listas para entregar</span></div>
-          <div class="cl ${entran===cand?'ok':''}"><b>${cand}</b><span>familias con ubicación utilizable${DP.incluirAprox?` (${exactas} exactas + ${aproxN} parciales)`:` (solo las ${exactas} exactas)`}</span></div>
+          <div class="cl ${entran===cand?'ok':''}"><b>${cand}</b><span>se pueden enrutar${DP.incluirAprox?` — ${exactas} exactas + ${aproxN} parciales`:` — solo las ${exactas} exactas`}</span></div>
           ${entran<cand?`<div class="cl"><b>${cand-entran}</b><span>quedan para la próxima jornada</span></div>`:''}
         </div>
         <div class="btnrow" style="margin-top:14px">
