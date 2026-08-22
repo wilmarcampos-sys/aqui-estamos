@@ -8,7 +8,7 @@
 <link rel="icon" type="image/svg+xml" href="logo/marca.svg">
 <title>Aquí Estamos · Administración</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
-<link rel="stylesheet" href="css/app.css?v=1.52.0">
+<link rel="stylesheet" href="css/app.css?v=1.52.1">
 <style>
   /* El panel es mobile-first: una columna, pestañas fijas abajo. En pantalla
      grande se centra en una franja de ancho de celular para no deformarse. */
@@ -315,9 +315,9 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="js/config.js?v=1.52.0"></script>
-<script src="js/version.js?v=1.52.0"></script>
-<script src="js/data.js?v=1.52.0"></script>
+<script src="js/config.js?v=1.52.1"></script>
+<script src="js/version.js?v=1.52.1"></script>
+<script src="js/data.js?v=1.52.1"></script>
 <script>
 /* ============================================================
    PANEL DE ADMINISTRACIÓN — Aquí Estamos
@@ -1069,7 +1069,7 @@ const DESP_REGLAS = [
 ];
 
 let DP = { paso:1, tipo:'alimentos', unidades:60, equipos:3, tope:8,
-           incluirAprox:false, reglas:new Set(['urgencia','olvidadas']), rutas:null };
+           incluirAprox:false, todas:false, reglas:new Set(['urgencia','olvidadas']), rutas:null };
 
 /* Candidatas: solo con punto exacto (a un punto aproximado no se puede
    despachar a nadie) y sin haber recibido lo mismo en la última semana. */
@@ -1078,7 +1078,9 @@ function dpCandidatas(){
     if(c.archivada) return false;
     if(!c.lat || !c.lng) return false;
     if(c.aprox && !DP.incluirAprox) return false;
-    if(!(c.needs||[]).includes(DP.tipo)) return false;
+    // "todas por igual": a veces no se reparte según lo que cada quien pidió,
+    // sino lo mismo para todo el censo (una donación grande de un solo tipo).
+    if(!DP.todas && !(c.needs||[]).includes(DP.tipo)) return false;
     const ya = ENTREGAS.some(y=>y.k===DP.tipo && y.lat &&
       distM(c.lat,c.lng,+y.lat,+y.lng)<300 && (now()-y.ts) < 7*24*H);
     return !ya;
@@ -1157,7 +1159,7 @@ function dpArmar(){
 
 function vDespachos(){
   const cand = dpCandidatas().length;
-  const pide = c=>!c.archivada && (c.needs||[]).includes(DP.tipo);
+  const pide = c=>!c.archivada && (DP.todas || (c.needs||[]).includes(DP.tipo));
   const exactas  = CENSO.filter(c=>pide(c) && c.lat && !c.aprox).length;
   const aproxN   = CENSO.filter(c=>pide(c) && c.lat && c.aprox).length;
   const sinPunto = CENSO.filter(c=>pide(c) && !c.lat).length;
@@ -1172,7 +1174,12 @@ function vDespachos(){
         </div>
         <div class="lbl" style="margin-top:16px">¿Cuántas ayudas tienen listas?</div>
         <input class="input" id="dp-unid" inputmode="numeric" value="${DP.unidades}" style="margin-top:6px">
-        <div class="lbl" style="margin-top:16px">Quién espera ${esc(tipoN.toLowerCase())}</div>
+        <button type="button" class="srow ${DP.todas?'on':''}" id="dp-todas" style="margin-top:16px">
+          <span class="st"><b>Llevar a todas por igual</b>
+            <small>Sin mirar qué pidió cada familia — para cuando se reparte lo mismo a todo el censo</small></span>
+          <span class="sw"></span></button>
+
+        <div class="lbl" style="margin-top:16px">${DP.todas?'Viviendas del censo':`Quién espera ${esc(tipoN.toLowerCase())}`}</div>
         <div class="card" style="padding:11px 13px;margin-top:6px">
           <div class="mt"><b>${exactas}</b> con punto exacto — se les puede llegar directo</div>
           <div class="mt"><b>${aproxN}</b> con ubicación aproximada — solo se sabe el barrio</div>
@@ -1184,8 +1191,8 @@ function vDespachos(){
           <span class="sw"></span></button>
         ${!cand?`<p class="hint warn" style="margin-top:12px">${(CENSO.length
             ? (aproxN||sinPunto
-               ? 'Nadie con punto exacto pide esto. Activa las aproximadas arriba, o ubica primero las viviendas en la pestaña Ubicar.'
-               : 'Ninguna vivienda del censo tiene esta necesidad pendiente. Prueba con otra ayuda.')
+               ? 'Nadie con punto exacto queda por atender. Activa las aproximadas arriba, o ubica primero las viviendas en la pestaña Ubicar.'
+               : 'Ninguna vivienda del censo tiene esta necesidad pendiente. Prueba con otra ayuda, o activa “Llevar a todas por igual”.')
             : 'No se pudo leer el censo. Vuelve a entrar con tu correo.')}</p>`:''}
         <button class="btn" id="dp-1" style="width:100%;margin-top:14px" ${cand?'':'disabled'}>Siguiente${cand?` · ${cand} destino${cand===1?'':'s'}`:''}</button>
       </div>`;
@@ -1682,6 +1689,7 @@ document.addEventListener('click', e=>{
   const t=e.target.closest('#dp-tipo [data-dt]');   if(t){ DP.tipo=t.dataset.dt; vDespachos(); return; }
   const q=e.target.closest('#dp-tope [data-dtope]');if(q){ DP.tope=+q.dataset.dtope; vDespachos(); return; }
   if(e.target.closest('#dp-aprox')){ DP.incluirAprox=!DP.incluirAprox; vDespachos(); return; }
+  if(e.target.closest('#dp-todas')){ DP.todas=!DP.todas; vDespachos(); return; }
   const d=e.target.closest('#dp-eq [data-de]');     if(d){ DP.equipos=Math.max(1,Math.min(20,DP.equipos+ +d.dataset.de)); vDespachos(); return; }
   const r=e.target.closest('#dp-reglas [data-dr]'); if(r){ const k=r.dataset.dr;
     DP.reglas.has(k)?DP.reglas.delete(k):DP.reglas.add(k); vDespachos(); return; }
