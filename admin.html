@@ -8,7 +8,7 @@
 <link rel="icon" type="image/svg+xml" href="logo/marca.svg">
 <title>Aquí Estamos · Administración</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
-<link rel="stylesheet" href="css/app.css?v=1.57.0">
+<link rel="stylesheet" href="css/app.css?v=1.58.0">
 <style>
   /* El panel es mobile-first: una columna, pestañas fijas abajo. En pantalla
      grande se centra en una franja de ancho de celular para no deformarse. */
@@ -157,6 +157,21 @@
   }
 
   /* moverse por la cola sin tener que aplazar la ficha */
+  /* aviso de datos nuevos cuando no se puede repintar sin romper el trabajo */
+  .avisonuevo{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:950;
+    display:flex;align-items:center;gap:12px;padding:12px 16px;border-radius:14px;
+    background:var(--card);border:1px solid var(--acc);box-shadow:0 10px 30px rgba(0,0,0,.45);
+    font-size:13.5px;font-weight:650;color:var(--txt);max-width:92vw}
+  .avisonuevo button{background:none;border:0;font-family:inherit;font-size:13.5px;font-weight:800;
+    color:var(--acc);cursor:pointer;text-decoration:underline;padding:6px}
+  .avisonuevo #an-cerrar{color:var(--dim);text-decoration:none;font-size:15px}
+
+  .lnk{background:none;border:0;color:var(--link);font-family:inherit;font-size:inherit;
+    font-weight:750;cursor:pointer;text-decoration:underline;padding:0}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .field{margin-bottom:12px}
+  select.campo{appearance:none;-webkit-appearance:none;height:46px}
+
   .navcola{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:12px}
   .navcola span{font-size:12.5px;font-weight:700;color:var(--dim)}
   .navcola .nc{width:44px;height:44px;border-radius:12px;border:1px solid var(--line);
@@ -422,9 +437,9 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="js/config.js?v=1.57.0"></script>
-<script src="js/version.js?v=1.57.0"></script>
-<script src="js/data.js?v=1.57.0"></script>
+<script src="js/config.js?v=1.58.0"></script>
+<script src="js/version.js?v=1.58.0"></script>
+<script src="js/data.js?v=1.58.0"></script>
 <script>
 /* ============================================================
    PANEL DE ADMINISTRACIÓN — Aquí Estamos
@@ -517,6 +532,7 @@ const deCen = c=>({ id:c.id, ficha:c.ficha||'', barrio:c.barrio||'', dir:c.direc
   ev:c.estado_vivienda||'', needs:c.necesidades||[], detalle:c.detalle||'', lat:c.lat?+c.lat:null, lng:c.lng?+c.lng:null,
   urg:c.urgencia||0, aprox:!!c.ubicacion_aprox, red:c.fuente_detalle||'', ciudad:c.ciudad||'', fuente:c.fuente||'app',
   archivada:!!c.archivada, motivo:c.motivo_descarte||'',
+  ubicadoPor:c.ubicado_por||'', descPor:c.descartada_por||'',
   saltadaEl:c.saltada_el?+new Date(c.saltada_el):0,
   pedidaEl:c.pedida_el?+new Date(c.pedida_el):0,
   ts:+new Date(c.creado||Date.now()) });
@@ -840,10 +856,127 @@ function abrirVivienda(id){
     ${c.cedula?`<p class="muted" style="margin:6px 0">CC ${esc(c.cedula)}${c.tel?` · ${esc(telBonito(c.tel))}`:''} <span style="color:#f5a524">(privado — no compartir)</span></p>`:''}
     <div class="lbl">Pendiente</div>
     <p class="muted">${esc((c.needs||[]).join(', ')||'—')}${c.detalle?` · “${esc(c.detalle)}”`:''}</p>
-    ${c.tel?`<a class="btn" style="background:#25d366;color:#04220f;display:block;text-align:center;text-decoration:none;margin-top:10px"
-      href="${waLink(c.tel,'Hola, le escribo de Aquí Estamos por el censo '+c.ficha)}" target="_blank" rel="noopener">Escribir por WhatsApp</a>`:''}
+    ${c.archivada?`<p class="hint warn" style="margin-top:10px">Ficha archivada${c.motivo?` (${esc(c.motivo)})`:''}.
+      <button type="button" class="lnk" data-desarchivar="${esc(c.id)}">Recuperarla</button></p>`:''}
+    <div class="btnrow" style="margin-top:12px">
+      <button class="btn" data-editar="${esc(c.id)}" style="flex:1 1 160px">Editar los datos</button>
+      ${c.tel?`<a class="btn flat" style="flex:1 1 160px;width:auto;background:#25d366;color:#04220f;text-align:center;text-decoration:none;display:flex;align-items:center;justify-content:center"
+        href="${waLink(c.tel,'Hola, le escribo de Aquí Estamos por el censo '+(c.ficha||''))}" target="_blank" rel="noopener">WhatsApp</a>`:''}
+    </div>
+    ${(c.ubicadoPor||c.pedidaEl||c.descPor)?`<div class="lbl" style="margin-top:16px">Historial</div>
+      <div class="desglose">
+        ${c.ubicadoPor?`<div class="cl"><span>Ubicada por ${esc(String(c.ubicadoPor).replace('panel:',''))}</span></div>`:''}
+        ${c.pedidaEl?`<div class="cl"><span>Ubicación pedida por WhatsApp ${hace(c.pedidaEl)}</span></div>`:''}
+        ${c.descPor?`<div class="cl"><span>Archivada por ${esc(c.descPor)}</span></div>`:''}
+      </div>`:''}
   `);
 }
+
+/* Editar la ficha: quien digita el censo es quien detecta el error (un
+   teléfono con un dígito de más, "5 personas" que son 8) y hasta ahora no
+   tenía dónde corregirlo. Lo pueden hacer los dos roles del panel. */
+const NECS_ED = [['agua','Agua'],['alimentos','Mercado'],['medicamentos','Medicinas'],
+  ['ropa','Carpas / cobijas'],['bebes','Pañales'],['aseo','Aseo'],['albergue','Albergue'],
+  ['arriendo','Arriendo'],['estructural','Evaluación']];
+
+function editarVivienda(id){
+  const c = CENSO.find(x=>String(x.id)===String(id)); if(!c) return;
+  const campo = (k,lbl,val,tipo='text',extra='') =>
+    `<div class="field"><label class="label">${lbl}</label>
+      <input class="campo" id="e-${k}" value="${esc(val??'')}" type="${tipo}" ${extra} style="width:100%"></div>`;
+  abrirSheet(`
+    <div class="sec" style="margin-top:4px">Editar ${esc(c.ficha||'la ficha')}</div>
+    <p class="muted" style="margin:6px 0 14px">Corrige lo que venga mal del formulario. Queda registrado quién lo cambió.</p>
+    ${campo('nombre','Nombre y apellidos', c.nombre)}
+    <div class="row2">
+      ${campo('tel','Celular', c.tel, 'tel')}
+      ${campo('cedula','Cédula', c.cedula)}
+    </div>
+    ${campo('barrio','Barrio', c.barrio)}
+    ${campo('dir','Dirección', c.dir)}
+    ${campo('sena','Cómo identificarla', c.sena)}
+    <div class="row2">
+      ${campo('personas','Personas', c.personas, 'number', 'min="0" max="60"')}
+      ${campo('men5','Menores de 5', c.men5, 'number', 'min="0" max="30"')}
+    </div>
+    <div class="row2">
+      ${campo('may65','Mayores de 65', c.may65, 'number', 'min="0" max="30"')}
+      <div class="field"><label class="label">Urgencia</label>
+        <select class="campo" id="e-urg" style="width:100%">
+          <option value="3" ${c.urg===3?'selected':''}>Urgente</option>
+          <option value="2" ${c.urg===2?'selected':''}>Prioritaria</option>
+          <option value="1" ${c.urg===1?'selected':''}>Programable</option>
+        </select></div>
+    </div>
+    <div class="field"><label class="label">Estado de la vivienda</label>
+      <select class="campo" id="e-ev" style="width:100%">
+        <option value="" ${!c.ev?'selected':''}>Sin evaluar</option>
+        <option value="habitable" ${c.ev==='habitable'?'selected':''}>Habitable</option>
+        <option value="danos" ${c.ev==='danos'?'selected':''}>Con daños</option>
+        <option value="inhabitable" ${c.ev==='inhabitable'?'selected':''}>Inhabitable</option>
+      </select></div>
+    <div class="lbl" style="margin-top:6px">Necesidades pendientes</div>
+    <div id="e-needs" class="capasel" style="margin-top:6px">
+      ${NECS_ED.map(([k,n])=>`<label><input type="checkbox" value="${k}" ${(c.needs||[]).includes(k)?'checked':''}><span>${n}</span></label>`).join('')}
+    </div>
+    <div class="field" style="margin-top:12px"><label class="label">Detalle</label>
+      <input class="campo" id="e-detalle" value="${esc(c.detalle||'')}" style="width:100%"></div>
+    <div class="btnrow" style="margin-top:14px">
+      <button class="btn" id="e-guardar" style="flex:1 1 200px">Guardar los cambios</button>
+      <button class="btn flat" id="e-cancelar" style="flex:0 1 auto;width:auto;min-width:120px">Cancelar</button>
+    </div>`);
+
+  const v = k => (document.getElementById('e-'+k)||{}).value;
+  document.getElementById('e-cancelar').onclick = ()=>abrirVivienda(id);
+  document.getElementById('e-guardar').onclick = async ()=>{
+    const nom = (v('nombre')||'').trim().split(/\s+/);
+    const needs = [...document.querySelectorAll('#e-needs input:checked')].map(x=>x.value);
+    const tel = (v('tel')||'').trim();
+    const campos = {
+      nombre: nom.slice(0,-1).join(' ') || nom[0] || null,
+      apellido: nom.length>1 ? nom[nom.length-1] : null,
+      tel_e164: tel ? (telDigitos(tel) ? '+'+telDigitos(tel) : tel) : null,
+      cedula: (v('cedula')||'').trim() || null,
+      barrio: (v('barrio')||'').trim() || null,
+      direccion: (v('dir')||'').trim() || null,
+      sena: (v('sena')||'').trim() || null,
+      personas: +v('personas')||0, menores5: +v('men5')||0, mayores65: +v('may65')||0,
+      urgencia: +v('urg')||0, estado_vivienda: v('ev')||null,
+      necesidades: needs, detalle: (v('detalle')||'').trim() || null,
+    };
+    const antes = {...c};
+    const b=document.getElementById('e-guardar'); b.disabled=true; b.textContent='Guardando…';
+    if(!DEMO){
+      const {error} = await db.from('censo').update(campos).eq('id', c.id);
+      if(error){ toast('No se pudo guardar. Revisa la conexión.'); console.error(error);
+        b.disabled=false; b.textContent='Guardar los cambios'; return; }
+    }
+    Object.assign(c, {nombre:[campos.nombre,campos.apellido].filter(Boolean).join(' '),
+      tel:campos.tel_e164||'', cedula:campos.cedula||'', barrio:campos.barrio||'',
+      dir:campos.direccion||'', sena:campos.sena||'', personas:campos.personas,
+      men5:campos.menores5, may65:campos.mayores65, urg:campos.urgencia,
+      ev:campos.estado_vivienda||'', needs, detalle:campos.detalle||''});
+    cerrarSheet(); render();
+    toastDeshacer('Ficha actualizada: '+(c.ficha||''), async ()=>{
+      if(!DEMO) await db.from('censo').update({
+        nombre:antes.nombre, tel_e164:antes.tel||null, cedula:antes.cedula||null,
+        barrio:antes.barrio||null, direccion:antes.dir||null, sena:antes.sena||null,
+        personas:antes.personas, menores5:antes.men5, mayores65:antes.may65,
+        urgencia:antes.urg, estado_vivienda:antes.ev||null,
+        necesidades:antes.needs, detalle:antes.detalle||null}).eq('id', c.id);
+      Object.assign(c, antes); toast('Cambios deshechos.'); render();
+    });
+  };
+}
+
+async function desarchivar(id){
+  const c = CENSO.find(x=>String(x.id)===String(id)); if(!c) return;
+  if(!DEMO){ const {error} = await db.from('censo').update({archivada:false, motivo_descarte:null,
+    descartada_por:null, descartada_el:null}).eq('id', c.id);
+    if(error){ toast('No se pudo recuperar.'); return; } }
+  c.archivada=false; c.motivo=''; cerrarSheet(); render(); toast('Ficha recuperada.');
+}
+
 
 async function atenderPedido(id){
   const r = REPORTES.find(x=>String(x.id)===String(id)); if(!r) return;
@@ -1044,15 +1177,7 @@ function vUbicar(){
   if(UB.i >= cola.length) UB.i = 0;
   const c = cola[UB.i];
 
-  const pendientes = CENSO.filter(c=>!c.archivada && (!c.lat || c.aprox));
-  const conTel = pendientes.filter(c=>c.tel && !c.pedidaEl);
   $('#v-ubicar').innerHTML = `
-    ${conTel.length?`<div class="alert" style="border-left-color:#7c3aed">
-      <div class="ti">${conTel.length} familias pueden marcar su casa ellas mismas</div>
-      <div class="cx">Tienen teléfono y aún no les hemos pedido la ubicación. Es más rápido y más exacto
-        que adivinar la dirección desde aquí.</div>
-      <button class="btn" id="ub-masivo" style="width:100%;margin-top:10px">Pedirles la ubicación por WhatsApp</button>
-    </div>`:''}
     <div class="buscabox" style="margin-bottom:10px">
       <input id="ubusca" placeholder="Buscar en la cola por nombre, ficha, barrio o celular"
         value="${esc(UB.q)}" autocomplete="off">
@@ -1209,47 +1334,6 @@ async function ubGeocodificar(c){
     }
   }catch(e){ msg.textContent='No se pudo consultar el buscador de direcciones.'; }
   b.disabled=false; b.textContent='Buscar la dirección';
-}
-
-/* Envío en tanda. No se abren N pestañas de golpe (el navegador las bloquea
-   y nadie puede con 90 chats a la vez): se va de una en una, marcando cada
-   familia como "ya pedida" para que nadie reciba el mensaje dos veces. */
-/* Copiar el número: en el celular se pega en la marcación o en WhatsApp sin
-   tener que transcribirlo, que es donde se cuela un dígito cambiado. */
-async function copiarTel(txt, boton){
-  try{ await navigator.clipboard.writeText(txt); }
-  catch(_){ const t=document.createElement('textarea'); t.value=txt; document.body.appendChild(t);
-    t.select(); try{ document.execCommand('copy'); }catch(__){} t.remove(); }
-  const antes = boton.textContent; boton.textContent='Copiado';
-  boton.classList.add('ok'); setTimeout(()=>{ boton.textContent=antes; boton.classList.remove('ok'); }, 1600);
-}
-
-function ubMasivo(){
-  const cola = CENSO.filter(c=>!c.archivada && (!c.lat || c.aprox) && c.tel && !c.pedidaEl);
-  if(!cola.length) return toast('No hay a quién pedirle: ya se les pidió a todas.');
-  let i = 0;
-  const paso = ()=>{
-    const c = cola[i];
-    abrirSheet(`
-      <div class="sec" style="margin-top:4px">Pedir ubicación · ${i+1} de ${cola.length}</div>
-      <div class="fila"><b>${esc(c.nombre||'Vivienda')}</b></div>
-      <p class="muted" style="margin:6px 0 12px">${esc(c.barrio||'')} · ${esc(telBonito(c.tel))}</p>
-      <p class="muted" style="margin:0 0 12px;font-size:12.5px">Se abre WhatsApp con el mensaje listo.
-        Al enviarlo, vuelve aquí y toca “Siguiente”.</p>
-      <a class="btn" id="m-wa" style="display:block;text-align:center;text-decoration:none;background:#25d366;color:#04220f"
-         href="${waLink(c.tel, msgUbicar(c))}" target="_blank" rel="noopener">Abrir WhatsApp</a>
-      <div class="btnrow" style="margin-top:10px">
-        <button class="btn flat" id="m-salto" style="flex:1 1 120px">Saltar esta</button>
-        <button class="btn flat" id="m-sig" style="flex:1 1 120px">Siguiente</button>
-      </div>
-      <button class="btn flat" id="m-fin" style="width:auto;margin-top:10px">Terminar</button>`);
-    const avanzar = ()=>{ i++; if(i>=cola.length){ cerrarSheet(); toast('Listo: se pidió la ubicación a '+cola.length+' familias.'); vUbicar(); render(); } else paso(); };
-    document.getElementById('m-wa').onclick = ()=>ubPedida(c);
-    document.getElementById('m-sig').onclick = avanzar;
-    document.getElementById('m-salto').onclick = avanzar;
-    document.getElementById('m-fin').onclick = ()=>{ cerrarSheet(); vUbicar(); render(); };
-  };
-  paso();
 }
 
 async function ubGuardar(c){
@@ -2150,7 +2234,6 @@ document.addEventListener('click', e=>{
   if(e.target.closest('#ub-guardar')) { if(c) ubGuardar(c); return; }
   const cp = e.target.closest('[data-copiar-tel]');
   if(cp){ e.stopPropagation(); copiarTel(cp.dataset.copiarTel, cp); return; }
-  if(e.target.closest('#ub-masivo'))  { ubMasivo(); return; }
   if(e.target.closest('#ub-pegar'))   { if(c) ubPegar(); return; }
   if(e.target.closest('#ub-descartar')){ if(c) ubDescartar(c); return; }
   if(e.target.closest('#ub-wa'))      { if(c) ubPedida(c); return; }   // deja rastro; el enlace abre igual
@@ -2215,6 +2298,10 @@ document.addEventListener('click', e=>{
   if(ped) return abrirPedido(ped.dataset.pedido);
   const iru = e.target.closest('[data-ir-ubicar]');
   if(iru){ e.stopPropagation(); abrirEnUbicar(iru.dataset.irUbicar); return; }
+  const ed = e.target.closest('[data-editar]');
+  if(ed){ editarVivienda(ed.dataset.editar); return; }
+  const des = e.target.closest('[data-desarchivar]');
+  if(des){ desarchivar(des.dataset.desarchivar); return; }
   const viv = e.target.closest('[data-vivienda]');
   if(viv) return abrirVivienda(viv.dataset.vivienda);
   const att = e.target.closest('[data-atender]');
@@ -2310,6 +2397,28 @@ function aplicarRol(){
   document.body.dataset.rol = ROL||'';
 }
 
+/* ¿Hay algo a medio hacer que un repintado destruiría? */
+let HAY_NUEVO = false;
+function editando(){
+  const a = document.activeElement;
+  const enCampo = a && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName);
+  const pinPuesto = VISTA==='ubicar' && UB.lat!=null;
+  const hojaAbierta = $('#sheet').classList.contains('on');
+  const asistente = VISTA==='despachos' && DP.paso>1;
+  return enCampo || pinPuesto || hojaAbierta || asistente;
+}
+function pintarAvisoNuevo(){
+  if(document.getElementById('aviso-nuevo')) return;
+  const d = document.createElement('div');
+  d.id='aviso-nuevo'; d.className='avisonuevo';
+  d.innerHTML = `<span>Hay datos nuevos de otra persona.</span>
+    <button type="button" id="an-refrescar">Actualizar</button>
+    <button type="button" id="an-cerrar" aria-label="Ocultar">✕</button>`;
+  document.body.appendChild(d);
+  d.querySelector('#an-refrescar').onclick = async ()=>{ d.remove(); HAY_NUEVO=false; await cargar(); };
+  d.querySelector('#an-cerrar').onclick = ()=>d.remove();
+}
+
 async function salir(){ if(DEMO){ toast('En demo no hay sesión que cerrar.'); return; }
   await db.auth.signOut(); location.reload(); }
 
@@ -2337,7 +2446,14 @@ async function arrancar(){
   YO = {email: session.user.email};
   $('#panel').hidden=false;
   await cargar();
-  db.channel('admin').on('postgres_changes', {event:'*', schema:'public'}, cargar).subscribe();
+  // El realtime traía datos nuevos y repintaba TODO: se perdía la dirección a
+  // medio escribir, el pin recién puesto y el foco del buscador. Ahora, si hay
+  // trabajo en curso, no se repinta: se avisa y la persona decide cuándo.
+  db.channel('admin')
+    .on('postgres_changes', {event:'*', schema:'public'}, ()=>{
+      if(editando()){ HAY_NUEVO = true; pintarAvisoNuevo(); return; }
+      cargar();
+    }).subscribe();
 }
 if(!DEMO) db.auth.onAuthStateChange(()=>{ if($('#panel').hidden){ location.hash=''; arrancar(); } });
 arrancar();
