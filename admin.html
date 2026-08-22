@@ -8,7 +8,7 @@
 <link rel="icon" type="image/svg+xml" href="logo/marca.svg">
 <title>Aquí Estamos · Administración</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
-<link rel="stylesheet" href="css/app.css?v=1.53.0">
+<link rel="stylesheet" href="css/app.css?v=1.53.1">
 <style>
   /* El panel es mobile-first: una columna, pestañas fijas abajo. En pantalla
      grande se centra en una franja de ancho de celular para no deformarse. */
@@ -87,14 +87,30 @@
 
   /* .btn nace con width:100%; dentro de una fila flex eso expulsa a sus
      vecinos. Se neutraliza aqui en vez de parchear cada fila. */
-  /* la cuenta del asistente: cada línea suma o resta, el total se destaca */
-  .cuenta .cl{display:flex;align-items:center;gap:12px;padding:9px 0;font-size:13.5px}
-  .cuenta .cl + .cl{border-top:1px solid var(--line)}
-  .cuenta .cl span{flex:1;color:var(--dim)}
-  .cuenta .cl b{font-variant-numeric:tabular-nums;font-weight:750}
-  .cuenta .cl.neg b{color:var(--dim)}
-  .cuenta .cl.tot span{color:var(--txt);font-weight:700}
-  .cuenta .cl.tot b{color:var(--acc);font-size:17px;font-weight:850}
+  /* Cuántos reciben hoy: el número manda, el desglose se abre solo si se pide.
+     (La versión anterior se pintaba en horizontal porque .card es flex.) */
+  .totalbox{display:flex;align-items:center;gap:16px;margin-top:16px;padding:16px 18px;
+    border-radius:16px;background:var(--chip);border:1px solid var(--line)}
+  .totalbox > b{font-size:44px;line-height:1;font-weight:850;color:var(--acc);
+    font-variant-numeric:tabular-nums}
+  .totalbox > span{font-size:16px;font-weight:750;color:var(--txt);line-height:1.25}
+  .totalbox small{display:block;font-size:12.5px;font-weight:550;color:var(--dim);margin-top:3px}
+
+  .porque{margin-top:10px}
+  .porque summary{cursor:pointer;font-size:13px;font-weight:700;color:var(--link);
+    padding:8px 3px;list-style:none;min-height:44px;display:flex;align-items:center}
+  .porque summary::-webkit-details-marker{display:none}
+  .porque summary::before{content:"▸ ";margin-right:5px}
+  .porque[open] summary::before{content:"▾ "}
+  .desglose{display:block;padding:2px 14px;border-radius:14px;
+    background:var(--surf);border:1px solid var(--line)}
+  .desglose .cl{display:flex;align-items:baseline;gap:12px;padding:11px 0;font-size:13.5px}
+  .desglose .cl + .cl{border-top:1px solid var(--line)}
+  .desglose .cl b{flex:0 0 46px;text-align:right;font-variant-numeric:tabular-nums;
+    font-weight:800;font-size:16px;color:var(--dim)}
+  .desglose .cl span{flex:1;color:var(--dim);line-height:1.4}
+  .desglose .cl.ok b{color:var(--acc)}
+  .desglose .cl.ok span{color:var(--txt);font-weight:700}
 
   .btnrow{display:flex;gap:8px;flex-wrap:wrap}
   /* objetivos táctiles: 44px es el mínimo cómodo con el pulgar */
@@ -324,9 +340,9 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="js/config.js?v=1.53.0"></script>
-<script src="js/version.js?v=1.53.0"></script>
-<script src="js/data.js?v=1.53.0"></script>
+<script src="js/config.js?v=1.53.1"></script>
+<script src="js/version.js?v=1.53.1"></script>
+<script src="js/data.js?v=1.53.1"></script>
 <script>
 /* ============================================================
    PANEL DE ADMINISTRACIÓN — Aquí Estamos
@@ -1244,21 +1260,26 @@ function vDespachos(){
             <small>Sin mirar qué pidió cada familia — para cuando se reparte lo mismo a todo el censo</small></span>
           <span class="sw"></span></button>
 
-        <div class="lbl" style="margin-top:16px">La cuenta, paso a paso</div>
-        <div class="card cuenta" style="padding:4px 13px;margin-top:6px">
-          <div class="cl"><span>${[DP.fuenteCenso===false?null:'censo', DP.conReportes?'reportes del mapa':null].filter(Boolean).join(' + ')||'Nada seleccionado'}</span><b>${vivas.length}</b></div>
-          ${DP.todas?'' : `<div class="cl neg"><span>No piden ${esc(tipoN.toLowerCase())}</span><b>−${noPiden}</b></div>`}
-          <div class="cl neg"><span>Sin ubicar en el mapa</span><b>−${sinPunto}</b></div>
-          <div class="cl ${DP.incluirAprox?'':'neg'}"><span>Con ubicación aproximada${DP.incluirAprox?' (incluidas)':''}</span><b>${DP.incluirAprox?'+':'−'}${aproxN}</b></div>
-          ${atendidas>0?`<div class="cl neg"><span>Ya recibieron esto hace menos de 7 días</span><b>−${atendidas}</b></div>`:''}
-          <div class="cl tot"><span>Se les puede llevar hoy</span><b>${cand}</b></div>
-          ${limite?`<div class="cl neg"><span>${limite==='ayudas'?`Solo hay ${DP.unidades} ayudas listas`:`Los ${DP.equipos} equipos alcanzan para ${cupo}`}</span><b>−${cand-entran}</b></div>
-          <div class="cl tot"><span>Entran a esta jornada</span><b>${entran}</b></div>`:''}
+        <div class="totalbox">
+          <b>${entran}</b>
+          <span>familia${entran===1?'':'s'} reciben hoy<small>de ${vivas.length} en ${DP.conReportes&&DP.fuenteCenso!==false?'censo y reportes':DP.conReportes?'los reportes del mapa':'el censo'}</small></span>
         </div>
-        <p class="muted" style="margin:8px 3px 0;font-size:12.5px">
+        <details class="porque">
+          <summary>Ver por qué no son las ${vivas.length}</summary>
+          <div class="desglose">
+            ${DP.todas?'' : `<div class="cl"><b>${noPiden}</b><span>no piden ${esc(tipoN.toLowerCase())} — pidieron otra cosa</span></div>`}
+            <div class="cl"><b>${sinPunto}</b><span>no tienen ubicación en el mapa — nadie sabe a qué casa ir</span></div>
+            <div class="cl"><b>${aproxN}</b><span>solo tienen el barrio, no la casa${DP.incluirAprox?' — incluidas con el interruptor de abajo':' — actívalas abajo si quieres llegarles'}</span></div>
+            ${atendidas>0?`<div class="cl"><b>${atendidas}</b><span>ya recibieron esto hace menos de una semana</span></div>`:''}
+            <div class="cl ok"><b>${cand}</b><span>quedan por atender hoy</span></div>
+            ${limite?`<div class="cl"><b>${cand-entran}</b><span>${limite==='ayudas'
+                ? `se quedan por fuera: solo hay ${DP.unidades} ayudas listas`
+                : `se quedan por fuera: ${DP.equipos} equipo${DP.equipos===1?'':'s'} × ${DP.tope} paradas = ${cupo} cupos`}</span></div>`:''}
+          </div>
+        </details>
+        ${limite?`<p class="muted" style="margin:8px 3px 0;font-size:12.5px">
           ${limite==='ayudas'?'Sube el número de ayudas listas para llegar a más familias.'
-           :limite==='cupo'?'Agrega equipos o paradas en el paso 2 para cubrir a las demás.'
-           :'Alcanza para todas las que se pueden atender hoy.'}</p>
+           :'Agrega equipos o paradas en el paso 2 para cubrir a las demás.'}</p>`:''}
         <button type="button" class="srow ${DP.incluirAprox?'on':''}" id="dp-aprox" style="margin-top:10px">
           <span class="st"><b>Incluir las aproximadas</b>
             <small>${aproxN} más. El equipo llega al barrio y llama al llegar: lleva el teléfono de cada familia.</small></span>
@@ -1551,7 +1572,7 @@ function montarMiniMapa(rows){
 /* ---------- MÁS ---------- */
 function vMas(){
   $('#v-mas').innerHTML = `
-    <div class="cuenta">
+    <div class="desglose">
       ${avatar({nom:YO.email||'A'},'big')}
       <div class="grow"><b>${esc(YO.email?YO.email.split('@')[0]:'Administración')}</b>
         <span>${esc(YO.email||(DEMO?'modo demostración':''))}</span></div>
