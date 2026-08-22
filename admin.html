@@ -8,7 +8,7 @@
 <link rel="icon" type="image/svg+xml" href="logo/marca.svg">
 <title>Aquí Estamos · Administración</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
-<link rel="stylesheet" href="css/app.css?v=1.55.0">
+<link rel="stylesheet" href="css/app.css?v=1.55.1">
 <style>
   /* El panel es mobile-first: una columna, pestañas fijas abajo. En pantalla
      grande se centra en una franja de ancho de celular para no deformarse. */
@@ -365,9 +365,9 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="js/config.js?v=1.55.0"></script>
-<script src="js/version.js?v=1.55.0"></script>
-<script src="js/data.js?v=1.55.0"></script>
+<script src="js/config.js?v=1.55.1"></script>
+<script src="js/version.js?v=1.55.1"></script>
+<script src="js/data.js?v=1.55.1"></script>
 <script>
 /* ============================================================
    PANEL DE ADMINISTRACIÓN — Aquí Estamos
@@ -1276,6 +1276,23 @@ function dpArmar(){
   return rutas;
 }
 
+/* Actualiza los números sin re-pintar el paso: volver a dibujarlo mientras
+   se escribe le quita el foco al campo. */
+function dpTotales(){
+  const t = document.querySelector('#v-despachos .totalbox');
+  if(!t || DP.paso!==1) return;
+  const cand = dpCandidatas().length;
+  const alcanzan = Math.min(cand, DP.unidades);
+  t.querySelector('b').textContent = alcanzan;
+  const s2 = t.querySelector('small');
+  if(s2) s2.innerHTML = (alcanzan<cand
+      ? `solo hay ${DP.unidades} ayudas listas · ${cand-alcanzan} quedan para la próxima`
+      : 'alcanza para todas las que se pueden atender')
+    + '<br>En el paso siguiente decides cuántos equipos salen.';
+  const b = document.getElementById('dp-1');
+  if(b) b.textContent = 'Siguiente' + (cand?` · ${alcanzan} destino${alcanzan===1?'':'s'}`:'');
+}
+
 function vDespachos(){
   const cand = dpCandidatas().length;
   const reps       = dpReportes();
@@ -1824,6 +1841,7 @@ function ir(v, seg){ VISTA=v; if(seg) SEG=seg; cerrarSheet(); render();
 // Buscador del censo: re-pintar en cada tecla borraría el foco, así que se
 // vuelve a montar la vista y se devuelve el cursor donde estaba.
 document.addEventListener('input', e=>{
+  if(e.target.id==='dp-unid'){ DP.unidades = Math.max(1, +e.target.value||1); dpTotales(); return; }
   if(e.target.id!=='cbusca') return;
   CFIL.q = e.target.value;
   const pos = e.target.selectionStart;
