@@ -8,7 +8,7 @@
 <link rel="icon" type="image/svg+xml" href="logo/marca.svg">
 <title>Aquí Estamos · Administración</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
-<link rel="stylesheet" href="css/app.css?v=1.50.0">
+<link rel="stylesheet" href="css/app.css?v=1.50.1">
 <style>
   /* El panel es mobile-first: una columna, pestañas fijas abajo. En pantalla
      grande se centra en una franja de ancho de celular para no deformarse. */
@@ -25,6 +25,7 @@
   .top h2{margin:0;font-size:22px;font-weight:800;letter-spacing:-.4px}
   .top .sub{font-size:12.5px;color:var(--dim);margin-top:2px}
 
+  .panel-main{display:flex;flex-direction:column;flex:1;min-height:0;min-width:0}
   main{flex:1;position:relative;overflow:hidden}
   .view{position:absolute;inset:0;display:none;overflow-y:auto;-webkit-overflow-scrolling:touch;
     padding:14px 16px calc(18px + var(--safe))}
@@ -42,6 +43,47 @@
     padding:0 4px;border-radius:8px;background:#d97706;color:#160c02;font-size:10px;font-weight:800;
     display:none;align-items:center;justify-content:center;line-height:1}
   .tabbar button .badge.on{display:flex}
+
+  /* ============================================================
+     ESCRITORIO (>=1000px)
+     El panel deja de fingir que es un celular: las pestañas se van a
+     una columna lateral y el contenido usa el ancho real de la pantalla.
+     ============================================================ */
+  @media (min-width:1000px){
+    #app{max-width:none;flex-direction:row;border:0}
+    #panel:not([hidden]){flex-direction:row;width:100%}
+
+    /* la barra de pestañas pasa a ser barra lateral */
+    /* app.css redondea las barras de navegación; de lado eso deja una
+       pastilla flotante en vez de una columna. */
+    .tabbar{order:-1;flex-direction:column;width:216px;flex:0 0 216px;
+      border-top:0;border-right:1px solid var(--line);padding:14px 10px;gap:3px;
+      background:var(--surf);border-radius:0;margin:0;height:100%;align-self:stretch}
+    .tabbar button{flex:0 0 auto;flex-direction:row;justify-content:flex-start;gap:11px;
+      padding:11px 13px;border-radius:12px;text-align:left}
+    .tabbar button .lab{font-size:14px;font-weight:650}
+    .tabbar button.on{background:var(--chip)}
+    .tabbar button .badge{position:static;margin-left:auto;left:auto;top:auto}
+
+    /* columna de contenido */
+    .top{padding:20px 30px 16px}
+    .top h2{font-size:27px}
+    .view{padding:20px 30px 30px}
+    .view > *{max-width:1180px}
+
+    /* las filas se acomodan en varias columnas en vez de una tira larga */
+    .prow-grid{display:grid;gap:10px;max-width:1180px;
+      grid-template-columns:repeat(auto-fill,minmax(370px,1fr))}
+    .prow-grid > *{margin:0;border-radius:14px;border:1px solid var(--line)}
+
+    /* la hoja inferior se vuelve panel lateral derecho */
+    .sheet{left:auto;right:0;top:0;bottom:0;width:min(460px,42vw);
+      border-radius:0;border-left:1px solid var(--line);max-height:none}
+  }
+  @media (min-width:1500px){
+    .prow-grid{grid-template-columns:repeat(auto-fill,minmax(400px,1fr));max-width:1500px}
+    .view > *{max-width:1500px}
+  }
 
   /* badges pill (mismo lenguaje de la app) */
   .sbadge{display:inline-block;padding:2px 8px;border-radius:999px;font-size:10.5px;font-weight:800;letter-spacing:.2px;vertical-align:1px}
@@ -199,6 +241,7 @@
 
   <!-- PANEL -->
   <div id="panel" hidden>
+    <div class="panel-main">
     <div class="top">
       <div class="row">
         <div class="grow">
@@ -207,7 +250,6 @@
         </div>
       </div>
     </div>
-
     <main>
       <section class="view on" id="v-inicio"></section>
       <section class="view" id="v-pedidos"></section>
@@ -215,6 +257,7 @@
       <section class="view" id="v-zonas"></section>
       <section class="view" id="v-mas"></section>
     </main>
+    </div>
 
     <nav class="tabbar" id="tabbar">
       <button data-v="inicio" class="on">
@@ -252,9 +295,9 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="js/config.js?v=1.50.0"></script>
-<script src="js/version.js?v=1.50.0"></script>
-<script src="js/data.js?v=1.50.0"></script>
+<script src="js/config.js?v=1.50.1"></script>
+<script src="js/version.js?v=1.50.1"></script>
+<script src="js/data.js?v=1.50.1"></script>
 <script>
 /* ============================================================
    PANEL DE ADMINISTRACIÓN — Aquí Estamos
@@ -900,6 +943,27 @@ function vMas(){
 /* ============================================================
    HOJA INFERIOR
    ============================================================ */
+/* En escritorio las filas se ven mejor en columnas. En vez de tocar el HTML
+   de cada vista, se agrupan aquí las .prow consecutivas dentro de un
+   contenedor; la rejilla la arma el CSS y en móvil no aplica. */
+function agruparFilas(){
+  document.querySelectorAll('.view').forEach(v=>{
+    v.querySelectorAll(':scope > .prow-grid').forEach(g=>{
+      while(g.firstChild) g.parentNode.insertBefore(g.firstChild, g);
+      g.remove();
+    });
+    let grupo=null;
+    const enRejilla = el => el.classList.contains('prow') || el.classList.contains('pgroup');
+    [...v.children].forEach(el=>{
+      if(enRejilla(el)){
+        if(!grupo){ grupo=document.createElement('div'); grupo.className='prow-grid';
+          el.parentNode.insertBefore(grupo, el); }
+        grupo.appendChild(el);
+      } else grupo=null;
+    });
+  });
+}
+
 function abrirSheet(html){ $('#sheet-body').innerHTML = html + `<button class="btn flat" data-close-btn style="margin-top:12px">Cerrar</button>`;
   $('#sheet').classList.add('on'); }
 function cerrarSheet(){ $('#sheet').classList.remove('on'); }
@@ -1004,6 +1068,7 @@ function render(){
   setBadge('zonas', necesita);
   setBadge('inicio', 0);
   setBadge('mas', 0);
+  agruparFilas();   // al final: las vistas ya están pintadas
 }
 function setBadge(v,n){ const b=$('#bg-'+v); if(!b) return;
   b.textContent = n>9?'9+':n; b.classList.toggle('on', n>0); }
