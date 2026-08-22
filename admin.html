@@ -8,7 +8,7 @@
 <link rel="icon" type="image/svg+xml" href="logo/marca.svg">
 <title>Aquí Estamos · Administración</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
-<link rel="stylesheet" href="css/app.css?v=1.52.1">
+<link rel="stylesheet" href="css/app.css?v=1.53.0">
 <style>
   /* El panel es mobile-first: una columna, pestañas fijas abajo. En pantalla
      grande se centra en una franja de ancho de celular para no deformarse. */
@@ -87,6 +87,15 @@
 
   /* .btn nace con width:100%; dentro de una fila flex eso expulsa a sus
      vecinos. Se neutraliza aqui en vez de parchear cada fila. */
+  /* la cuenta del asistente: cada línea suma o resta, el total se destaca */
+  .cuenta .cl{display:flex;align-items:center;gap:12px;padding:9px 0;font-size:13.5px}
+  .cuenta .cl + .cl{border-top:1px solid var(--line)}
+  .cuenta .cl span{flex:1;color:var(--dim)}
+  .cuenta .cl b{font-variant-numeric:tabular-nums;font-weight:750}
+  .cuenta .cl.neg b{color:var(--dim)}
+  .cuenta .cl.tot span{color:var(--txt);font-weight:700}
+  .cuenta .cl.tot b{color:var(--acc);font-size:17px;font-weight:850}
+
   .btnrow{display:flex;gap:8px;flex-wrap:wrap}
   /* objetivos táctiles: 44px es el mínimo cómodo con el pulgar */
   #v-ubicar .seg button{min-height:44px}
@@ -315,9 +324,9 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="js/config.js?v=1.52.1"></script>
-<script src="js/version.js?v=1.52.1"></script>
-<script src="js/data.js?v=1.52.1"></script>
+<script src="js/config.js?v=1.53.0"></script>
+<script src="js/version.js?v=1.53.0"></script>
+<script src="js/data.js?v=1.53.0"></script>
 <script>
 /* ============================================================
    PANEL DE ADMINISTRACIÓN — Aquí Estamos
@@ -758,7 +767,8 @@ async function atenderPedido(id){
 let UB = { i:0, lat:null, lng:null, map:null, mk:null, modo:'sin' };
 
 function ubCola(){
-  const vivas = CENSO.filter(c=>!c.archivada);
+  const reps  = dpReportes();
+  const vivas = (DP.fuenteCenso===false?[]:CENSO).filter(c=>!c.archivada).concat(reps);
   const lista = UB.modo==='aprox' ? vivas.filter(c=>c.lat && c.aprox) : vivas.filter(c=>!c.lat);
   // lo aplazado vuelve al final, no al frente: si no, las fichas imposibles
   // reaparecen en cada vuelta y el trabajo no avanza nunca.
@@ -1054,11 +1064,28 @@ function ubDescartar(c){
    negras: se agrupa por cercanía para que ningún equipo cruce la ciudad,
    y dentro de cada grupo se ordena por las reglas que marque la persona.
    ============================================================ */
+/* El censo agrupa en seis necesidades; los reportes usan el catálogo fino
+   (mercado, enlatados, cobijas, carpa…). El cruce se hace por CATEGORÍA del
+   catálogo, no por clave suelta: así "enlatados" cuenta como alimentos sin
+   tener que enumerar cada ítem a mano. */
 const DESP_TIPOS = [
-  {k:'alimentos', n:'Mercado / alimentos'}, {k:'aseo', n:'Aseo e higiene'},
-  {k:'agua', n:'Agua potable'}, {k:'ropa', n:'Carpas y cobijas'},
-  {k:'medicamentos', n:'Medicamentos'}, {k:'bebes', n:'Pañales y bebés'},
+  {k:'alimentos',    n:'Mercado / alimentos', cats:['Agua y alimento']},
+  {k:'aseo',         n:'Aseo e higiene',      cats:['Higiene personal','Servicios y limpieza']},
+  {k:'agua',         n:'Agua potable',        cats:['Agua y alimento']},
+  {k:'ropa',         n:'Carpas y cobijas',    cats:['Dónde dormir','Ropa y calzado']},
+  {k:'medicamentos', n:'Medicamentos',        cats:['Medicamentos','Insumos médicos','Material de curación','Vida o muerte']},
+  {k:'bebes',        n:'Pañales y bebés',     cats:['Bebés y crianza']},
 ];
+// dentro de "Agua y alimento" hay agua y hay comida: se afinan con estas claves
+const SOLO_AGUA = new Set(['agua','carrotanq','potabiliza','filtros']);
+function repCalza(k){
+  const t = DESP_TIPOS.find(x=>x.k===DP.tipo); if(!t) return false;
+  const cat = (typeof NEED!=='undefined' && NEED[k]) ? NEED[k].cat : '';
+  if(!t.cats.includes(cat)) return false;
+  if(DP.tipo==='agua')      return SOLO_AGUA.has(k);
+  if(DP.tipo==='alimentos') return !SOLO_AGUA.has(k);
+  return true;
+}
 const DESP_REGLAS = [
   {k:'urgencia',  n:'Urgentes primero',            d:'Las marcadas como urgentes encabezan la ruta'},
   {k:'menores',   n:'Familias con niños pequeños', d:'Menores de 5 años suben en la lista'},
@@ -1069,12 +1096,30 @@ const DESP_REGLAS = [
 ];
 
 let DP = { paso:1, tipo:'alimentos', unidades:60, equipos:3, tope:8,
-           incluirAprox:false, todas:false, reglas:new Set(['urgencia','olvidadas']), rutas:null };
+           incluirAprox:false, todas:false, conReportes:false, reglas:new Set(['urgencia','olvidadas']), rutas:null };
 
 /* Candidatas: solo con punto exacto (a un punto aproximado no se puede
    despachar a nadie) y sin haber recibido lo mismo en la última semana. */
+function dpReportes(){
+  if(!DP.conReportes) return [];
+  return REPORTES.filter(r=>r.lat && r.lng && !repAtendido(r))
+    .filter(r=>DP.todas || repCalza(r.k))
+    .map(r=>{
+      const ct = CONTACTOS[r.folio] || {};
+      // el panel no carga calc.js: el nombre de zona sale del mapa ya portado
+      const zn = NOMBRE_ZONA.get(r.z) || '';
+      return {id:'rep:'+r.id, ficha:r.folio||'', fuente:'reporte',
+        nombre: ct.nombre || 'Reporte del mapa', barrio: r.ref || zn, dir:'', sena:'',
+        tel: ct.tel||'', personas: r.personas||0, men5:0, may65:0, cond:[],
+        ev:'', needs:[DP.tipo], urg:r.u||0,
+        pide:(typeof NEED!=='undefined' && NEED[r.k]) ? NEED[r.k].n : r.k, lat:+r.lat, lng:+r.lng, aprox:false,
+        archivada:false, ts:r.ts};
+    });
+}
+
 function dpCandidatas(){
-  return CENSO.filter(c=>{
+  const base = DP.fuenteCenso===false ? [] : CENSO;
+  return base.concat(dpReportes()).filter(c=>{
     if(c.archivada) return false;
     if(!c.lat || !c.lng) return false;
     if(c.aprox && !DP.incluirAprox) return false;
@@ -1159,10 +1204,20 @@ function dpArmar(){
 
 function vDespachos(){
   const cand = dpCandidatas().length;
+  const reps  = dpReportes();
+  const vivas = (DP.fuenteCenso===false?[]:CENSO).filter(c=>!c.archivada).concat(reps);
   const pide = c=>!c.archivada && (DP.todas || (c.needs||[]).includes(DP.tipo));
-  const exactas  = CENSO.filter(c=>pide(c) && c.lat && !c.aprox).length;
-  const aproxN   = CENSO.filter(c=>pide(c) && c.lat && c.aprox).length;
-  const sinPunto = CENSO.filter(c=>pide(c) && !c.lat).length;
+  const piden    = vivas.filter(pide);
+  const exactas  = piden.filter(c=>c.lat && !c.aprox).length;
+  const aproxN   = piden.filter(c=>c.lat && c.aprox).length;
+  const sinPunto = piden.filter(c=>!c.lat).length;
+  const noPiden  = vivas.length - piden.length;
+  // ubicables = las que podrían entrar según los interruptores de arriba
+  const ubicables = exactas + (DP.incluirAprox ? aproxN : 0);
+  const atendidas = ubicables - cand;             // filtradas por el anti-duplicado
+  const cupo      = DP.equipos * DP.tope;
+  const entran    = Math.min(cand, DP.unidades, cupo);
+  const limite    = entran===cand ? null : (DP.unidades<=cupo ? 'ayudas' : 'cupo');
   const tipoN = (DESP_TIPOS.find(t=>t.k===DP.tipo)||{}).n||DP.tipo;
 
   if(DP.paso===1){
@@ -1174,17 +1229,36 @@ function vDespachos(){
         </div>
         <div class="lbl" style="margin-top:16px">¿Cuántas ayudas tienen listas?</div>
         <input class="input" id="dp-unid" inputmode="numeric" value="${DP.unidades}" style="margin-top:6px">
+        <div class="lbl" style="margin-top:16px">¿A quiénes se les lleva?</div>
+        <button type="button" class="srow ${DP.fuenteCenso===false?'':'on'}" id="dp-fcenso" style="margin-top:8px">
+          <span class="st"><b>Viviendas del censo</b>
+            <small>Familias registradas casa por casa, con nombre y teléfono</small></span>
+          <span class="sw"></span></button>
+        <button type="button" class="srow ${DP.conReportes?'on':''}" id="dp-freps">
+          <span class="st"><b>Reportes del mapa</b>
+            <small>Quien pidió ayuda desde la app. Anónimos salvo que hayan dejado contacto</small></span>
+          <span class="sw"></span></button>
+
         <button type="button" class="srow ${DP.todas?'on':''}" id="dp-todas" style="margin-top:16px">
           <span class="st"><b>Llevar a todas por igual</b>
             <small>Sin mirar qué pidió cada familia — para cuando se reparte lo mismo a todo el censo</small></span>
           <span class="sw"></span></button>
 
-        <div class="lbl" style="margin-top:16px">${DP.todas?'Viviendas del censo':`Quién espera ${esc(tipoN.toLowerCase())}`}</div>
-        <div class="card" style="padding:11px 13px;margin-top:6px">
-          <div class="mt"><b>${exactas}</b> con punto exacto — se les puede llegar directo</div>
-          <div class="mt"><b>${aproxN}</b> con ubicación aproximada — solo se sabe el barrio</div>
-          <div class="mt"><b>${sinPunto}</b> sin ubicar — no entran a ninguna ruta</div>
+        <div class="lbl" style="margin-top:16px">La cuenta, paso a paso</div>
+        <div class="card cuenta" style="padding:4px 13px;margin-top:6px">
+          <div class="cl"><span>${[DP.fuenteCenso===false?null:'censo', DP.conReportes?'reportes del mapa':null].filter(Boolean).join(' + ')||'Nada seleccionado'}</span><b>${vivas.length}</b></div>
+          ${DP.todas?'' : `<div class="cl neg"><span>No piden ${esc(tipoN.toLowerCase())}</span><b>−${noPiden}</b></div>`}
+          <div class="cl neg"><span>Sin ubicar en el mapa</span><b>−${sinPunto}</b></div>
+          <div class="cl ${DP.incluirAprox?'':'neg'}"><span>Con ubicación aproximada${DP.incluirAprox?' (incluidas)':''}</span><b>${DP.incluirAprox?'+':'−'}${aproxN}</b></div>
+          ${atendidas>0?`<div class="cl neg"><span>Ya recibieron esto hace menos de 7 días</span><b>−${atendidas}</b></div>`:''}
+          <div class="cl tot"><span>Se les puede llevar hoy</span><b>${cand}</b></div>
+          ${limite?`<div class="cl neg"><span>${limite==='ayudas'?`Solo hay ${DP.unidades} ayudas listas`:`Los ${DP.equipos} equipos alcanzan para ${cupo}`}</span><b>−${cand-entran}</b></div>
+          <div class="cl tot"><span>Entran a esta jornada</span><b>${entran}</b></div>`:''}
         </div>
+        <p class="muted" style="margin:8px 3px 0;font-size:12.5px">
+          ${limite==='ayudas'?'Sube el número de ayudas listas para llegar a más familias.'
+           :limite==='cupo'?'Agrega equipos o paradas en el paso 2 para cubrir a las demás.'
+           :'Alcanza para todas las que se pueden atender hoy.'}</p>
         <button type="button" class="srow ${DP.incluirAprox?'on':''}" id="dp-aprox" style="margin-top:10px">
           <span class="st"><b>Incluir las aproximadas</b>
             <small>${aproxN} más. El equipo llega al barrio y llama al llegar: lleva el teléfono de cada familia.</small></span>
@@ -1194,7 +1268,7 @@ function vDespachos(){
                ? 'Nadie con punto exacto queda por atender. Activa las aproximadas arriba, o ubica primero las viviendas en la pestaña Ubicar.'
                : 'Ninguna vivienda del censo tiene esta necesidad pendiente. Prueba con otra ayuda, o activa “Llevar a todas por igual”.')
             : 'No se pudo leer el censo. Vuelve a entrar con tu correo.')}</p>`:''}
-        <button class="btn" id="dp-1" style="width:100%;margin-top:14px" ${cand?'':'disabled'}>Siguiente${cand?` · ${cand} destino${cand===1?'':'s'}`:''}</button>
+        <button class="btn" id="dp-1" style="width:100%;margin-top:14px" ${cand?'':'disabled'}>Siguiente${cand?` · ${entran} de ${cand}`:''}</button>
       </div>`;
     return;
   }
@@ -1211,7 +1285,10 @@ function vDespachos(){
           ${[5,6,8,10].map(n=>`<button data-dtope="${n}" class="${DP.tope===n?'on':''}">${n}</button>`).join('')}
         </div>
         <p class="muted" style="margin:12px 3px 0;font-size:12.5px">
-          Alcanza para <b>${Math.min(DP.unidades, DP.equipos*DP.tope)}</b> entregas en esta jornada.</p>
+          ${DP.equipos} equipo${DP.equipos===1?'':'s'} × ${DP.tope} paradas = <b>${cupo}</b> cupos ·
+          ${DP.unidades} ayudas listas · ${cand} familias por atender →
+          <b style="color:var(--acc)">${entran} entregas</b> en esta jornada.
+          ${entran<cand?`Quedan ${cand-entran} para la próxima.`:''}</p>
         <div class="btnrow" style="margin-top:14px">
           <button class="btn flat" id="dp-atras" style="flex:0 1 auto;min-width:110px">Atrás</button>
           <button class="btn" id="dp-2" style="flex:1 1 200px">Siguiente</button>
@@ -1261,7 +1338,8 @@ function vDespachos(){
         <div style="margin-top:10px">
           ${r.paradas.map((x,j)=>`<div class="prow" style="border:0;padding:9px 0">
             <div class="info">
-              <div class="nm">${j+1}. ${esc(x.c.nombre||'Vivienda')}${x.c.personas?` · ${x.c.personas}p`:''}</div>
+              <div class="nm">${j+1}. ${esc(x.c.nombre||'Vivienda')}${x.c.personas?` · ${x.c.personas}p`:''}
+                ${x.c.fuente==='reporte'?`<span class="sbadge" style="background:rgba(220,38,38,.15);color:#f87171">reporte${x.c.pide?': '+esc(x.c.pide):''}</span>`:''}</div>
               <div class="mt">${esc(x.c.barrio||'')}${x.c.dir?` · ${esc(x.c.dir)}`:''}</div>
               ${x.por.length?`<div class="mt" style="color:var(--acc)">${esc(x.por.join(' · '))}</div>`:''}
             </div>
@@ -1690,6 +1768,8 @@ document.addEventListener('click', e=>{
   const q=e.target.closest('#dp-tope [data-dtope]');if(q){ DP.tope=+q.dataset.dtope; vDespachos(); return; }
   if(e.target.closest('#dp-aprox')){ DP.incluirAprox=!DP.incluirAprox; vDespachos(); return; }
   if(e.target.closest('#dp-todas')){ DP.todas=!DP.todas; vDespachos(); return; }
+  if(e.target.closest('#dp-fcenso')){ DP.fuenteCenso = DP.fuenteCenso===false; vDespachos(); return; }
+  if(e.target.closest('#dp-freps')){ DP.conReportes=!DP.conReportes; vDespachos(); return; }
   const d=e.target.closest('#dp-eq [data-de]');     if(d){ DP.equipos=Math.max(1,Math.min(20,DP.equipos+ +d.dataset.de)); vDespachos(); return; }
   const r=e.target.closest('#dp-reglas [data-dr]'); if(r){ const k=r.dataset.dr;
     DP.reglas.has(k)?DP.reglas.delete(k):DP.reglas.add(k); vDespachos(); return; }
