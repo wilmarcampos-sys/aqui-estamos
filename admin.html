@@ -8,7 +8,7 @@
 <link rel="icon" type="image/svg+xml" href="logo/marca.svg">
 <title>Aquí Estamos · Administración</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
-<link rel="stylesheet" href="css/app.css?v=1.54.0">
+<link rel="stylesheet" href="css/app.css?v=1.55.0">
 <style>
   /* El panel es mobile-first: una columna, pestañas fijas abajo. En pantalla
      grande se centra en una franja de ancho de celular para no deformarse. */
@@ -365,9 +365,9 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="js/config.js?v=1.54.0"></script>
-<script src="js/version.js?v=1.54.0"></script>
-<script src="js/data.js?v=1.54.0"></script>
+<script src="js/config.js?v=1.55.0"></script>
+<script src="js/version.js?v=1.55.0"></script>
+<script src="js/data.js?v=1.55.0"></script>
 <script>
 /* ============================================================
    PANEL DE ADMINISTRACIÓN — Aquí Estamos
@@ -1201,45 +1201,76 @@ function dpArmar(){
   if(!cand.length) return [];
 
   const K = Math.max(1, Math.min(DP.equipos, cand.length));
-  // semillas repartidas por el listado ya ordenado, no al azar: el resultado
-  // es el mismo cada vez que se arma la misma jornada.
-  let cent = Array.from({length:K}, (_,i)=>{
-    const x = cand[Math.floor(i*cand.length/K)];
-    return {lat:x.c.lat, lng:x.c.lng};
-  });
-  // Reparto con cupo: sin él, k-means deja un equipo con ocho paradas y
-  // otro con dos. El cupo se reparte parejo y nunca pasa del tope.
+
+  // ---- 1. semillas separadas entre sí (punto más lejano) ----
+  // Antes las semillas salían del listado ordenado por puntaje: dos podían
+  // caer en la misma cuadra y los grupos quedaban entreverados.
+  const centroide = g => ({lat:g.reduce((a,x)=>a+x.c.lat,0)/g.length,
+                           lng:g.reduce((a,x)=>a+x.c.lng,0)/g.length});
+  let cent = [centroide(cand)];
+  while(cent.length < K){
+    let lejos = cand[0], d0 = -1;
+    cand.forEach(x=>{
+      const d = Math.min(...cent.map(k=>distM(x.c.lat,x.c.lng,k.lat,k.lng)));
+      if(d > d0){ d0 = d; lejos = x; }
+    });
+    cent.push({lat:lejos.c.lat, lng:lejos.c.lng});
+  }
+
+  // ---- 2. asignación con cupo, por distancia global ----
+  // La clave: recorrer TODOS los pares (parada, equipo) del más cercano al
+  // más lejano. Asignar en orden de puntaje hacía que las últimas familias
+  // terminaran en el equipo del otro extremo de la ciudad.
   const cupo = Math.min(DP.tope, Math.ceil(cand.length / K));
   const sobran = [];
   let grupos = [];
-  for(let it=0; it<10; it++){
+  for(let it=0; it<14; it++){
     grupos = Array.from({length:K}, ()=>[]);
-    sobran.length = 0;
-    // las de más peso escogen primero; cada una entra al equipo más cercano
-    // que todavía tenga cupo.
-    cand.forEach(x=>{
-      const orden = cent.map((k,i)=>({i, d:distM(x.c.lat,x.c.lng,k.lat,k.lng)}))
-                        .sort((a,b)=>a.d-b.d);
-      const libre = orden.find(o=>grupos[o.i].length < cupo);
-      if(libre) grupos[libre.i].push(x); else sobran.push(x);
+    const pares = [];
+    cand.forEach((x,xi)=>cent.forEach((k,ki)=>
+      pares.push({xi, ki, d:distM(x.c.lat,x.c.lng,k.lat,k.lng)})));
+    pares.sort((a,b)=>a.d-b.d);
+    const puesto = new Set();
+    pares.forEach(pr=>{
+      if(puesto.has(pr.xi) || grupos[pr.ki].length >= cupo) return;
+      grupos[pr.ki].push(cand[pr.xi]); puesto.add(pr.xi);
     });
-    cent = grupos.map((g,i)=> g.length
-      ? {lat:g.reduce((s,x)=>s+x.c.lat,0)/g.length, lng:g.reduce((s,x)=>s+x.c.lng,0)/g.length}
-      : cent[i]);
+    sobran.length = 0;
+    cand.forEach((x,xi)=>{ if(!puesto.has(xi)) sobran.push(x); });
+    const nuevos = grupos.map((g,i)=> g.length ? centroide(g) : cent[i]);
+    const movio = nuevos.some((n,i)=>distM(n.lat,n.lng,cent[i].lat,cent[i].lng) > 30);
+    cent = nuevos;
+    if(!movio) break;   // ya se estabilizó: seguir iterando no cambia nada
   }
-  grupos = grupos.map(g=>g.sort((a,b)=>b.p-a.p));
 
-  // dentro del grupo: vecino más cercano desde la primera parada (la de más peso)
+  // ---- 3. orden dentro de la ruta: vecino más cercano + 2-opt ----
+  // El 2-opt deshace los cruces que deja el vecino más cercano, que es de
+  // donde salían los zigzags entre barrios.
+  const largo = r => { let m=0; for(let j=1;j<r.length;j++)
+    m += distM(r[j-1].c.lat,r[j-1].c.lng,r[j].c.lat,r[j].c.lng); return m; };
   const rutas = grupos.filter(g=>g.length).map((g,i)=>{
-    const resto = g.slice(1); const ruta = [g[0]];
+    // arrancar por un extremo del grupo (la parada más lejana del centroide)
+    const k = centroide(g);
+    const orden = g.slice().sort((a,b)=>
+      distM(b.c.lat,b.c.lng,k.lat,k.lng) - distM(a.c.lat,a.c.lng,k.lat,k.lng));
+    const resto = orden.slice(1); let ruta = [orden[0]];
     while(resto.length){
       const u = ruta[ruta.length-1].c;
       let bi=0, bd=Infinity;
       resto.forEach((x,j)=>{ const d=distM(u.lat,u.lng,x.c.lat,x.c.lng); if(d<bd){bd=d;bi=j;} });
       ruta.push(resto.splice(bi,1)[0]);
     }
-    let km=0; for(let j=1;j<ruta.length;j++) km += distM(ruta[j-1].c.lat,ruta[j-1].c.lng,ruta[j].c.lat,ruta[j].c.lng)/1000;
-    return {equipo:i+1, paradas:ruta, km, personas:ruta.reduce((s,x)=>s+(x.c.personas||0),0)};
+    let mejoro = true;
+    while(mejoro){
+      mejoro = false;
+      for(let a=0; a<ruta.length-2; a++)
+        for(let b=a+2; b<ruta.length; b++){
+          const prueba = ruta.slice(0,a+1).concat(ruta.slice(a+1,b+1).reverse(), ruta.slice(b+1));
+          if(largo(prueba) < largo(ruta) - 1){ ruta = prueba; mejoro = true; }
+        }
+    }
+    return {equipo:i+1, paradas:ruta, km:largo(ruta)/1000,
+            personas:ruta.reduce((s2,x)=>s2+(x.c.personas||0),0)};
   });
   rutas.sobran = sobran;
   return rutas;
@@ -1262,7 +1293,8 @@ function vDespachos(){
   const ubicables = exactas + (DP.incluirAprox ? aproxN : 0);
   const atendidas = ubicables - cand;             // filtradas por el anti-duplicado
   const cupo      = DP.equipos * DP.tope;
-  const entran    = Math.min(cand, DP.unidades, cupo);
+  const alcanzan  = Math.min(cand, DP.unidades);          // paso 1: sin equipos
+  const entran    = Math.min(cand, DP.unidades, cupo);    // paso 2: ya con equipos
   const limite    = entran===cand ? null : (DP.unidades<=cupo ? 'ayudas' : 'cupo');
   const tipoN = (DESP_TIPOS.find(t=>t.k===DP.tipo)||{}).n||DP.tipo;
 
@@ -1310,18 +1342,17 @@ function vDespachos(){
         </div>
 
         <div class="totalbox" style="margin-top:18px">
-          <b>${entran}</b>
-          <span>reciben en esta jornada<small>${
-            entran===piden.length ? 'todas las seleccionadas'
-            : atendidas>0 && entran===cand ? `${atendidas} ya recibieron esto hace menos de una semana`
-            : limite==='ayudas' ? `hay ${DP.unidades} ayudas listas · ${cand-entran} quedan para la próxima`
-            : limite==='cupo' ? `${DP.equipos} equipo${DP.equipos===1?'':'s'} × ${DP.tope} paradas · ${cand-entran} quedan para la próxima`
-            : `${piden.length-entran} no entran: sin ubicación utilizable o ya atendidas`}</small></span>
+          <b>${alcanzan}</b>
+          <span>se les puede llevar<small>${
+            alcanzan===piden.length ? 'todas las seleccionadas'
+            : alcanzan<cand ? `solo hay ${DP.unidades} ayudas listas · ${cand-alcanzan} quedan para la próxima`
+            : `${piden.length-cand} no entran: sin ubicación utilizable${atendidas>0?` o ya recibieron esto hace poco`:''}`}
+            <br>En el paso siguiente decides cuántos equipos salen.</small></span>
         </div>
         ${!cand?`<p class="hint warn" style="margin-top:12px">${vivas.length
             ? 'Ninguna de las seleccionadas tiene ubicación utilizable. Marca “incluir las de ubicación parcial”, o ubícalas en la pestaña Ubicar.'
             : 'No hay destinos con los filtros de arriba. Activa otra fuente o desmarca el filtro de categoría.'}</p>`:''}
-        <button class="btn" id="dp-1" style="width:100%;margin-top:14px" ${cand?'':'disabled'}>Siguiente${cand?` · ${entran} de ${cand}`:''}</button>
+        <button class="btn" id="dp-1" style="width:100%;margin-top:14px" ${cand?'':'disabled'}>Siguiente${cand?` · ${alcanzan} destino${alcanzan===1?'':'s'}`:''}</button>
       </div>`;
     return;
   }
@@ -1337,11 +1368,11 @@ function vDespachos(){
         <div class="seg" id="dp-tope" style="margin-top:8px">
           ${[5,6,8,10].map(n=>`<button data-dtope="${n}" class="${DP.tope===n?'on':''}">${n}</button>`).join('')}
         </div>
-        <p class="muted" style="margin:12px 3px 0;font-size:12.5px">
-          ${DP.equipos} equipo${DP.equipos===1?'':'s'} × ${DP.tope} paradas = <b>${cupo}</b> cupos ·
-          ${DP.unidades} ayudas listas · ${cand} familias por atender →
-          <b style="color:var(--acc)">${entran} entregas</b> en esta jornada.
-          ${entran<cand?`Quedan ${cand-entran} para la próxima.`:''}</p>
+        <div class="totalbox" style="margin-top:16px">
+          <b>${entran}</b>
+          <span>reciben en esta jornada<small>${DP.equipos} equipo${DP.equipos===1?'':'s'} × ${DP.tope} paradas = ${cupo} cupos ·
+            ${DP.unidades} ayudas listas · ${cand} familias esperando${entran<cand?` · ${cand-entran} quedan para la próxima`:''}</small></span>
+        </div>
         <div class="btnrow" style="margin-top:14px">
           <button class="btn flat" id="dp-atras" style="flex:0 1 auto;min-width:110px">Atrás</button>
           <button class="btn" id="dp-2" style="flex:1 1 200px">Siguiente</button>
