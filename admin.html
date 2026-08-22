@@ -8,7 +8,7 @@
 <link rel="icon" type="image/svg+xml" href="logo/marca.svg">
 <title>Aquí Estamos · Administración</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
-<link rel="stylesheet" href="css/app.css?v=1.56.0">
+<link rel="stylesheet" href="css/app.css?v=1.56.1">
 <style>
   /* El panel es mobile-first: una columna, pestañas fijas abajo. En pantalla
      grande se centra en una franja de ancho de celular para no deformarse. */
@@ -136,6 +136,11 @@
   }
 
   /* teléfono de la ficha: leerlo, copiarlo o llamar sin transcribirlo */
+  /* la etiqueta de ubicación es también el atajo a la cola */
+  .irubicar{background:rgba(124,58,237,.16);color:#a78bfa;border:1px solid rgba(124,58,237,.35);
+    font-family:inherit;cursor:pointer;margin-top:4px;padding:5px 10px;min-height:30px}
+  .irubicar:hover{background:rgba(124,58,237,.28)}
+
   .telrow{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:12px;
     padding:10px 12px;border-radius:14px;background:var(--surf);border:1px solid var(--line)}
   .telrow .tl{flex:1;min-width:130px;font-size:17px;font-weight:800;letter-spacing:.4px;
@@ -388,9 +393,9 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="js/config.js?v=1.56.0"></script>
-<script src="js/version.js?v=1.56.0"></script>
-<script src="js/data.js?v=1.56.0"></script>
+<script src="js/config.js?v=1.56.1"></script>
+<script src="js/version.js?v=1.56.1"></script>
+<script src="js/data.js?v=1.56.1"></script>
 <script>
 /* ============================================================
    PANEL DE ADMINISTRACIÓN — Aquí Estamos
@@ -727,7 +732,8 @@ function vCensoLista(aviso){
         <div class="mt">${esc((c.needs||[]).join(', ')||'sin necesidades')}</div>
         ${c.ficha?`<div class="cd">${esc(c.ficha)}</div>`:''}
         ${c.urg?`<span class="sbadge ${c.urg===3?'b3':c.urg===2?'b2':'b1'}" style="margin-top:3px">${c.urg===3?'Urgente':c.urg===2?'Prioritaria':'Programable'}</span>`:''}
-        ${(!c.lat||c.aprox)?`<span class="sbadge" style="background:rgba(124,58,237,.15);color:#a78bfa;margin-top:3px">${c.lat?'ubicación aprox.':'sin ubicar'}</span>`:''}
+        ${(!c.lat||c.aprox)?`<button type="button" class="sbadge irubicar" data-ir-ubicar="${esc(c.id)}"
+          title="Abrir en Ubicar">${c.lat?'ubicación aprox.':'sin ubicar'} · ubicar ahora</button>`:''}
       </div>
       ${c.tel && (!c.lat||c.aprox) ? `<a class="waq" style="background:#7c3aed" title="Pedir ubicación"
         href="${waLink(c.tel, msgUbicar(c))}"
@@ -829,6 +835,18 @@ async function atenderPedido(id){
    Primero las que no tienen ningún punto; después las aproximadas.
    ============================================================ */
 let UB = { i:0, lat:null, lng:null, map:null, mk:null, modo:'sin' };
+
+/* Atajo desde la lista: abre esa ficha exacta en la cola de Ubicar, en la
+   pestaña que le corresponde (sin punto o aproximada). */
+function abrirEnUbicar(id){
+  const c = CENSO.find(x=>String(x.id)===String(id)); if(!c) return;
+  UB.modo = c.lat && c.aprox ? 'aprox' : 'sin';
+  ir('ubicar');
+  const i = ubCola().findIndex(x=>String(x.id)===String(id));
+  UB.i = i<0 ? 0 : i;
+  vUbicar();
+  if(i<0) toast('Esa ficha ya no está en la cola.');
+}
 
 function ubCola(){
   const reps       = dpReportes();
@@ -1971,6 +1989,8 @@ document.addEventListener('click', e=>{
   if(e.target.closest('#btn-export-censo')) return exportarCenso();
   const ped = e.target.closest('[data-pedido]');
   if(ped) return abrirPedido(ped.dataset.pedido);
+  const iru = e.target.closest('[data-ir-ubicar]');
+  if(iru){ e.stopPropagation(); abrirEnUbicar(iru.dataset.irUbicar); return; }
   const viv = e.target.closest('[data-vivienda]');
   if(viv) return abrirVivienda(viv.dataset.vivienda);
   const att = e.target.closest('[data-atender]');
