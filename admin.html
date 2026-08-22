@@ -8,7 +8,7 @@
 <link rel="icon" type="image/svg+xml" href="logo/marca.svg">
 <title>Aquí Estamos · Administración</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
-<link rel="stylesheet" href="css/app.css?v=1.55.1">
+<link rel="stylesheet" href="css/app.css?v=1.55.2">
 <style>
   /* El panel es mobile-first: una columna, pestañas fijas abajo. En pantalla
      grande se centra en una franja de ancho de celular para no deformarse. */
@@ -365,9 +365,9 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="js/config.js?v=1.55.1"></script>
-<script src="js/version.js?v=1.55.1"></script>
-<script src="js/data.js?v=1.55.1"></script>
+<script src="js/config.js?v=1.55.2"></script>
+<script src="js/version.js?v=1.55.2"></script>
+<script src="js/data.js?v=1.55.2"></script>
 <script>
 /* ============================================================
    PANEL DE ADMINISTRACIÓN — Aquí Estamos
@@ -1345,7 +1345,7 @@ function vDespachos(){
             <div class="cl"><b>${censoVivas}</b><span>viviendas en el censo</span></div>
             ${DP.todas?'' : `<div class="cl"><b>${censoPiden}</b><span>de esas, pidieron ${esc(tipoN.toLowerCase())}</span></div>`}`}
           ${DP.conReportes?`<div class="cl"><b>${repsN}</b><span>reportes del mapa${DP.todas?'':' de esa categoría'}</span></div>`:''}
-          <div class="cl ok"><b>${piden.length}</b><span>en total para repartir</span></div>
+          <div class="cl ok"><b>${piden.length}</b><span>seleccionadas con los filtros de arriba</span></div>
         </div>
 
         <div class="lbl" style="margin-top:18px">Qué tan bien ubicadas están <span style="font-weight:600;opacity:.8">— toca para incluir o excluir</span></div>
@@ -1387,8 +1387,13 @@ function vDespachos(){
         </div>
         <div class="totalbox" style="margin-top:16px">
           <b>${entran}</b>
-          <span>reciben en esta jornada<small>${DP.equipos} equipo${DP.equipos===1?'':'s'} × ${DP.tope} paradas = ${cupo} cupos ·
-            ${DP.unidades} ayudas listas · ${cand} familias esperando${entran<cand?` · ${cand-entran} quedan para la próxima`:''}</small></span>
+          <span>reciben en esta jornada<small>Lo que manda es el más pequeño de los tres</small></span>
+        </div>
+        <div class="desglose" style="margin-top:8px">
+          <div class="cl ${entran===cupo?'ok':''}"><b>${cupo}</b><span>cupos de los equipos — ${DP.equipos} × ${DP.tope} paradas</span></div>
+          <div class="cl ${entran===DP.unidades?'ok':''}"><b>${DP.unidades}</b><span>ayudas listas para entregar</span></div>
+          <div class="cl ${entran===cand?'ok':''}"><b>${cand}</b><span>familias con ubicación utilizable${DP.incluirAprox?` (${exactas} exactas + ${aproxN} parciales)`:` (solo las ${exactas} exactas)`}</span></div>
+          ${entran<cand?`<div class="cl"><b>${cand-entran}</b><span>quedan para la próxima jornada</span></div>`:''}
         </div>
         <div class="btnrow" style="margin-top:14px">
           <button class="btn flat" id="dp-atras" style="flex:0 1 auto;min-width:110px">Atrás</button>
