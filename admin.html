@@ -8,7 +8,7 @@
 <link rel="icon" type="image/svg+xml" href="logo/marca.svg">
 <title>Aquí Estamos · Administración</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
-<link rel="stylesheet" href="css/app.css?v=1.58.0">
+<link rel="stylesheet" href="css/app.css?v=1.58.1">
 <style>
   /* El panel es mobile-first: una columna, pestañas fijas abajo. En pantalla
      grande se centra en una franja de ancho de celular para no deformarse. */
@@ -154,6 +154,8 @@
     .card{page-break-after:always}
     .muted,.mt{color:#444!important}
     .tick2{border:1.5px solid #000!important;background:#fff!important}
+    .tick2::after{content:"entregado";position:absolute;margin-left:42px;font-size:9px;color:#666}
+    .prow{position:relative}
   }
 
   /* moverse por la cola sin tener que aplazar la ficha */
@@ -437,9 +439,9 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="js/config.js?v=1.58.0"></script>
-<script src="js/version.js?v=1.58.0"></script>
-<script src="js/data.js?v=1.58.0"></script>
+<script src="js/config.js?v=1.58.1"></script>
+<script src="js/version.js?v=1.58.1"></script>
+<script src="js/data.js?v=1.58.1"></script>
 <script>
 /* ============================================================
    PANEL DE ADMINISTRACIÓN — Aquí Estamos
@@ -1063,14 +1065,17 @@ function vJornadas(){
         return `<div class="card" style="padding:14px;margin-top:12px">
           <div class="row" style="align-items:flex-start">
             <div class="grow"><b style="font-size:16px">Equipo ${n}</b>
-              <p class="muted" style="margin:3px 0 0">${ps.filter(p=>p.entregada).length} de ${ps.length} entregadas</p></div>
+              <p class="muted" style="margin:3px 0 0">${ps.filter(p=>p.entregada).length} de ${ps.length} entregadas ·
+                toca la casilla al entregar cada una</p></div>
             <a class="btn flat" style="flex:0 1 auto;width:auto;min-width:110px;text-decoration:none" target="_blank" rel="noopener"
                href="https://www.google.com/maps/dir/${ps.map(p=>p.lat+','+p.lng).join('/')}">Abrir ruta</a>
           </div>
           <div style="margin-top:10px">
             ${ps.map(p=>`<div class="prow" style="border:0;padding:9px 0;${p.entregada?'opacity:.55':''}">
               <button type="button" class="tick2 ${p.entregada?'on':''}" data-entregar="${esc(p.id)}"
-                aria-label="${p.entregada?'Marcar como no entregada':'Marcar como entregada'}">${p.entregada?'✓':''}</button>
+                title="${p.entregada?'Entregada — toca para desmarcar':'Marcar como entregada'}"
+                aria-pressed="${p.entregada?'true':'false'}"
+                aria-label="${p.entregada?'Entregada a '+esc(p.nombre||'')+'. Toca para desmarcar':'Marcar como entregada a '+esc(p.nombre||'')}">${p.entregada?'✓':''}</button>
               <div class="info">
                 <div class="nm">${p.orden}. ${esc(p.nombre||'Vivienda')}${p.personas?` · ${p.personas}p`:''}</div>
                 <div class="mt">${esc(p.barrio||'')}${p.direccion?` · ${esc(p.direccion)}`:''}</div>
