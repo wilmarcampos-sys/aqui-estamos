@@ -44,13 +44,30 @@ function estadoZona(z){
     idx = Math.round(100 * (0.45*gravedad + 0.40*abandono + 0.15*escala));
     if (!ents.length && pendCrit.length) idx = Math.max(idx, 78);
   }
+  // impacto REAL del CENSO: cada vivienda registrada y sin atender es
+  // demanda de familias con nombre y urgencia. Se calcula su propio
+  // índice y manda la peor señal (max), para no contar dos veces.
+  const csZona = (S.censo||[]).filter(cn=>cn.lat && cn.lng && zonaDe(cn.lat,cn.lng).id===z.id);
+  const csPend = csZona.filter(cn=>{
+    const e = S.entregas.filter(y=>y.lat && dist(cn.lat,cn.lng,y.lat,y.lng)<300).sort((a,b)=>b.ts-a.ts)[0];
+    return !(e && (now()-e.ts) < 7*24*H);
+  });
+  const csCrit = csPend.filter(cn=>cn.urg===3);
+  const persCenso = csPend.reduce((s2,c)=>s2+(c.personas||0),0);
+  if(csPend.length){
+    const gravC = Math.min(1, (csCrit.length*2 + csPend.length) / 25);
+    const escC  = Math.min(1, persCenso / 300);
+    const idxCenso = Math.round(100 * (0.55*gravC + 0.25*escC + 0.20));
+    idx = Math.max(idx, idxCenso);
+  }
   // aporte ACOTADO de los acopios aliados (alluda.online): sus necesidades
   // urgentes también son desatención del área, pero con tope para que
   // nunca ahoguen los reportes de los vecinos.
   const urgAco = (window.ACOPIOS||[]).filter(a=>a.zid===z.id)
     .reduce((n,a)=>n + a.needs.filter(x=>/urgente/i.test(x.prio||'')).length, 0);
   if(urgAco) idx = Math.min(100, idx + Math.min(20, urgAco*2));
-  return {z, lista, pend, pendCrit, personas, ultEnt, horasSinAyuda, idx,
+  return {z, lista, pend, pendCrit, personas: personas + persCenso, ultEnt, horasSinAyuda, idx,
+          censoPend: csPend.length, censoCrit: csCrit.length,
           nCoord: S.coords.filter(c=>c.z===z.id && c.ver).length};
 }
 /* zona más cercana a un punto — así el punto del mapa define la comuna solo */

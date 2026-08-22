@@ -487,10 +487,11 @@ function render(){
     const at = Math.max(0, 100 - s.idx);
     const [lbl, cls] = s.idx>=80 ? ['Olvidada','b3'] : s.idx>=60 ? ['Crítica','b3']
                      : s.idx>=40 ? ['Rezagada','b2'] : s.idx>=20 ? ['Parcial','b2'] : ['Atendida','bok'];
-    const pers = s.pend.reduce((a,p)=>a+(p.personas||0),0);
+    const pers = s.personas;
     const frase = [
       s.z.t==='corregimiento'?'Rural':s.z.t==='municipio'?'Municipio vecino':null,
       s.ultEnt ? `última ayuda ${hace(s.ultEnt)}` : 'nunca ha llegado ayuda',
+      s.censoPend ? `${s.censoPend} vivienda${s.censoPend===1?'':'s'} del censo esperando` : null,
       s.nCoord ? `${s.nCoord} coordinador${s.nCoord===1?'':'es'}` : 'sin coordinador',
     ].filter(Boolean).join(' · ');
     return `

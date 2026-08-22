@@ -8,7 +8,7 @@
 <link rel="icon" type="image/svg+xml" href="logo/marca.svg">
 <title>Aquí Estamos · Administración</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
-<link rel="stylesheet" href="css/app.css?v=1.49.3">
+<link rel="stylesheet" href="css/app.css?v=1.50.0">
 <style>
   /* El panel es mobile-first: una columna, pestañas fijas abajo. En pantalla
      grande se centra en una franja de ancho de celular para no deformarse. */
@@ -252,9 +252,9 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="js/config.js?v=1.49.3"></script>
-<script src="js/version.js?v=1.49.3"></script>
-<script src="js/data.js?v=1.49.3"></script>
+<script src="js/config.js?v=1.50.0"></script>
+<script src="js/version.js?v=1.50.0"></script>
+<script src="js/data.js?v=1.50.0"></script>
 <script>
 /* ============================================================
    PANEL DE ADMINISTRACIÓN — Aquí Estamos
@@ -325,6 +325,7 @@ let SEGP     = 'abiertos';   // segmento de Pedidos: abiertos | atendidos | cens
    Si tu correo está en la lista de administradores (tabla `admins`),
    la base te deja leer contactos y censo. Sin claves que pegar. */
 let PRIV = false;
+let ROL  = 'admin';   // 'admin' ve todo; 'censo' solo el censo y sus herramientas
 const AKEY = ()=> PRIV ? '1' : '';   // compatibilidad con los avisos
 let VISTA = 'inicio';
 let SEG   = 'esperando';
@@ -1087,27 +1088,46 @@ async function marcar(id, campo, valor, aviso){
 
 async function cargar(){
   const desde = new Date(now() - 30*24*H).toISOString();
+  // el rol decide qué se pide: pedirle a la base algo que el rol no puede
+  // ver no es un error de seguridad (RLS lo niega), pero sí ruido inútil.
+  const rr = await db.rpc('mi_rol');
+  ROL  = rr.data || null;
+  PRIV = !!ROL;
+  if(!PRIV){ toast('Esta cuenta no tiene acceso al panel.'); CENSO=[]; CONTACTOS={}; render(); return; }
+  aplicarRol();
+
+  const esAdm = ROL==='admin';
   const [r,e,c] = await Promise.all([
-    db.from('reportes').select('*').gte('creado',desde).order('creado',{ascending:false}).limit(5000),
+    esAdm ? db.from('reportes').select('*').gte('creado',desde).order('creado',{ascending:false}).limit(5000) : {data:[]},
     db.from('entregas').select('*').gte('creado',desde).order('creado',{ascending:false}).limit(5000),
-    db.from('coordinadores').select('*').order('creado',{ascending:false}).limit(2000),
+    esAdm ? db.from('coordinadores').select('*').order('creado',{ascending:false}).limit(2000) : {data:[]},
   ]);
   if(r.error||e.error||c.error){ toast('No se pudo leer los datos.'); return; }
   REPORTES = (r.data||[]).map(deRep);
   ENTREGAS = (e.data||[]).map(deEnt);
   COORDS   = (c.data||[]).map(deCoo);
-  // privadas: la base las suelta solo si el correo logueado es admin
-  const adm = await db.from('admins').select('email').limit(1);
-  PRIV = !!(adm.data && adm.data.length);
-  if(PRIV){
-    const [cont, cen] = await Promise.all([
-      db.from('reportes_contacto').select('folio,nombre,tel_e164,whatsapp').order('creado',{ascending:false}).limit(2000),
-      db.from('censo').select('*').order('creado',{ascending:false}).limit(3000),
-    ]);
-    CONTACTOS = {}; (cont.data||[]).forEach(x=>{ if(x.folio && !CONTACTOS[x.folio]) CONTACTOS[x.folio]={nombre:x.nombre,tel:x.tel_e164,whatsapp:x.whatsapp}; });
-    CENSO = (cen.data||[]).map(deCen);
-  } else { CONTACTOS={}; CENSO=[]; }
+
+  const [cont, cen] = await Promise.all([
+    esAdm ? db.from('reportes_contacto').select('folio,nombre,tel_e164,whatsapp').order('creado',{ascending:false}).limit(2000) : {data:[]},
+    db.from('censo').select('*').order('creado',{ascending:false}).limit(3000),
+  ]);
+  CONTACTOS = {}; (cont.data||[]).forEach(x=>{ if(x.folio && !CONTACTOS[x.folio]) CONTACTOS[x.folio]={nombre:x.nombre,tel:x.tel_e164,whatsapp:x.whatsapp}; });
+  CENSO = (cen.data||[]).map(deCen);
   render();
+}
+
+/* El rol 'censo' entra al mismo panel, pero solo con lo suyo: el censo y sus
+   herramientas. Esto es comodidad visual — quien manda es RLS en la base. */
+function aplicarRol(){
+  const soloCenso = ROL==='censo';
+  ['pedidos','zonas'].forEach(v=>{
+    const b=document.querySelector(`#tabbar [data-v="${v}"]`);
+    if(b) b.style.display = soloCenso ? 'none' : '';
+  });
+  if(soloCenso){
+    if(['pedidos','zonas','inicio'].includes(VISTA)) ir('personas');
+  }
+  document.body.dataset.rol = ROL||'';
 }
 
 async function salir(){ if(DEMO){ toast('En demo no hay sesión que cerrar.'); return; }
