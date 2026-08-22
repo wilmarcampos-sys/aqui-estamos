@@ -8,7 +8,7 @@
 <link rel="icon" type="image/svg+xml" href="logo/marca.svg">
 <title>Aquí Estamos · Administración</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
-<link rel="stylesheet" href="css/app.css?v=1.53.1">
+<link rel="stylesheet" href="css/app.css?v=1.54.0">
 <style>
   /* El panel es mobile-first: una columna, pestañas fijas abajo. En pantalla
      grande se centra en una franja de ancho de celular para no deformarse. */
@@ -95,6 +95,31 @@
     font-variant-numeric:tabular-nums}
   .totalbox > span{font-size:16px;font-weight:750;color:var(--txt);line-height:1.25}
   .totalbox small{display:block;font-size:12.5px;font-weight:550;color:var(--dim);margin-top:3px}
+
+  /* fuentes: mismo lenguaje que las capas del mapa */
+  .capasel{display:flex;flex-direction:column;gap:2px;border-radius:14px;
+    background:var(--surf);border:1px solid var(--line);padding:4px 13px}
+  .capasel label{display:flex;align-items:flex-start;gap:11px;padding:12px 0;cursor:pointer;min-height:44px}
+  .capasel label + label{border-top:1px solid var(--line)}
+  .capasel.solo{padding:0 13px}
+  .capasel input{width:20px;height:20px;flex:0 0 auto;margin-top:1px;accent-color:var(--acc)}
+  .capasel span{flex:1;font-size:14px;font-weight:650;color:var(--txt);line-height:1.35}
+  .capasel span i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:7px}
+  .capasel span b{font-variant-numeric:tabular-nums;color:var(--acc)}
+  .capasel span small{display:block;font-size:12.3px;font-weight:550;color:var(--dim);margin-top:3px}
+
+  /* las tres calidades de ubicación son el dato y el control a la vez */
+  .ubisel{display:grid;gap:8px;grid-template-columns:repeat(auto-fit,minmax(180px,1fr))}
+  .ubisel .us{text-align:left;font-family:inherit;padding:13px 14px;border-radius:14px;
+    background:var(--surf);border:1.6px solid var(--line);cursor:pointer;color:var(--txt)}
+  .ubisel .us b{display:block;font-size:26px;font-weight:850;line-height:1;
+    font-variant-numeric:tabular-nums;color:var(--dim)}
+  .ubisel .us span{display:block;font-size:13.5px;font-weight:700;margin-top:5px}
+  .ubisel .us small{display:block;font-size:12px;color:var(--dim);margin-top:4px;line-height:1.35}
+  .ubisel .us.on{border-color:var(--acc);background:rgba(79,156,249,.10)}
+  .ubisel .us.on b{color:var(--acc)}
+  .ubisel .us.fija{cursor:default}
+  .ubisel .us.no{opacity:.55;cursor:default}
 
   .porque{margin-top:10px}
   .porque summary{cursor:pointer;font-size:13px;font-weight:700;color:var(--link);
@@ -340,9 +365,9 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="js/config.js?v=1.53.1"></script>
-<script src="js/version.js?v=1.53.1"></script>
-<script src="js/data.js?v=1.53.1"></script>
+<script src="js/config.js?v=1.54.0"></script>
+<script src="js/version.js?v=1.54.0"></script>
+<script src="js/data.js?v=1.54.0"></script>
 <script>
 /* ============================================================
    PANEL DE ADMINISTRACIÓN — Aquí Estamos
@@ -783,7 +808,9 @@ async function atenderPedido(id){
 let UB = { i:0, lat:null, lng:null, map:null, mk:null, modo:'sin' };
 
 function ubCola(){
-  const reps  = dpReportes();
+  const reps       = dpReportes();
+  const censoVivas = CENSO.filter(c=>!c.archivada).length;
+  const repsN      = reps.length;
   const vivas = (DP.fuenteCenso===false?[]:CENSO).filter(c=>!c.archivada).concat(reps);
   const lista = UB.modo==='aprox' ? vivas.filter(c=>c.lat && c.aprox) : vivas.filter(c=>!c.lat);
   // lo aplazado vuelve al final, no al frente: si no, las fichas imposibles
@@ -1220,7 +1247,9 @@ function dpArmar(){
 
 function vDespachos(){
   const cand = dpCandidatas().length;
-  const reps  = dpReportes();
+  const reps       = dpReportes();
+  const censoVivas = CENSO.filter(c=>!c.archivada).length;
+  const repsN      = reps.length;
   const vivas = (DP.fuenteCenso===false?[]:CENSO).filter(c=>!c.archivada).concat(reps);
   const pide = c=>!c.archivada && (DP.todas || (c.needs||[]).includes(DP.tipo));
   const piden    = vivas.filter(pide);
@@ -1228,6 +1257,7 @@ function vDespachos(){
   const aproxN   = piden.filter(c=>c.lat && c.aprox).length;
   const sinPunto = piden.filter(c=>!c.lat).length;
   const noPiden  = vivas.length - piden.length;
+  const censoPiden = CENSO.filter(c=>!c.archivada && (c.needs||[]).includes(DP.tipo)).length;
   // ubicables = las que podrían entrar según los interruptores de arriba
   const ubicables = exactas + (DP.incluirAprox ? aproxN : 0);
   const atendidas = ubicables - cand;             // filtradas por el anti-duplicado
@@ -1245,50 +1275,52 @@ function vDespachos(){
         </div>
         <div class="lbl" style="margin-top:16px">¿Cuántas ayudas tienen listas?</div>
         <input class="input" id="dp-unid" inputmode="numeric" value="${DP.unidades}" style="margin-top:6px">
-        <div class="lbl" style="margin-top:16px">¿A quiénes se les lleva?</div>
-        <button type="button" class="srow ${DP.fuenteCenso===false?'':'on'}" id="dp-fcenso" style="margin-top:8px">
-          <span class="st"><b>Viviendas del censo</b>
-            <small>Familias registradas casa por casa, con nombre y teléfono</small></span>
-          <span class="sw"></span></button>
-        <button type="button" class="srow ${DP.conReportes?'on':''}" id="dp-freps">
-          <span class="st"><b>Reportes del mapa</b>
-            <small>Quien pidió ayuda desde la app. Anónimos salvo que hayan dejado contacto</small></span>
-          <span class="sw"></span></button>
-
-        <button type="button" class="srow ${DP.todas?'on':''}" id="dp-todas" style="margin-top:16px">
-          <span class="st"><b>Llevar a todas por igual</b>
-            <small>Sin mirar qué pidió cada familia — para cuando se reparte lo mismo a todo el censo</small></span>
-          <span class="sw"></span></button>
-
-        <div class="totalbox">
-          <b>${entran}</b>
-          <span>familia${entran===1?'':'s'} reciben hoy<small>de ${vivas.length} en ${DP.conReportes&&DP.fuenteCenso!==false?'censo y reportes':DP.conReportes?'los reportes del mapa':'el censo'}</small></span>
+        <div class="lbl" style="margin-top:18px">¿De dónde salen los destinos?</div>
+        <div class="capasel" style="margin-top:8px">
+          <label><input type="checkbox" id="dp-fcenso" ${DP.fuenteCenso===false?'':'checked'}>
+            <span><i style="background:#7c3aed"></i>Viviendas del censo <b>${CENSO.filter(c=>!c.archivada).length}</b></span></label>
+          <label><input type="checkbox" id="dp-freps" ${DP.conReportes?'checked':''}>
+            <span><i style="background:#dc2626"></i>Reportes del mapa <b>${REPORTES.filter(r=>r.lat && !repAtendido(r)).length}</b></span></label>
         </div>
-        <details class="porque">
-          <summary>Ver por qué no son las ${vivas.length}</summary>
-          <div class="desglose">
-            ${DP.todas?'' : `<div class="cl"><b>${noPiden}</b><span>no piden ${esc(tipoN.toLowerCase())} — pidieron otra cosa</span></div>`}
-            <div class="cl"><b>${sinPunto}</b><span>no tienen ubicación en el mapa — nadie sabe a qué casa ir</span></div>
-            <div class="cl"><b>${aproxN}</b><span>solo tienen el barrio, no la casa${DP.incluirAprox?' — incluidas con el interruptor de abajo':' — actívalas abajo si quieres llegarles'}</span></div>
-            ${atendidas>0?`<div class="cl"><b>${atendidas}</b><span>ya recibieron esto hace menos de una semana</span></div>`:''}
-            <div class="cl ok"><b>${cand}</b><span>quedan por atender hoy</span></div>
-            ${limite?`<div class="cl"><b>${cand-entran}</b><span>${limite==='ayudas'
-                ? `se quedan por fuera: solo hay ${DP.unidades} ayudas listas`
-                : `se quedan por fuera: ${DP.equipos} equipo${DP.equipos===1?'':'s'} × ${DP.tope} paradas = ${cupo} cupos`}</span></div>`:''}
-          </div>
-        </details>
-        ${limite?`<p class="muted" style="margin:8px 3px 0;font-size:12.5px">
-          ${limite==='ayudas'?'Sube el número de ayudas listas para llegar a más familias.'
-           :'Agrega equipos o paradas en el paso 2 para cubrir a las demás.'}</p>`:''}
-        <button type="button" class="srow ${DP.incluirAprox?'on':''}" id="dp-aprox" style="margin-top:10px">
-          <span class="st"><b>Incluir las aproximadas</b>
-            <small>${aproxN} más. El equipo llega al barrio y llama al llegar: lleva el teléfono de cada familia.</small></span>
-          <span class="sw"></span></button>
-        ${!cand?`<p class="hint warn" style="margin-top:12px">${(CENSO.length
-            ? (aproxN||sinPunto
-               ? 'Nadie con punto exacto queda por atender. Activa las aproximadas arriba, o ubica primero las viviendas en la pestaña Ubicar.'
-               : 'Ninguna vivienda del censo tiene esta necesidad pendiente. Prueba con otra ayuda, o activa “Llevar a todas por igual”.')
-            : 'No se pudo leer el censo. Vuelve a entrar con tu correo.')}</p>`:''}
+
+        ${DP.fuenteCenso===false?'' : `
+        <label class="capasel solo" style="margin-top:8px">
+          <input type="checkbox" id="dp-solopide" ${DP.todas?'':'checked'}>
+          <span>Solo las viviendas que pidieron <b>${esc(tipoN.toLowerCase())}</b>
+            <small>Desmárcalo para llevarle lo mismo a todo el censo</small></span>
+        </label>`}
+
+        <div class="lbl" style="margin-top:18px">Cuántas hay</div>
+        <div class="desglose" style="margin-top:6px">
+          ${DP.fuenteCenso===false?'' : `
+            <div class="cl"><b>${censoVivas}</b><span>viviendas en el censo</span></div>
+            ${DP.todas?'' : `<div class="cl"><b>${censoPiden}</b><span>de esas, pidieron ${esc(tipoN.toLowerCase())}</span></div>`}`}
+          ${DP.conReportes?`<div class="cl"><b>${repsN}</b><span>reportes del mapa${DP.todas?'':' de esa categoría'}</span></div>`:''}
+          <div class="cl ok"><b>${piden.length}</b><span>en total para repartir</span></div>
+        </div>
+
+        <div class="lbl" style="margin-top:18px">Qué tan bien ubicadas están <span style="font-weight:600;opacity:.8">— toca para incluir o excluir</span></div>
+        <div class="ubisel" style="margin-top:8px">
+          <div class="us on fija" aria-disabled="true">
+            <b>${exactas}</b><span>dirección exacta</span><small>El equipo llega a la puerta</small></div>
+          <button type="button" class="us ${DP.incluirAprox?'on':''}" id="dp-aprox">
+            <b>${aproxN}</b><span>ubicación parcial</span><small>Se sabe el barrio, no la casa: hay que llamar al llegar</small></button>
+          <div class="us no">
+            <b>${sinPunto}</b><span>por verificar</span><small>Sin punto en el mapa: no pueden entrar a una ruta</small></div>
+        </div>
+
+        <div class="totalbox" style="margin-top:18px">
+          <b>${entran}</b>
+          <span>reciben en esta jornada<small>${
+            entran===piden.length ? 'todas las seleccionadas'
+            : atendidas>0 && entran===cand ? `${atendidas} ya recibieron esto hace menos de una semana`
+            : limite==='ayudas' ? `hay ${DP.unidades} ayudas listas · ${cand-entran} quedan para la próxima`
+            : limite==='cupo' ? `${DP.equipos} equipo${DP.equipos===1?'':'s'} × ${DP.tope} paradas · ${cand-entran} quedan para la próxima`
+            : `${piden.length-entran} no entran: sin ubicación utilizable o ya atendidas`}</small></span>
+        </div>
+        ${!cand?`<p class="hint warn" style="margin-top:12px">${vivas.length
+            ? 'Ninguna de las seleccionadas tiene ubicación utilizable. Marca “incluir las de ubicación parcial”, o ubícalas en la pestaña Ubicar.'
+            : 'No hay destinos con los filtros de arriba. Activa otra fuente o desmarca el filtro de categoría.'}</p>`:''}
         <button class="btn" id="dp-1" style="width:100%;margin-top:14px" ${cand?'':'disabled'}>Siguiente${cand?` · ${entran} de ${cand}`:''}</button>
       </div>`;
     return;
@@ -1787,10 +1819,11 @@ document.addEventListener('click', e=>{
 document.addEventListener('click', e=>{
   const t=e.target.closest('#dp-tipo [data-dt]');   if(t){ DP.tipo=t.dataset.dt; vDespachos(); return; }
   const q=e.target.closest('#dp-tope [data-dtope]');if(q){ DP.tope=+q.dataset.dtope; vDespachos(); return; }
+
+  if(e.target.id==='dp-fcenso'){ DP.fuenteCenso = e.target.checked; vDespachos(); return; }
+  if(e.target.id==='dp-freps'){ DP.conReportes = e.target.checked; vDespachos(); return; }
+  if(e.target.id==='dp-solopide'){ DP.todas = !e.target.checked; vDespachos(); return; }
   if(e.target.closest('#dp-aprox')){ DP.incluirAprox=!DP.incluirAprox; vDespachos(); return; }
-  if(e.target.closest('#dp-todas')){ DP.todas=!DP.todas; vDespachos(); return; }
-  if(e.target.closest('#dp-fcenso')){ DP.fuenteCenso = DP.fuenteCenso===false; vDespachos(); return; }
-  if(e.target.closest('#dp-freps')){ DP.conReportes=!DP.conReportes; vDespachos(); return; }
   const d=e.target.closest('#dp-eq [data-de]');     if(d){ DP.equipos=Math.max(1,Math.min(20,DP.equipos+ +d.dataset.de)); vDespachos(); return; }
   const r=e.target.closest('#dp-reglas [data-dr]'); if(r){ const k=r.dataset.dr;
     DP.reglas.has(k)?DP.reglas.delete(k):DP.reglas.add(k); vDespachos(); return; }
