@@ -8,7 +8,7 @@
 <link rel="icon" type="image/svg+xml" href="logo/marca.svg">
 <title>Aquí Estamos · Administración</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
-<link rel="stylesheet" href="css/app.css?v=1.51.0">
+<link rel="stylesheet" href="css/app.css?v=1.52.0">
 <style>
   /* El panel es mobile-first: una columna, pestañas fijas abajo. En pantalla
      grande se centra en una franja de ancho de celular para no deformarse. */
@@ -84,6 +84,16 @@
     .prow-grid{grid-template-columns:repeat(auto-fill,minmax(400px,1fr));max-width:1500px}
     .view > *{max-width:1500px}
   }
+
+  /* .btn nace con width:100%; dentro de una fila flex eso expulsa a sus
+     vecinos. Se neutraliza aqui en vez de parchear cada fila. */
+  .btnrow{display:flex;gap:8px;flex-wrap:wrap}
+  /* objetivos táctiles: 44px es el mínimo cómodo con el pulgar */
+  #v-ubicar .seg button{min-height:44px}
+  #v-ubicar .leaflet-touch .leaflet-control-zoom a,
+  #v-ubicar .leaflet-control-zoom a{width:44px;height:44px;line-height:44px;font-size:20px}
+  #ub-descartar{min-height:44px;padding:0 12px}
+  .btnrow > .btn{width:auto}
 
   /* badges pill (mismo lenguaje de la app) */
   .sbadge{display:inline-block;padding:2px 8px;border-radius:999px;font-size:10.5px;font-weight:800;letter-spacing:.2px;vertical-align:1px}
@@ -305,9 +315,9 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="js/config.js?v=1.51.0"></script>
-<script src="js/version.js?v=1.51.0"></script>
-<script src="js/data.js?v=1.51.0"></script>
+<script src="js/config.js?v=1.52.0"></script>
+<script src="js/version.js?v=1.52.0"></script>
+<script src="js/data.js?v=1.52.0"></script>
 <script>
 /* ============================================================
    PANEL DE ADMINISTRACIÓN — Aquí Estamos
@@ -399,6 +409,9 @@ const deCen = c=>({ id:c.id, ficha:c.ficha||'', barrio:c.barrio||'', dir:c.direc
   personas:c.personas||0, men5:c.menores5||0, may65:c.mayores65||0, cond:c.condiciones||[],
   ev:c.estado_vivienda||'', needs:c.necesidades||[], detalle:c.detalle||'', lat:c.lat?+c.lat:null, lng:c.lng?+c.lng:null,
   urg:c.urgencia||0, aprox:!!c.ubicacion_aprox, red:c.fuente_detalle||'', ciudad:c.ciudad||'', fuente:c.fuente||'app',
+  archivada:!!c.archivada, motivo:c.motivo_descarte||'',
+  saltadaEl:c.saltada_el?+new Date(c.saltada_el):0,
+  pedidaEl:c.pedida_el?+new Date(c.pedida_el):0,
   ts:+new Date(c.creado||Date.now()) });
 const deEnt = e=>({ id:e.id, z:e.zona, k:e.necesidad, quien:e.quien||'Anónimo',
   cant:e.cantidad||'', lat:e.lat?+e.lat:null, lng:e.lng?+e.lng:null,
@@ -612,13 +625,13 @@ function vPedidos(){
     ${filas}`;
 }
 
-let CFIL = {u:0, ubicar:false, red:'', q:''};
+let CFIL = {u:0, ubicar:false, red:'', q:'', arch:false};
 function vCensoLista(aviso){
   const inhab = CENSO.filter(c=>c.ev==='inhabitable');
   const sinUbicar = CENSO.filter(c=>!c.lat);
   const aproxN = CENSO.filter(c=>c.lat && c.aprox);
   const redes = [...new Set(CENSO.map(c=>c.red).filter(Boolean))].sort();
-  let lista = CENSO.slice();
+  let lista = CENSO.filter(c=>CFIL.arch ? c.archivada : !c.archivada);
   // buscar por lo que la persona tenga a mano: nombre, cédula, celular,
   // folio o barrio. Sin tildes ni mayúsculas, para que "GOMEZ" encuentre "Gómez".
   if(CFIL.q){
@@ -644,7 +657,7 @@ function vCensoLista(aviso){
         ${(!c.lat||c.aprox)?`<span class="sbadge" style="background:rgba(124,58,237,.15);color:#a78bfa;margin-top:3px">${c.lat?'ubicación aprox.':'sin ubicar'}</span>`:''}
       </div>
       ${c.tel && (!c.lat||c.aprox) ? `<a class="waq" style="background:#7c3aed" title="Pedir ubicación"
-        href="${waLink(c.tel,'Hola '+(c.nombre.split(' ')[0]||'')+', somos Aquí Estamos (censo de ayuda del terremoto). Para que las brigadas lleguen a tu vivienda, marca el punto aquí: https://aquiestamos.co/ubicar?f='+c.ficha)}"
+        href="${waLink(c.tel, msgUbicar(c))}"
         target="_blank" rel="noopener">${WA_SVG}</a>` : (c.tel?`<a class="waq" href="${waLink(c.tel,'Hola, le escribo de Aquí Estamos por el censo '+c.ficha)}" target="_blank" rel="noopener">${WA_SVG}</a>`:'')}
       <button class="chev" data-vivienda="${esc(c.id)}">›</button>
     </div>`;
@@ -667,12 +680,14 @@ function vCensoLista(aviso){
       <button data-cf="u3" class="${CFIL.u===3?'on':''}">Urgentes</button>
       <button data-cf="sin" class="${CFIL.ubicar==='sin'?'on':''}">Sin ubicar <span class="c">${sinUbicar.length}</span></button>
       <button data-cf="aprox" class="${CFIL.ubicar==='aprox'?'on':''}">Aprox. <span class="c">${aproxN.length}</span></button>
+      <button data-cf="arch" class="${CFIL.arch?'on':''}">Archivadas <span class="c">${CENSO.filter(c=>c.archivada).length}</span></button>
       ${redes.length?`<select id="cfil-red" class="selred"><option value="">Toda red/iglesia</option>
         ${redes.map(r=>`<option ${CFIL.red===r?'selected':''}>${esc(r)}</option>`).join('')}</select>`:''}
     </div>
     ${filas}`;
   document.querySelectorAll('#cfil [data-cf]').forEach(b=>b.onclick=()=>{
     if(b.dataset.cf==='u3') CFIL.u = CFIL.u===3?0:3;
+    if(b.dataset.cf==='arch') CFIL.arch = !CFIL.arch;
     if(b.dataset.cf==='sin') CFIL.ubicar = CFIL.ubicar==='sin'?false:'sin';
     if(b.dataset.cf==='aprox') CFIL.ubicar = CFIL.ubicar==='aprox'?false:'aprox';
     render();
@@ -743,9 +758,11 @@ async function atenderPedido(id){
 let UB = { i:0, lat:null, lng:null, map:null, mk:null, modo:'sin' };
 
 function ubCola(){
-  const sin   = CENSO.filter(c=>!c.lat);
-  const aprox = CENSO.filter(c=>c.lat && c.aprox);
-  return UB.modo==='aprox' ? aprox : sin;
+  const vivas = CENSO.filter(c=>!c.archivada);
+  const lista = UB.modo==='aprox' ? vivas.filter(c=>c.lat && c.aprox) : vivas.filter(c=>!c.lat);
+  // lo aplazado vuelve al final, no al frente: si no, las fichas imposibles
+  // reaparecen en cada vuelta y el trabajo no avanza nunca.
+  return lista.sort((a,b)=>(a.saltadaEl||0)-(b.saltadaEl||0));
 }
 
 function vUbicar(){
@@ -755,7 +772,15 @@ function vUbicar(){
   if(UB.i >= cola.length) UB.i = 0;
   const c = cola[UB.i];
 
+  const pendientes = CENSO.filter(c=>!c.archivada && (!c.lat || c.aprox));
+  const conTel = pendientes.filter(c=>c.tel && !c.pedidaEl);
   $('#v-ubicar').innerHTML = `
+    ${conTel.length?`<div class="alert" style="border-left-color:#7c3aed">
+      <div class="ti">${conTel.length} familias pueden marcar su casa ellas mismas</div>
+      <div class="cx">Tienen teléfono y aún no les hemos pedido la ubicación. Es más rápido y más exacto
+        que adivinar la dirección desde aquí.</div>
+      <button class="btn" id="ub-masivo" style="width:100%;margin-top:10px">Pedirles la ubicación por WhatsApp</button>
+    </div>`:''}
     <div class="seg" id="ubseg">
       <button data-ub="sin" class="${UB.modo==='sin'?'on':''}">Sin ubicar <span class="c">${sin}</span></button>
       <button data-ub="aprox" class="${UB.modo==='aprox'?'on':''}">Aproximadas <span class="c">${aprox}</span></button>
@@ -773,22 +798,36 @@ function vUbicar(){
       </div>
 
       <div class="lbl" style="margin-top:12px">Dirección del formulario</div>
-      <p style="margin:4px 0 0;font-size:15px;font-weight:650">${esc(c.dir||'— sin dirección escrita —')}</p>
-      <p class="muted" style="margin:3px 0 0">${esc(c.barrio||'sin barrio')}${c.ciudad?` · ${esc(c.ciudad)}`:''}${c.sena?` · ${esc(c.sena)}`:''}</p>
+      <input class="campo" id="ub-dir" value="${esc(c.dir||'')}" placeholder="Sin dirección escrita — corrígela aquí si la sabes"
+        style="width:100%;margin-top:4px">
+      <p class="muted" style="margin:5px 3px 0;font-size:12px">Si viene mal escrita, corrígela: se guarda junto con el punto y mejora la búsqueda.</p>
+      <p class="muted" style="margin:6px 0 0">${esc(c.barrio||'sin barrio')}${c.ciudad?` · ${esc(c.ciudad)}`:''}${c.sena?` · ${esc(c.sena)}`:''}</p>
+      ${c.aprox?`<p class="hint warn" style="margin-top:10px">Hoy está marcada en el centro de ${esc(c.barrio||'su barrio')}, no en la casa.
+        El punto que fijes <b>reemplaza</b> ese.</p>`:''}
+      ${c.pedidaEl?`<p class="muted" style="margin:8px 0 0;font-size:12.5px">Ubicación pedida por WhatsApp ${hace(c.pedidaEl)}.</p>`:''}
 
-      <div id="ubmapa" style="height:320px;border-radius:14px;overflow:hidden;border:1px solid var(--line);margin-top:12px"></div>
-      <p class="muted" id="ubmsg" style="margin:8px 3px 0;font-size:12.5px">Busca la dirección o toca el mapa donde queda la vivienda.</p>
+      <div id="ubmapa" style="height:340px;border-radius:14px;overflow:hidden;border:1px solid var(--line);margin-top:12px"></div>
+      <p class="muted" id="ubmsg" role="status" aria-live="polite" style="margin:8px 3px 0;font-size:12.5px">Busca la dirección o toca el mapa donde queda la vivienda.</p>
 
-      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">
-        <button class="btn flat" id="ub-geo" style="flex:1;min-width:170px">Buscar la dirección</button>
-        ${c.tel?`<a class="btn flat" id="ub-wa" style="flex:1;min-width:170px;text-align:center;text-decoration:none"
-          href="${waLink(c.tel,'Hola '+((c.nombre||'').split(' ')[0]||'')+', somos Aquí Estamos (censo de ayuda del terremoto). Para que las brigadas lleguen a tu vivienda, marca el punto aquí: https://aquiestamos.co/ubicar?f='+c.ficha)}"
+      <div class="lbl" style="margin-top:12px">…o pega la ubicación que te mandaron</div>
+      <div class="btnrow" style="margin-top:5px">
+        <input class="campo" id="ub-coord" style="flex:1 1 220px;min-width:0"
+          placeholder="Enlace de WhatsApp o Google Maps, o 4.813, -75.696">
+        <button class="btn flat" id="ub-pegar" style="flex:0 1 auto;min-width:110px">Usar</button>
+      </div>
+
+      <div class="btnrow" style="margin-top:12px">
+        <button class="btn flat" id="ub-geo" style="flex:1 1 170px;width:auto" ${(c.dir||c.barrio)?'':'disabled'}>Buscar la dirección</button>
+        ${c.tel?`<a class="btn flat" id="ub-wa" style="flex:1 1 170px;width:auto;text-align:center;text-decoration:none"
+          href="${waLink(c.tel, msgUbicar(c))}"
           target="_blank" rel="noopener">Pedirla por WhatsApp</a>`:''}
       </div>
-      <div style="display:flex;gap:8px;margin-top:8px">
-        <button class="btn flat" id="ub-saltar" style="flex:0 0 auto">Saltar</button>
-        <button class="btn" id="ub-guardar" style="flex:1" disabled>Guardar el punto</button>
+      <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
+        <button class="btn flat" id="ub-saltar" style="flex:0 1 auto;width:auto;min-width:150px">Dejar para después</button>
+        <button class="btn" id="ub-guardar" style="flex:1 1 200px;width:auto;min-width:0" disabled>${c.lat&&c.aprox?'Reemplazar el punto':'Guardar el punto'}</button>
       </div>
+      <button type="button" class="cerrar-txt" id="ub-descartar"
+        style="display:block;margin:14px auto 0;background:none;border:0;color:var(--dim);font-family:inherit;font-size:12.5px;cursor:pointer;text-decoration:underline">Descartar esta ficha…</button>
     </div>`}
   `;
   if(c) ubMapa(c);
@@ -804,7 +843,17 @@ function ubMapa(c){
   L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
     {maxZoom:19, subdomains:'abcd'}).addTo(UB.map);
   setTimeout(()=>UB.map && UB.map.invalidateSize(), 60);
-  if(c.lat) ubFijar(c.lat, c.lng, false);
+  clearTimeout(ubMapa._r);
+  window.addEventListener('resize', ()=>{ clearTimeout(ubMapa._r);
+    ubMapa._r = setTimeout(()=>UB.map && UB.map.invalidateSize(), 180); }, {once:true});
+  if(c.lat){
+    ubFijar(c.lat, c.lng, false);
+    if(c.aprox){
+      // un punto de barrio no es una casa: se dibuja el radio de incertidumbre
+      L.circle([c.lat,c.lng], {radius:400, color:'#7C3AED', weight:1.5,
+        dashArray:'5 5', fillOpacity:.07}).addTo(UB.map);
+    }
+  }
   UB.map.on('click', e=>ubFijar(e.latlng.lat, e.latlng.lng));
 }
 function ubFijar(la, lo, habilita=true){
@@ -823,6 +872,25 @@ function ubFijar(la, lo, habilita=true){
 /* Geocodificación: la dirección escrita se busca en Nominatim, acotada a
    Risaralda. Si el resultado cae fuera de la caja de Pereira se descarta:
    más vale no proponer nada que mandar la brigada a otro municipio. */
+/* Acepta lo que la gente realmente tiene a mano: un par de coordenadas, un
+   enlace de Google Maps o el de WhatsApp. Es también la única forma de fijar
+   el punto sin ratón: antes, sin mouse la tarea era imposible. */
+function ubPegar(){
+  const t = ((document.getElementById('ub-coord')||{}).value||'').trim();
+  const msg = document.getElementById('ubmsg');
+  if(!t){ msg.textContent='Pega el enlace o las coordenadas primero.'; return; }
+  let la=null, lo=null;
+  let m = t.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/)                 // google maps /@lat,lng
+       || t.match(/[?&](?:q|ll|daddr)=(-?\d+\.\d+),\s*(-?\d+\.\d+)/) // ...?q=lat,lng
+       || t.match(/^\s*(-?\d+\.\d+)\s*[,;\s]\s*(-?\d+\.\d+)\s*$/);  // "4.813, -75.696"
+  if(m){ la=+m[1]; lo=+m[2]; }
+  if(la==null){ msg.textContent='No reconocí una ubicación ahí. Pega el enlace completo o escribe "4.813, -75.696".'; return; }
+  if(!(la>4.60 && la<5.10 && lo>-76.10 && lo<-75.40)){
+    msg.textContent='Esa ubicación queda fuera de Pereira y alrededores. Revísala antes de guardarla.'; return; }
+  UB.map.setView([la,lo], 17); ubFijar(la,lo);
+  msg.textContent='Punto puesto donde indica el enlace. Verifícalo en el mapa.';
+}
+
 async function ubGeocodificar(c){
   const msg = document.getElementById('ubmsg');
   const partes = [c.dir, c.barrio, c.ciudad||'Pereira', 'Risaralda, Colombia'].filter(Boolean);
@@ -848,16 +916,133 @@ async function ubGeocodificar(c){
   b.disabled=false; b.textContent='Buscar la dirección';
 }
 
+/* Envío en tanda. No se abren N pestañas de golpe (el navegador las bloquea
+   y nadie puede con 90 chats a la vez): se va de una en una, marcando cada
+   familia como "ya pedida" para que nadie reciba el mensaje dos veces. */
+function ubMasivo(){
+  const cola = CENSO.filter(c=>!c.archivada && (!c.lat || c.aprox) && c.tel && !c.pedidaEl);
+  if(!cola.length) return toast('No hay a quién pedirle: ya se les pidió a todas.');
+  let i = 0;
+  const paso = ()=>{
+    const c = cola[i];
+    abrirSheet(`
+      <div class="sec" style="margin-top:4px">Pedir ubicación · ${i+1} de ${cola.length}</div>
+      <div class="fila"><b>${esc(c.nombre||'Vivienda')}</b></div>
+      <p class="muted" style="margin:6px 0 12px">${esc(c.barrio||'')} · ${esc(telBonito(c.tel))}</p>
+      <p class="muted" style="margin:0 0 12px;font-size:12.5px">Se abre WhatsApp con el mensaje listo.
+        Al enviarlo, vuelve aquí y toca “Siguiente”.</p>
+      <a class="btn" id="m-wa" style="display:block;text-align:center;text-decoration:none;background:#25d366;color:#04220f"
+         href="${waLink(c.tel, msgUbicar(c))}" target="_blank" rel="noopener">Abrir WhatsApp</a>
+      <div class="btnrow" style="margin-top:10px">
+        <button class="btn flat" id="m-salto" style="flex:1 1 120px">Saltar esta</button>
+        <button class="btn flat" id="m-sig" style="flex:1 1 120px">Siguiente</button>
+      </div>
+      <button class="btn flat" id="m-fin" style="width:auto;margin-top:10px">Terminar</button>`);
+    const avanzar = ()=>{ i++; if(i>=cola.length){ cerrarSheet(); toast('Listo: se pidió la ubicación a '+cola.length+' familias.'); vUbicar(); render(); } else paso(); };
+    document.getElementById('m-wa').onclick = ()=>ubPedida(c);
+    document.getElementById('m-sig').onclick = avanzar;
+    document.getElementById('m-salto').onclick = avanzar;
+    document.getElementById('m-fin').onclick = ()=>{ cerrarSheet(); vUbicar(); render(); };
+  };
+  paso();
+}
+
 async function ubGuardar(c){
   if(UB.lat==null) return toast('Primero marca el punto.');
-  if(DEMO){ c.lat=UB.lat; c.lng=UB.lng; c.aprox=false; toast('Guardado (demo).'); vUbicar(); render(); return; }
-  const b=document.getElementById('ub-guardar'); b.disabled=true; b.textContent='Guardando…';
-  const {error} = await db.from('censo').update({lat:UB.lat, lng:UB.lng, ubicacion_aprox:false,
-    ubicado_por:'panel:'+(YO.email||'')}).eq('id', c.id);
-  if(error){ toast('No se pudo guardar: '+error.message); b.disabled=false; b.textContent='Guardar el punto'; return; }
-  c.lat=UB.lat; c.lng=UB.lng; c.aprox=false;   // al día sin recargar toda la base
-  toast('Ubicada: '+(c.ficha||c.nombre));
+  const dirNueva = ((document.getElementById('ub-dir')||{}).value||'').trim();
+  const antes = {lat:c.lat, lng:c.lng, aprox:c.aprox, dir:c.dir};   // para deshacer
+  const era = c.aprox, barrio = c.barrio||'su barrio';
+  const campos = {lat:UB.lat, lng:UB.lng, ubicacion_aprox:false, ubicado_por:'panel:'+(YO.email||'')};
+  if(dirNueva !== (c.dir||'')) campos.direccion = dirNueva;
+
+  if(!DEMO){
+    const b=document.getElementById('ub-guardar'); b.disabled=true; b.textContent='Guardando…';
+    const {error} = await db.from('censo').update(campos).eq('id', c.id);
+    if(error){
+      // el mensaje crudo de Postgres no le sirve a nadie: se explica y se deja el botón listo
+      toast('No se pudo guardar. Revisa la conexión e inténtalo otra vez.');
+      console.error('censo update', error);
+      b.disabled=false; b.textContent = era?'Reemplazar el punto':'Guardar el punto'; return;
+    }
+  }
+  c.lat=UB.lat; c.lng=UB.lng; c.aprox=false; if(campos.direccion!==undefined) c.dir=dirNueva;
+  toastDeshacer(era ? `Punto reemplazado: ${c.ficha||''}. Antes estaba en el centro de ${barrio}.`
+                    : `Ubicada: ${c.ficha||c.nombre}`,
+    async ()=>{
+      if(!DEMO) await db.from('censo').update({lat:antes.lat, lng:antes.lng,
+        ubicacion_aprox:antes.aprox, direccion:antes.dir}).eq('id', c.id);
+      Object.assign(c, antes); toast('Deshecho.'); vUbicar(); render();
+    });
   vUbicar(); render();
+}
+
+/* Un toast con salida: guardar sobreescribe datos de una familia, y sin
+   deshacer un arrastre accidental del pin se vuelve permanente y silencioso. */
+function toastDeshacer(msg, alDeshacer){
+  const e=$('#toast');
+  e.innerHTML = `<span>${esc(msg)}</span> <button type="button" id="t-undo"
+    style="margin-left:10px;background:none;border:0;color:var(--acc);font-family:inherit;
+    font-weight:800;font-size:13px;cursor:pointer;text-decoration:underline">Deshacer</button>`;
+  e.classList.add('on');
+  const cerrar=()=>{ e.classList.remove('on'); setTimeout(()=>e.textContent='',250); };
+  clearTimeout(_t); _t=setTimeout(cerrar, 9000);
+  const b=document.getElementById('t-undo');
+  if(b) b.onclick=async ()=>{ clearTimeout(_t); cerrar(); await alDeshacer(); };
+}
+
+/* Aplazar y pedir por WhatsApp dejan rastro: sin él una familia recién
+   damnificada puede recibir el mismo mensaje tres veces. */
+async function ubAplazar(c){
+  c.saltadaEl = now();
+  if(!DEMO) await db.from('censo').update({saltada_el:new Date().toISOString()}).eq('id', c.id);
+  UB.i = 0; vUbicar();
+}
+async function ubPedida(c){
+  c.pedidaEl = now();
+  if(!DEMO) await db.from('censo').update({pedida_el:new Date().toISOString(),
+    pedida_por:(YO.email||'')}).eq('id', c.id);
+  vUbicar();
+}
+
+/* Descartar archiva con motivo. Nunca DELETE: en un censo de damnificados el
+   dato borrado no se reconstruye, y el motivo es la auditoría de por qué. */
+const MOTIVOS = [
+  ['duplicada','Duplicada de otra ficha'],
+  ['fuera','Fuera de la zona de atención'],
+  ['atendida','Ya atendida o la familia se mudó'],
+  ['erronea','Datos errados, imposible contactar'],
+];
+function ubDescartar(c){
+  abrirSheet(`
+    <div class="sec" style="margin-top:4px">Descartar ${esc(c.ficha||'la ficha')}</div>
+    <p class="muted" style="margin:6px 0 12px">No se borra: queda archivada con el motivo y se puede
+      recuperar. Sale del mapa y de todas las colas.</p>
+    <div id="d-motivos">
+      ${MOTIVOS.map(([k,n])=>`<button type="button" class="srow" data-mot="${k}">
+        <span class="st"><b>${n}</b></span><span class="sw"></span></button>`).join('')}
+    </div>
+    <input class="campo" id="d-nota" placeholder="Nota (opcional)" style="width:100%;margin-top:10px">
+    <button class="btn" id="d-ok" style="width:100%;margin-top:12px" disabled>Archivar la ficha</button>`);
+  let mot='';
+  document.querySelectorAll('#d-motivos [data-mot]').forEach(b=>b.onclick=()=>{
+    document.querySelectorAll('#d-motivos [data-mot]').forEach(x=>x.classList.remove('on'));
+    b.classList.add('on'); mot=b.dataset.mot; document.getElementById('d-ok').disabled=false;
+  });
+  document.getElementById('d-ok').onclick = async ()=>{
+    const nota=(document.getElementById('d-nota').value||'').trim();
+    if(!DEMO){
+      const {error} = await db.from('censo').update({archivada:true, motivo_descarte:mot,
+        nota_descarte:nota||null, descartada_por:(YO.email||''), descartada_el:new Date().toISOString()}).eq('id', c.id);
+      if(error){ toast('No se pudo archivar. Inténtalo otra vez.'); console.error(error); return; }
+    }
+    c.archivada=true; c.motivo=mot; cerrarSheet();
+    toastDeshacer('Ficha archivada: '+(c.ficha||''), async ()=>{
+      if(!DEMO) await db.from('censo').update({archivada:false, motivo_descarte:null,
+        descartada_por:null, descartada_el:null}).eq('id', c.id);
+      c.archivada=false; toast('Recuperada.'); vUbicar(); render();
+    });
+    UB.i=0; vUbicar(); render();
+  };
 }
 
 
@@ -884,13 +1069,15 @@ const DESP_REGLAS = [
 ];
 
 let DP = { paso:1, tipo:'alimentos', unidades:60, equipos:3, tope:8,
-           reglas:new Set(['urgencia','olvidadas']), rutas:null };
+           incluirAprox:false, reglas:new Set(['urgencia','olvidadas']), rutas:null };
 
 /* Candidatas: solo con punto exacto (a un punto aproximado no se puede
    despachar a nadie) y sin haber recibido lo mismo en la última semana. */
 function dpCandidatas(){
   return CENSO.filter(c=>{
-    if(!c.lat || !c.lng || c.aprox) return false;
+    if(c.archivada) return false;
+    if(!c.lat || !c.lng) return false;
+    if(c.aprox && !DP.incluirAprox) return false;
     if(!(c.needs||[]).includes(DP.tipo)) return false;
     const ya = ENTREGAS.some(y=>y.k===DP.tipo && y.lat &&
       distM(c.lat,c.lng,+y.lat,+y.lng)<300 && (now()-y.ts) < 7*24*H);
@@ -970,6 +1157,10 @@ function dpArmar(){
 
 function vDespachos(){
   const cand = dpCandidatas().length;
+  const pide = c=>!c.archivada && (c.needs||[]).includes(DP.tipo);
+  const exactas  = CENSO.filter(c=>pide(c) && c.lat && !c.aprox).length;
+  const aproxN   = CENSO.filter(c=>pide(c) && c.lat && c.aprox).length;
+  const sinPunto = CENSO.filter(c=>pide(c) && !c.lat).length;
   const tipoN = (DESP_TIPOS.find(t=>t.k===DP.tipo)||{}).n||DP.tipo;
 
   if(DP.paso===1){
@@ -981,9 +1172,22 @@ function vDespachos(){
         </div>
         <div class="lbl" style="margin-top:16px">¿Cuántas ayudas tienen listas?</div>
         <input class="input" id="dp-unid" inputmode="numeric" value="${DP.unidades}" style="margin-top:6px">
-        <p class="muted" style="margin:10px 3px 0;font-size:12.5px">
-          Hay <b>${cand}</b> vivienda${cand===1?'':'s'} del censo con punto exacto esperando ${esc(tipoN.toLowerCase())}.</p>
-        <button class="btn" id="dp-1" style="width:100%;margin-top:14px" ${cand?'':'disabled'}>Siguiente</button>
+        <div class="lbl" style="margin-top:16px">Quién espera ${esc(tipoN.toLowerCase())}</div>
+        <div class="card" style="padding:11px 13px;margin-top:6px">
+          <div class="mt"><b>${exactas}</b> con punto exacto — se les puede llegar directo</div>
+          <div class="mt"><b>${aproxN}</b> con ubicación aproximada — solo se sabe el barrio</div>
+          <div class="mt"><b>${sinPunto}</b> sin ubicar — no entran a ninguna ruta</div>
+        </div>
+        <button type="button" class="srow ${DP.incluirAprox?'on':''}" id="dp-aprox" style="margin-top:10px">
+          <span class="st"><b>Incluir las aproximadas</b>
+            <small>${aproxN} más. El equipo llega al barrio y llama al llegar: lleva el teléfono de cada familia.</small></span>
+          <span class="sw"></span></button>
+        ${!cand?`<p class="hint warn" style="margin-top:12px">${(CENSO.length
+            ? (aproxN||sinPunto
+               ? 'Nadie con punto exacto pide esto. Activa las aproximadas arriba, o ubica primero las viviendas en la pestaña Ubicar.'
+               : 'Ninguna vivienda del censo tiene esta necesidad pendiente. Prueba con otra ayuda.')
+            : 'No se pudo leer el censo. Vuelve a entrar con tu correo.')}</p>`:''}
+        <button class="btn" id="dp-1" style="width:100%;margin-top:14px" ${cand?'':'disabled'}>Siguiente${cand?` · ${cand} destino${cand===1?'':'s'}`:''}</button>
       </div>`;
     return;
   }
@@ -1001,9 +1205,9 @@ function vDespachos(){
         </div>
         <p class="muted" style="margin:12px 3px 0;font-size:12.5px">
           Alcanza para <b>${Math.min(DP.unidades, DP.equipos*DP.tope)}</b> entregas en esta jornada.</p>
-        <div style="display:flex;gap:8px;margin-top:14px">
-          <button class="btn flat" id="dp-atras" style="flex:0 0 auto">Atrás</button>
-          <button class="btn" id="dp-2" style="flex:1">Siguiente</button>
+        <div class="btnrow" style="margin-top:14px">
+          <button class="btn flat" id="dp-atras" style="flex:0 1 auto;min-width:110px">Atrás</button>
+          <button class="btn" id="dp-2" style="flex:1 1 200px">Siguiente</button>
         </div>
       </div>`;
     return;
@@ -1018,9 +1222,9 @@ function vDespachos(){
           ${DESP_REGLAS.map(r=>`<button type="button" class="srow ${DP.reglas.has(r.k)?'on':''}" data-dr="${r.k}">
             <span class="st"><b>${r.n}</b><small>${r.d}</small></span><span class="sw"></span></button>`).join('')}
         </div>
-        <div style="display:flex;gap:8px;margin-top:14px">
-          <button class="btn flat" id="dp-atras" style="flex:0 0 auto">Atrás</button>
-          <button class="btn" id="dp-armar" style="flex:1">Armar los despachos</button>
+        <div class="btnrow" style="margin-top:14px">
+          <button class="btn flat" id="dp-atras" style="flex:0 1 auto;min-width:110px">Atrás</button>
+          <button class="btn" id="dp-armar" style="flex:1 1 200px">Armar los despachos</button>
         </div>
       </div>`;
     return;
@@ -1036,15 +1240,15 @@ function vDespachos(){
       <div class="cx">${esc(tipoN)} · ${rutas.reduce((s,r)=>s+r.personas,0)} personas
         ${sobran.length?` · ${sobran.length} quedan para la próxima jornada`:''}</div>
     </div>
-    <div style="display:flex;gap:8px;margin:10px 0 14px">
-      <button class="btn flat" id="dp-rehacer" style="flex:1">Cambiar las reglas</button>
+    <div class="btnrow" style="margin:10px 0 14px">
+      <button class="btn flat" id="dp-rehacer" style="flex:1 1 200px">Cambiar las reglas</button>
     </div>
     ${rutas.map(r=>`
       <div class="card" style="padding:14px;margin-bottom:12px">
         <div class="row" style="align-items:flex-start">
           <div class="grow"><b style="font-size:16px">Equipo ${r.equipo}</b>
             <p class="muted" style="margin:3px 0 0">${r.paradas.length} paradas · ${r.personas} personas · ~${r.km.toFixed(1)} km de recorrido</p></div>
-          <a class="btn flat" style="flex:0 0 auto;text-decoration:none" target="_blank" rel="noopener"
+          <a class="btn flat" style="flex:0 1 auto;width:auto;min-width:110px;text-decoration:none" target="_blank" rel="noopener"
              href="https://www.google.com/maps/dir/${r.paradas.map(x=>x.c.lat+','+x.c.lng).join('/')}">Abrir ruta</a>
         </div>
         <div style="margin-top:10px">
@@ -1066,6 +1270,11 @@ function vDespachos(){
 }
 
 /* ---------- PERSONAS ---------- */
+const URL_UBICAR = 'https://aquiestamos.co/ubicar?f=';
+const msgUbicar = c => 'Hola '+((c.nombre||'').trim().split(/\s+/)[0]||'')+
+  ', somos Aquí Estamos (censo de ayuda del terremoto). Para que las brigadas lleguen a tu vivienda, '+
+  'marca el punto aquí: '+URL_UBICAR+(c.ficha||'');
+
 const WA_SVG = `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.5 14.4c-.3-.2-1.7-.9-2-1-.3-.1-.5-.1-.6.1-.2.3-.7.9-.8 1.1-.2.2-.3.2-.6.1-.3-.2-1.2-.5-2.3-1.4-.9-.8-1.4-1.7-1.6-2-.2-.3 0-.5.1-.6l.5-.6c.1-.2.2-.3.3-.5.1-.2 0-.4 0-.5-.1-.2-.6-1.6-.9-2.2-.2-.5-.4-.5-.6-.5h-.5c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.5s1.1 2.9 1.2 3.1c.2.2 2.1 3.3 5.2 4.6.7.3 1.3.5 1.7.6.7.2 1.4.2 1.9.1.6-.1 1.7-.7 2-1.4.2-.7.2-1.3.2-1.4-.1-.2-.3-.3-.6-.4Z"/><path d="M12 2C6.5 2 2 6.5 2 12c0 1.8.5 3.4 1.3 4.9L2 22l5.3-1.4A10 10 0 1 0 12 2Zm0 18.2c-1.5 0-3-.4-4.3-1.2l-.3-.2-3.1.8.8-3-.2-.3A8.2 8.2 0 1 1 12 20.2Z"/></svg>`;
 const TICK_SVG = `<svg class="tick ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>`;
 
@@ -1461,13 +1670,18 @@ document.addEventListener('click', e=>{
   const cola = ubCola(), c = cola[UB.i];
   if(e.target.closest('#ub-geo'))     { if(c) ubGeocodificar(c); return; }
   if(e.target.closest('#ub-guardar')) { if(c) ubGuardar(c); return; }
-  if(e.target.closest('#ub-saltar'))  { UB.i=(UB.i+1)%Math.max(1,cola.length); vUbicar(); return; }
+  if(e.target.closest('#ub-masivo'))  { ubMasivo(); return; }
+  if(e.target.closest('#ub-pegar'))   { if(c) ubPegar(); return; }
+  if(e.target.closest('#ub-descartar')){ if(c) ubDescartar(c); return; }
+  if(e.target.closest('#ub-wa'))      { if(c) ubPedida(c); return; }   // deja rastro; el enlace abre igual
+  if(e.target.closest('#ub-saltar'))  { if(c) ubAplazar(c); return; }
 });
 
 // asistente de despachos
 document.addEventListener('click', e=>{
   const t=e.target.closest('#dp-tipo [data-dt]');   if(t){ DP.tipo=t.dataset.dt; vDespachos(); return; }
   const q=e.target.closest('#dp-tope [data-dtope]');if(q){ DP.tope=+q.dataset.dtope; vDespachos(); return; }
+  if(e.target.closest('#dp-aprox')){ DP.incluirAprox=!DP.incluirAprox; vDespachos(); return; }
   const d=e.target.closest('#dp-eq [data-de]');     if(d){ DP.equipos=Math.max(1,Math.min(20,DP.equipos+ +d.dataset.de)); vDespachos(); return; }
   const r=e.target.closest('#dp-reglas [data-dr]'); if(r){ const k=r.dataset.dr;
     DP.reglas.has(k)?DP.reglas.delete(k):DP.reglas.add(k); vDespachos(); return; }
