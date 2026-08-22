@@ -8,7 +8,7 @@
 <link rel="icon" type="image/svg+xml" href="logo/marca.svg">
 <title>Aquí Estamos · Administración</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
-<link rel="stylesheet" href="css/app.css?v=1.55.3">
+<link rel="stylesheet" href="css/app.css?v=1.56.0">
 <style>
   /* El panel es mobile-first: una columna, pestañas fijas abajo. En pantalla
      grande se centra en una franja de ancho de celular para no deformarse. */
@@ -120,6 +120,29 @@
   .ubisel .us.on b{color:var(--acc)}
   .ubisel .us.fija{cursor:default}
   .ubisel .us.no{opacity:.55;cursor:default}
+
+  /* Ubicar: en el celular una columna; en escritorio los datos a la izquierda
+     y el mapa alto a la derecha, que es lo que de verdad hay que mirar. */
+  .ubgrid{display:grid;gap:16px;margin-top:14px}
+  .ubcol{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:18px}
+  .ubmapcol{min-height:300px}
+  #ubmapa{height:340px;border-radius:16px;overflow:hidden;border:1px solid var(--line)}
+  @media (min-width:1000px){
+    .ubgrid{grid-template-columns:minmax(380px,460px) 1fr;align-items:start;
+      max-width:1500px;height:calc(100vh - 190px)}
+    .ubcol{overflow-y:auto;max-height:100%}
+    .ubmapcol{height:100%}
+    #ubmapa{height:100%;min-height:420px}
+  }
+
+  /* teléfono de la ficha: leerlo, copiarlo o llamar sin transcribirlo */
+  .telrow{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:12px;
+    padding:10px 12px;border-radius:14px;background:var(--surf);border:1px solid var(--line)}
+  .telrow .tl{flex:1;min-width:130px;font-size:17px;font-weight:800;letter-spacing:.4px;
+    color:var(--txt);text-decoration:none;font-variant-numeric:tabular-nums}
+  .telrow .cp{flex:0 0 auto;width:auto;height:40px;min-height:40px;padding:0 16px;font-size:13.5px;
+    display:flex;align-items:center;justify-content:center;text-decoration:none}
+  .telrow .cp.ok{background:rgba(47,158,95,.18);color:#5FBE8A}
 
   .porque{margin-top:10px}
   .porque summary{cursor:pointer;font-size:13px;font-weight:700;color:var(--link);
@@ -365,9 +388,9 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="js/config.js?v=1.55.3"></script>
-<script src="js/version.js?v=1.55.3"></script>
-<script src="js/data.js?v=1.55.3"></script>
+<script src="js/config.js?v=1.56.0"></script>
+<script src="js/version.js?v=1.56.0"></script>
+<script src="js/data.js?v=1.56.0"></script>
 <script>
 /* ============================================================
    PANEL DE ADMINISTRACIÓN — Aquí Estamos
@@ -841,46 +864,54 @@ function vUbicar(){
     ${!c ? `<div class="vacio"><b>Nada pendiente aquí</b><p>${UB.modo==='sin'
         ? 'Todas las viviendas del censo tienen un punto.'
         : 'Ninguna vivienda quedó con ubicación aproximada.'}</p></div>` : `
-    <div class="card" style="padding:14px;margin-top:12px">
-      <div class="row" style="align-items:flex-start">
-        <div class="grow">
-          <div class="fila"><b>${esc(c.nombre||'Vivienda')}</b>
-            ${c.urg?`<span class="sbadge ${c.urg===3?'b3':c.urg===2?'b2':'b1'}">${c.urg===3?'Urgente':c.urg===2?'Prioritaria':'Programable'}</span>`:''}</div>
-          <p class="muted" style="margin:5px 0 0">${esc(c.ficha||'')} · ${UB.i+1} de ${cola.length}</p>
+    <div class="ubgrid">
+      <div class="ubcol">
+        <div class="fila" style="align-items:flex-start">
+          <div class="grow">
+            <h3 style="margin:0;font-size:20px;font-weight:800;letter-spacing:-.4px">${esc(c.nombre||'Vivienda')}</h3>
+            <p class="muted" style="margin:4px 0 0">${esc(c.ficha||'')} · ${UB.i+1} de ${cola.length}
+              ${c.personas?` · ${c.personas} persona${c.personas>1?'s':''}`:''}</p>
+          </div>
+          ${c.urg?`<span class="sbadge ${c.urg===3?'b3':c.urg===2?'b2':'b1'}">${c.urg===3?'Urgente':c.urg===2?'Prioritaria':'Programable'}</span>`:''}
         </div>
+
+        <div class="lbl" style="margin-top:18px">Dirección del formulario</div>
+        <input class="campo" id="ub-dir" value="${esc(c.dir||'')}" placeholder="Sin dirección escrita — corrígela aquí si la sabes"
+          style="width:100%;margin-top:5px">
+        <p class="muted" style="margin:5px 3px 0;font-size:12px">Si viene mal escrita, corrígela: se guarda junto con el punto.</p>
+        <p class="muted" style="margin:8px 0 0">${esc(c.barrio||'sin barrio')}${c.ciudad?` · ${esc(c.ciudad)}`:''}${c.sena?` · ${esc(c.sena)}`:''}</p>
+
+        ${c.tel?`<div class="telrow">
+          <a class="tl" href="tel:${esc(c.tel)}">${esc(telBonito(c.tel))}</a>
+          <button type="button" class="btn flat cp" data-copiar-tel="${esc(c.tel)}">Copiar</button>
+          <a class="btn flat cp" href="tel:${esc(c.tel)}">Llamar</a>
+        </div>`:`<p class="muted" style="margin:10px 0 0;font-size:12.5px">Esta ficha no trae teléfono.</p>`}
+        ${c.pedidaEl?`<p class="muted" style="margin:8px 0 0;font-size:12.5px">Ubicación pedida por WhatsApp ${hace(c.pedidaEl)}.</p>`:''}
+        ${c.aprox?`<p class="hint warn" style="margin-top:12px">Hoy está marcada en el centro de ${esc(c.barrio||'su barrio')}, no en la casa.
+          El punto que fijes <b>reemplaza</b> ese.</p>`:''}
+
+        <div class="lbl" style="margin-top:18px">Cómo fijar el punto</div>
+        <div class="btnrow" style="margin-top:6px">
+          <button class="btn flat" id="ub-geo" style="flex:1 1 160px;width:auto" ${(c.dir||c.barrio)?'':'disabled'}>Buscar la dirección</button>
+          ${c.tel?`<a class="btn flat" id="ub-wa" style="flex:1 1 160px;width:auto;text-align:center;text-decoration:none"
+            href="${waLink(c.tel, msgUbicar(c))}" target="_blank" rel="noopener">Pedirla por WhatsApp</a>`:''}
+        </div>
+        <div class="btnrow" style="margin-top:8px">
+          <input class="campo" id="ub-coord" style="flex:1 1 200px;min-width:0"
+            placeholder="Pega el enlace de WhatsApp o Maps">
+          <button class="btn flat" id="ub-pegar" style="flex:0 1 auto;min-width:100px">Usar</button>
+        </div>
+        <p class="muted" id="ubmsg" role="status" aria-live="polite" style="margin:10px 3px 0;font-size:12.5px">O toca el mapa donde queda la vivienda.</p>
+
+        <div class="btnrow" style="margin-top:16px">
+          <button class="btn" id="ub-guardar" style="flex:1 1 200px;width:auto;min-width:0" disabled>${c.lat&&c.aprox?'Reemplazar el punto':'Guardar el punto'}</button>
+          <button class="btn flat" id="ub-saltar" style="flex:0 1 auto;width:auto;min-width:140px">Dejar para después</button>
+        </div>
+        <button type="button" class="cerrar-txt" id="ub-descartar"
+          style="display:block;margin:14px auto 0;background:none;border:0;color:var(--dim);font-family:inherit;font-size:12.5px;cursor:pointer;text-decoration:underline;min-height:44px;padding:0 12px">Descartar esta ficha…</button>
       </div>
 
-      <div class="lbl" style="margin-top:12px">Dirección del formulario</div>
-      <input class="campo" id="ub-dir" value="${esc(c.dir||'')}" placeholder="Sin dirección escrita — corrígela aquí si la sabes"
-        style="width:100%;margin-top:4px">
-      <p class="muted" style="margin:5px 3px 0;font-size:12px">Si viene mal escrita, corrígela: se guarda junto con el punto y mejora la búsqueda.</p>
-      <p class="muted" style="margin:6px 0 0">${esc(c.barrio||'sin barrio')}${c.ciudad?` · ${esc(c.ciudad)}`:''}${c.sena?` · ${esc(c.sena)}`:''}</p>
-      ${c.aprox?`<p class="hint warn" style="margin-top:10px">Hoy está marcada en el centro de ${esc(c.barrio||'su barrio')}, no en la casa.
-        El punto que fijes <b>reemplaza</b> ese.</p>`:''}
-      ${c.pedidaEl?`<p class="muted" style="margin:8px 0 0;font-size:12.5px">Ubicación pedida por WhatsApp ${hace(c.pedidaEl)}.</p>`:''}
-
-      <div id="ubmapa" style="height:340px;border-radius:14px;overflow:hidden;border:1px solid var(--line);margin-top:12px"></div>
-      <p class="muted" id="ubmsg" role="status" aria-live="polite" style="margin:8px 3px 0;font-size:12.5px">Busca la dirección o toca el mapa donde queda la vivienda.</p>
-
-      <div class="lbl" style="margin-top:12px">…o pega la ubicación que te mandaron</div>
-      <div class="btnrow" style="margin-top:5px">
-        <input class="campo" id="ub-coord" style="flex:1 1 220px;min-width:0"
-          placeholder="Enlace de WhatsApp o Google Maps, o 4.813, -75.696">
-        <button class="btn flat" id="ub-pegar" style="flex:0 1 auto;min-width:110px">Usar</button>
-      </div>
-
-      <div class="btnrow" style="margin-top:12px">
-        <button class="btn flat" id="ub-geo" style="flex:1 1 170px;width:auto" ${(c.dir||c.barrio)?'':'disabled'}>Buscar la dirección</button>
-        ${c.tel?`<a class="btn flat" id="ub-wa" style="flex:1 1 170px;width:auto;text-align:center;text-decoration:none"
-          href="${waLink(c.tel, msgUbicar(c))}"
-          target="_blank" rel="noopener">Pedirla por WhatsApp</a>`:''}
-      </div>
-      <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
-        <button class="btn flat" id="ub-saltar" style="flex:0 1 auto;width:auto;min-width:150px">Dejar para después</button>
-        <button class="btn" id="ub-guardar" style="flex:1 1 200px;width:auto;min-width:0" disabled>${c.lat&&c.aprox?'Reemplazar el punto':'Guardar el punto'}</button>
-      </div>
-      <button type="button" class="cerrar-txt" id="ub-descartar"
-        style="display:block;margin:14px auto 0;background:none;border:0;color:var(--dim);font-family:inherit;font-size:12.5px;cursor:pointer;text-decoration:underline">Descartar esta ficha…</button>
+      <div class="ubmapcol"><div id="ubmapa"></div></div>
     </div>`}
   `;
   if(c) ubMapa(c);
@@ -895,10 +926,17 @@ function ubMapa(c){
             .setView([c.lat ?? 4.8133, c.lng ?? -75.6961], c.lat ? 16 : 13);
   L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
     {maxZoom:19, subdomains:'abcd'}).addTo(UB.map);
+  // El contenedor toma su alto con el layout, después de crear el mapa: sin
+  // esto Leaflet calcula 0 y no pide una sola tesela (mapa en blanco).
   setTimeout(()=>UB.map && UB.map.invalidateSize(), 60);
-  clearTimeout(ubMapa._r);
-  window.addEventListener('resize', ()=>{ clearTimeout(ubMapa._r);
-    ubMapa._r = setTimeout(()=>UB.map && UB.map.invalidateSize(), 180); }, {once:true});
+  if(window.ResizeObserver){
+    if(ubMapa._ro) ubMapa._ro.disconnect();
+    ubMapa._ro = new ResizeObserver(()=>{ if(UB.map) UB.map.invalidateSize(); });
+    ubMapa._ro.observe(el);
+  } else {
+    window.addEventListener('resize', ()=>{ clearTimeout(ubMapa._r);
+      ubMapa._r = setTimeout(()=>UB.map && UB.map.invalidateSize(), 180); });
+  }
   if(c.lat){
     ubFijar(c.lat, c.lng, false);
     if(c.aprox){
@@ -972,6 +1010,16 @@ async function ubGeocodificar(c){
 /* Envío en tanda. No se abren N pestañas de golpe (el navegador las bloquea
    y nadie puede con 90 chats a la vez): se va de una en una, marcando cada
    familia como "ya pedida" para que nadie reciba el mensaje dos veces. */
+/* Copiar el número: en el celular se pega en la marcación o en WhatsApp sin
+   tener que transcribirlo, que es donde se cuela un dígito cambiado. */
+async function copiarTel(txt, boton){
+  try{ await navigator.clipboard.writeText(txt); }
+  catch(_){ const t=document.createElement('textarea'); t.value=txt; document.body.appendChild(t);
+    t.select(); try{ document.execCommand('copy'); }catch(__){} t.remove(); }
+  const antes = boton.textContent; boton.textContent='Copiado';
+  boton.classList.add('ok'); setTimeout(()=>{ boton.textContent=antes; boton.classList.remove('ok'); }, 1600);
+}
+
 function ubMasivo(){
   const cola = CENSO.filter(c=>!c.archivada && (!c.lat || c.aprox) && c.tel && !c.pedidaEl);
   if(!cola.length) return toast('No hay a quién pedirle: ya se les pidió a todas.');
@@ -1869,6 +1917,8 @@ document.addEventListener('click', e=>{
   const cola = ubCola(), c = cola[UB.i];
   if(e.target.closest('#ub-geo'))     { if(c) ubGeocodificar(c); return; }
   if(e.target.closest('#ub-guardar')) { if(c) ubGuardar(c); return; }
+  const cp = e.target.closest('[data-copiar-tel]');
+  if(cp){ e.stopPropagation(); copiarTel(cp.dataset.copiarTel, cp); return; }
   if(e.target.closest('#ub-masivo'))  { ubMasivo(); return; }
   if(e.target.closest('#ub-pegar'))   { if(c) ubPegar(); return; }
   if(e.target.closest('#ub-descartar')){ if(c) ubDescartar(c); return; }
