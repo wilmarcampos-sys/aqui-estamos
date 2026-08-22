@@ -8,7 +8,7 @@
 <link rel="icon" type="image/svg+xml" href="logo/marca.svg">
 <title>Aquí Estamos · Administración</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
-<link rel="stylesheet" href="css/app.css?v=1.58.1">
+<link rel="stylesheet" href="css/app.css?v=1.58.2">
 <style>
   /* El panel es mobile-first: una columna, pestañas fijas abajo. En pantalla
      grande se centra en una franja de ancho de celular para no deformarse. */
@@ -439,9 +439,9 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="js/config.js?v=1.58.1"></script>
-<script src="js/version.js?v=1.58.1"></script>
-<script src="js/data.js?v=1.58.1"></script>
+<script src="js/config.js?v=1.58.2"></script>
+<script src="js/version.js?v=1.58.2"></script>
+<script src="js/data.js?v=1.58.2"></script>
 <script>
 /* ============================================================
    PANEL DE ADMINISTRACIÓN — Aquí Estamos
@@ -1153,7 +1153,8 @@ let UB = { i:0, lat:null, lng:null, map:null, mk:null, modo:'sin', q:'' };
    pestaña que le corresponde (sin punto o aproximada). */
 function abrirEnUbicar(id){
   const c = CENSO.find(x=>String(x.id)===String(id)); if(!c) return;
-  UB.modo = c.lat && c.aprox ? 'aprox' : 'sin';
+  UB.q = '';
+  UB.modo = c.lat ? 'aprox' : 'sin';
   ir('ubicar');
   const i = ubCola().findIndex(x=>String(x.id)===String(id));
   UB.i = i<0 ? 0 : i;
@@ -1166,13 +1167,19 @@ function ubCola(){
   const censoVivas = CENSO.filter(c=>!c.archivada).length;
   const repsN      = reps.length;
   const vivas = (DP.fuenteCenso===false?[]:CENSO).filter(c=>!c.archivada).concat(reps);
-  let lista = UB.modo==='aprox' ? vivas.filter(c=>c.lat && c.aprox) : vivas.filter(c=>!c.lat);
-  if(UB.q){ const q=norma(UB.q);
-    lista = lista.filter(c=>[c.nombre,c.cedula,c.tel,c.ficha,c.barrio,c.dir]
-      .some(x=>norma(x).includes(q))); }
+  const lista = UB.modo==='aprox' ? vivas.filter(c=>c.lat && c.aprox) : vivas.filter(c=>!c.lat);
   // lo aplazado vuelve al final, no al frente: si no, las fichas imposibles
   // reaparecen en cada vuelta y el trabajo no avanza nunca.
   return lista.sort((a,b)=>(a.saltadaEl||0)-(b.saltadaEl||0));
+}
+
+/* Buscar mira todo el censo, no solo la pestaña abierta: quien busca "hugo"
+   no sabe —ni tiene por qué— si esa ficha está sin ubicar o aproximada. */
+function ubBuscar(){
+  const q = norma(UB.q); if(!q) return [];
+  return CENSO.filter(c=>!c.archivada)
+    .filter(c=>[c.nombre,c.cedula,c.tel,c.ficha,c.barrio,c.dir].some(x=>norma(x).includes(q)))
+    .slice(0,30);
 }
 
 function vUbicar(){
@@ -1187,11 +1194,25 @@ function vUbicar(){
       <input id="ubusca" placeholder="Buscar en la cola por nombre, ficha, barrio o celular"
         value="${esc(UB.q)}" autocomplete="off">
     </div>
+    ${UB.q ? `<div class="resbusca">
+      ${(()=>{ const rs=ubBuscar(); return rs.length
+        ? `<p class="muted" style="margin:2px 3px 8px;font-size:12.5px">${rs.length} coincidencia${rs.length===1?'':'s'} en todo el censo</p>`
+          + rs.map(x=>`<div class="prow" data-abrirficha="${esc(x.id)}" style="cursor:pointer">
+              <div class="info">
+                <div class="nm">${esc(x.nombre||'Vivienda')}${x.personas?` · ${x.personas}p`:''}</div>
+                <div class="mt">${esc(x.ficha||'')}${x.barrio?` · ${esc(x.barrio)}`:''}${x.dir?` · ${esc(x.dir)}`:''}</div>
+                <span class="sbadge" style="margin-top:3px;background:${x.lat&&!x.aprox?'rgba(47,158,95,.16)':'rgba(124,58,237,.15)'};color:${x.lat&&!x.aprox?'#5FBE8A':'#a78bfa'}">
+                  ${!x.lat?'sin ubicar':x.aprox?'ubicación parcial':'ya ubicada'}</span>
+              </div>
+              <button class="chev" data-abrirficha="${esc(x.id)}">›</button>
+            </div>`).join('')
+        : `<div class="vacio"><b>Sin resultados</b><p>Nada coincide con “${esc(UB.q)}” en el censo.</p></div>`; })()}
+    </div>` : `
     <div class="seg" id="ubseg">
       <button data-ub="sin" class="${UB.modo==='sin'?'on':''}">Sin ubicar <span class="c">${sin}</span></button>
       <button data-ub="aprox" class="${UB.modo==='aprox'?'on':''}">Aproximadas <span class="c">${aprox}</span></button>
-    </div>
-    ${!c ? `<div class="vacio"><b>${UB.q?'Sin resultados':'Nada pendiente aquí'}</b><p>${UB.q?`Nada coincide con “${esc(UB.q)}” en esta cola.`:UB.modo==='sin'
+    </div>`}
+    ${UB.q ? '' : !c ? `<div class="vacio"><b>Nada pendiente aquí</b><p>${UB.modo==='sin'
         ? 'Todas las viviendas del censo tienen un punto.'
         : 'Ninguna vivienda quedó con ubicación aproximada.'}</p></div>` : `
     <div class="ubgrid">
@@ -1248,7 +1269,7 @@ function vUbicar(){
       <div class="ubmapcol"><div id="ubmapa"></div></div>
     </div>`}
   `;
-  if(c) ubMapa(c);
+  if(c && !UB.q) ubMapa(c);
 }
 
 /* mapa de la ficha en curso */
@@ -2237,6 +2258,8 @@ document.addEventListener('click', e=>{
   const cola = ubCola(), c = cola[UB.i];
   if(e.target.closest('#ub-geo'))     { if(c) ubGeocodificar(c); return; }
   if(e.target.closest('#ub-guardar')) { if(c) ubGuardar(c); return; }
+  const af = e.target.closest('[data-abrirficha]');
+  if(af){ abrirEnUbicar(af.dataset.abrirficha); return; }
   const cp = e.target.closest('[data-copiar-tel]');
   if(cp){ e.stopPropagation(); copiarTel(cp.dataset.copiarTel, cp); return; }
   if(e.target.closest('#ub-pegar'))   { if(c) ubPegar(); return; }
