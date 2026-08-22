@@ -8,7 +8,7 @@
 <link rel="icon" type="image/svg+xml" href="logo/marca.svg">
 <title>Aquí Estamos · Administración</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
-<link rel="stylesheet" href="css/app.css?v=1.56.1">
+<link rel="stylesheet" href="css/app.css?v=1.56.2">
 <style>
   /* El panel es mobile-first: una columna, pestañas fijas abajo. En pantalla
      grande se centra en una franja de ancho de celular para no deformarse. */
@@ -393,9 +393,9 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="js/config.js?v=1.56.1"></script>
-<script src="js/version.js?v=1.56.1"></script>
-<script src="js/data.js?v=1.56.1"></script>
+<script src="js/config.js?v=1.56.2"></script>
+<script src="js/version.js?v=1.56.2"></script>
+<script src="js/data.js?v=1.56.2"></script>
 <script>
 /* ============================================================
    PANEL DE ADMINISTRACIÓN — Aquí Estamos
@@ -834,7 +834,7 @@ async function atenderPedido(id){
    persona lo confirma o lo arrastra, y queda guardado como ubicación real.
    Primero las que no tienen ningún punto; después las aproximadas.
    ============================================================ */
-let UB = { i:0, lat:null, lng:null, map:null, mk:null, modo:'sin' };
+let UB = { i:0, lat:null, lng:null, map:null, mk:null, modo:'sin', q:'' };
 
 /* Atajo desde la lista: abre esa ficha exacta en la cola de Ubicar, en la
    pestaña que le corresponde (sin punto o aproximada). */
@@ -853,7 +853,10 @@ function ubCola(){
   const censoVivas = CENSO.filter(c=>!c.archivada).length;
   const repsN      = reps.length;
   const vivas = (DP.fuenteCenso===false?[]:CENSO).filter(c=>!c.archivada).concat(reps);
-  const lista = UB.modo==='aprox' ? vivas.filter(c=>c.lat && c.aprox) : vivas.filter(c=>!c.lat);
+  let lista = UB.modo==='aprox' ? vivas.filter(c=>c.lat && c.aprox) : vivas.filter(c=>!c.lat);
+  if(UB.q){ const q=norma(UB.q);
+    lista = lista.filter(c=>[c.nombre,c.cedula,c.tel,c.ficha,c.barrio,c.dir]
+      .some(x=>norma(x).includes(q))); }
   // lo aplazado vuelve al final, no al frente: si no, las fichas imposibles
   // reaparecen en cada vuelta y el trabajo no avanza nunca.
   return lista.sort((a,b)=>(a.saltadaEl||0)-(b.saltadaEl||0));
@@ -875,11 +878,15 @@ function vUbicar(){
         que adivinar la dirección desde aquí.</div>
       <button class="btn" id="ub-masivo" style="width:100%;margin-top:10px">Pedirles la ubicación por WhatsApp</button>
     </div>`:''}
+    <div class="buscabox" style="margin-bottom:10px">
+      <input id="ubusca" placeholder="Buscar en la cola por nombre, ficha, barrio o celular"
+        value="${esc(UB.q)}" autocomplete="off">
+    </div>
     <div class="seg" id="ubseg">
       <button data-ub="sin" class="${UB.modo==='sin'?'on':''}">Sin ubicar <span class="c">${sin}</span></button>
       <button data-ub="aprox" class="${UB.modo==='aprox'?'on':''}">Aproximadas <span class="c">${aprox}</span></button>
     </div>
-    ${!c ? `<div class="vacio"><b>Nada pendiente aquí</b><p>${UB.modo==='sin'
+    ${!c ? `<div class="vacio"><b>${UB.q?'Sin resultados':'Nada pendiente aquí'}</b><p>${UB.q?`Nada coincide con “${esc(UB.q)}” en esta cola.`:UB.modo==='sin'
         ? 'Todas las viviendas del censo tienen un punto.'
         : 'Ninguna vivienda quedó con ubicación aproximada.'}</p></div>` : `
     <div class="ubgrid">
@@ -1919,6 +1926,13 @@ function ir(v, seg){ VISTA=v; if(seg) SEG=seg; cerrarSheet(); render();
 // Buscador del censo: re-pintar en cada tecla borraría el foco, así que se
 // vuelve a montar la vista y se devuelve el cursor donde estaba.
 document.addEventListener('input', e=>{
+  if(e.target.id==='ubusca'){
+    UB.q = e.target.value; UB.i = 0;
+    const pos = e.target.selectionStart; vUbicar();
+    const n = document.getElementById('ubusca');
+    if(n){ n.focus(); try{ n.setSelectionRange(pos,pos); }catch(_){} }
+    return;
+  }
   if(e.target.id==='dp-unid'){ DP.unidades = Math.max(1, +e.target.value||1); dpTotales(); return; }
   if(e.target.id!=='cbusca') return;
   CFIL.q = e.target.value;
