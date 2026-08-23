@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Tarjeta para compartir</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@600;700;800;900&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   TARJETA DE ENLACE (og:image)
+   ============================================================
+   1200 × 630, la proporción que esperan iMessage, WhatsApp, Facebook y
+   X. La infografía completa es demasiado alta y esos servicios la
+   descartan, por eso esta pieza existe aparte.
+
+     chrome --headless --disable-gpu --screenshot=/tmp/og.png \
+       --window-size=1200,630 --force-device-scale-factor=2 \
+       --virtual-time-budget=9000 http://localhost:8851/og.html
+     sips -s format jpeg -s formatOptions 80 -Z 1200 /tmp/og.png \
+       --out img/og.jpg
+   ============================================================ */
+*{box-sizing:border-box;margin:0}
+body{width:1200px;height:630px;overflow:hidden;position:relative;background:#0D1520;
+  font-family:Inter,system-ui,sans-serif;color:#fff}
+.foto{position:absolute;inset:0;background:url('img/wck-1.jpg') center 45%/cover}
+.velo{position:absolute;inset:0;
+  background:linear-gradient(95deg,rgba(13,21,32,.97) 0%,rgba(13,21,32,.95) 24%,
+    rgba(13,21,32,.76) 44%,rgba(13,21,32,.34) 66%,rgba(13,21,32,.06) 100%),
+  linear-gradient(0deg,rgba(13,21,32,.72) 0%,rgba(13,21,32,0) 34%)}
+.cont{position:absolute;inset:0;padding:54px 58px;display:flex;flex-direction:column}
+.marca{display:flex;align-items:center;gap:11px}
+.marca svg{width:34px;height:34px}
+.marca b{font-size:27px;font-weight:900;letter-spacing:-.6px}
+.marca b i{font-style:normal;color:#F2B705}
+.vivo{display:inline-flex;align-items:center;gap:9px;align-self:flex-start;
+  background:#D62828;font-size:14px;font-weight:900;letter-spacing:1.8px;
+  padding:9px 16px;border-radius:7px;margin-top:38px}
+.vivo i{width:8px;height:8px;border-radius:50%;background:#fff}
+h1{margin-top:20px;font-size:62px;line-height:1;font-weight:900;letter-spacing:-2.4px}
+.ciu{margin-top:15px;font-size:22px;font-weight:800;letter-spacing:-.3px}
+.datos{margin-top:auto;display:flex;gap:46px;align-items:flex-end}
+.d b{display:block;font-size:46px;font-weight:900;line-height:1;letter-spacing:-1.8px}
+.d.r b{color:#E8453C}
+.d span{display:block;font-size:13px;font-weight:900;letter-spacing:1.3px;
+  color:#93A3B8;margin-top:8px}
+.pie{margin-left:auto;text-align:right;font-size:16px;font-weight:800;color:#F2B705;
+  line-height:1.4}
+.pie s{display:block;text-decoration:none;font-size:13px;font-weight:700;color:#8FA0B8;
+  margin-top:4px}
+.cred{position:absolute;right:20px;bottom:10px;font-size:11px;color:rgba(255,255,255,.42)}
+</style>
+</head>
+<body>
+<div class="foto"></div><div class="velo"></div>
+<div class="cont">
+  <span class="marca">
+    <svg viewBox="0 0 24 24">
+      <defs><clipPath id="m"><path d="M12 1.6c-4.6 0-8.3 3.7-8.3 8.3 0 5.9 8.3 12.5 8.3 12.5s8.3-6.6 8.3-12.5c0-4.6-3.7-8.3-8.3-8.3z"/></clipPath></defs>
+      <g clip-path="url(#m)"><rect width="12" height="24" fill="#F2B705"/><rect x="12" width="12" height="24" fill="#D62828"/></g>
+      <path d="M5.9 9.1h6.4a1.35 1.35 0 0 1 0 2.7H5.9z" fill="#fff"/>
+      <path d="M18.1 12.2h-6.4a1.35 1.35 0 0 0 0 2.7h6.4z" fill="#fff"/>
+    </svg>
+    <b>Aquí<i> Estamos</i></b></span>
+  <span class="vivo"><i></i> REPORTE EN VIVO</span>
+  <h1>La emergencia<br>no terminó.</h1>
+  <p class="ciu">Pereira · Dosquebradas · La Virginia</p>
+  <div class="datos">
+    <div class="d"><b id="d1">203</b><span>VIVIENDAS CENSADAS</span></div>
+    <div class="d"><b id="d2">694</b><span>PERSONAS</span></div>
+    <div class="d r"><b id="d3">62</b><span>CASOS URGENTES</span></div>
+    <div class="pie">Mira qué falta y dónde<s>aquiestamos.co/reporte</s></div>
+  </div>
+</div>
+<span class="cred">Foto: World Central Kitchen · CC BY 4.0</span>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="js/config.js"></script>
+<script>
+(async ()=>{ try{
+  const db = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
+  const {data} = await db.from('resumen_censo').select('*').single();
+  if(data){ d1.textContent = data.viviendas; d2.textContent = data.personas;
+    d3.textContent = data.urgentes; }
+}catch(e){} document.body.dataset.listo='1'; })();
+</script>
+</body>
+</html>
