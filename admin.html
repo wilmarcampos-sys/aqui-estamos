@@ -8,7 +8,7 @@
 <link rel="icon" type="image/svg+xml" href="logo/marca.svg">
 <title>Aquí Estamos · Administración</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
-<link rel="stylesheet" href="css/app.css?v=1.59.1">
+<link rel="stylesheet" href="css/app.css?v=1.60.0">
 <style>
   /* El panel es mobile-first: una columna, pestañas fijas abajo. En pantalla
      grande se centra en una franja de ancho de celular para no deformarse. */
@@ -450,9 +450,9 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="js/config.js?v=1.59.1"></script>
-<script src="js/version.js?v=1.59.1"></script>
-<script src="js/data.js?v=1.59.1"></script>
+<script src="js/config.js?v=1.60.0"></script>
+<script src="js/version.js?v=1.60.0"></script>
+<script src="js/data.js?v=1.60.0"></script>
 <script>
 /* ============================================================
    PANEL DE ADMINISTRACIÓN — Aquí Estamos
@@ -1257,6 +1257,22 @@ function ubCola(){
 
 /* Buscar mira todo el censo, no solo la pestaña abierta: quien busca "hugo"
    no sabe —ni tiene por qué— si esa ficha está sin ubicar o aproximada. */
+/* Barrios que ya tienen al menos una vivienda ubicada: sirven de referencia
+   para llevar el mapa cerca cuando la dirección no dice nada al geocodificador. */
+function barriosConocidos(){
+  const g = {};
+  CENSO.forEach(c=>{
+    if(!c.barrio || !c.lat) return;
+    const k = norma(c.barrio);
+    (g[k] = g[k] || {n:c.barrio.trim(), pts:[]}).pts.push([c.lat, c.lng]);
+  });
+  return Object.values(g).map(x=>({
+    n: x.n, n2: x.pts.length>1 ? x.pts.length+' viviendas' : '',
+    lat: x.pts.reduce((a,p)=>a+p[0],0)/x.pts.length,
+    lng: x.pts.reduce((a,p)=>a+p[1],0)/x.pts.length,
+  })).sort((a,b)=>a.n.localeCompare(b.n));
+}
+
 function ubBuscar(){
   const q = norma(UB.q); if(!q) return [];
   return CENSO.filter(c=>!c.archivada)
@@ -1316,7 +1332,23 @@ function vUbicar(){
         <input class="campo" id="ub-dir" value="${esc(c.dir||'')}" placeholder="Sin dirección escrita — corrígela aquí si la sabes"
           style="width:100%;margin-top:5px">
         <p class="muted" style="margin:5px 3px 0;font-size:12px">Si viene mal escrita, corrígela: se guarda junto con el punto.</p>
-        <p class="muted" style="margin:8px 0 0">${esc(c.barrio||'sin barrio')}${c.ciudad?` · ${esc(c.ciudad)}`:''}${c.sena?` · ${esc(c.sena)}`:''}</p>
+        ${c.sena?`<p class="muted" style="margin:8px 0 0">Seña: ${esc(c.sena)}</p>`:''}
+
+        <div class="lbl" style="margin-top:16px">Punto de referencia <span style="font-weight:600;opacity:.8">— lleva el mapa cerca</span></div>
+        <div class="row2" style="margin-top:6px">
+          <select class="campo" id="ub-comuna">
+            <option value="">Comuna o corregimiento…</option>
+            ${(ZONAS||[]).slice().sort((a,b)=>a.n.localeCompare(b.n)).map(z=>
+              `<option value="${z.lat},${z.lng}" ${norma(z.n)===norma(c.barrio)?'selected':''}>${esc(z.n)}</option>`).join('')}
+          </select>
+          <select class="campo" id="ub-barrio">
+            <option value="">Barrio del censo…</option>
+            ${barriosConocidos().map(b=>
+              `<option value="${b.lat},${b.lng}" ${norma(b.n)===norma(c.barrio)?'selected':''}>${esc(b.n)}${b.n2?` · ${esc(b.n2)}`:''}</option>`).join('')}
+          </select>
+        </div>
+        <input class="campo" id="ub-barrio-txt" value="${esc(c.barrio||'')}" placeholder="Barrio (se guarda con el punto)"
+          style="width:100%;margin-top:8px">
 
         ${c.tel?`<div class="telrow">
           <a class="tl" href="tel:${esc(c.tel)}">${esc(telBonito(c.tel))}</a>
@@ -1447,10 +1479,12 @@ async function ubGeocodificar(c){
 async function ubGuardar(c){
   if(UB.lat==null) return toast('Primero marca el punto.');
   const dirNueva = ((document.getElementById('ub-dir')||{}).value||'').trim();
-  const antes = {lat:c.lat, lng:c.lng, aprox:c.aprox, dir:c.dir};   // para deshacer
+  const barNuevo = ((document.getElementById('ub-barrio-txt')||{}).value||'').trim();
+  const antes = {lat:c.lat, lng:c.lng, aprox:c.aprox, dir:c.dir, barrio:c.barrio};   // para deshacer
   const era = c.aprox, barrio = c.barrio||'su barrio';
   const campos = {lat:UB.lat, lng:UB.lng, ubicacion_aprox:false, ubicado_por:'panel:'+(YO.email||'')};
   if(dirNueva !== (c.dir||'')) campos.direccion = dirNueva;
+  if(barNuevo !== (c.barrio||'')) campos.barrio = barNuevo || null;
 
   if(!DEMO){
     const b=document.getElementById('ub-guardar'); b.disabled=true; b.textContent='Guardando…';
@@ -1462,7 +1496,9 @@ async function ubGuardar(c){
       b.disabled=false; b.textContent = era?'Reemplazar el punto':'Guardar el punto'; return;
     }
   }
-  c.lat=UB.lat; c.lng=UB.lng; c.aprox=false; if(campos.direccion!==undefined) c.dir=dirNueva;
+  c.lat=UB.lat; c.lng=UB.lng; c.aprox=false;
+  if(campos.direccion!==undefined) c.dir=dirNueva;
+  if(campos.barrio!==undefined) c.barrio=barNuevo;
   toastDeshacer(era ? `Punto reemplazado: ${c.ficha||''}. Antes estaba en el centro de ${barrio}.`
                     : `Ubicada: ${c.ficha||c.nombre}`,
     async ()=>{
@@ -2324,6 +2360,21 @@ function ir(v, seg){ VISTA=v; if(seg) SEG=seg; cerrarSheet(); render();
 /* ---------- eventos ---------- */
 // Buscador del censo: re-pintar en cada tecla borraría el foco, así que se
 // vuelve a montar la vista y se devuelve el cursor donde estaba.
+document.addEventListener('change', e=>{
+  if(e.target.id==='ub-comuna' || e.target.id==='ub-barrio'){
+    const v = e.target.value; if(!v || !UB.map) return;
+    const [la,lo] = v.split(',').map(Number);
+    UB.map.setView([la,lo], e.target.id==='ub-barrio' ? 16 : 14);
+    const m = document.getElementById('ubmsg');
+    if(m) m.textContent = 'Mapa centrado en ' + e.target.selectedOptions[0].textContent.split(' · ')[0]
+      + '. Ahora toca la vivienda en el mapa.';
+    // el barrio elegido se propone como texto, para que quede guardado
+    const t = document.getElementById('ub-barrio-txt');
+    if(t && e.target.id==='ub-barrio' && !t.value.trim()) t.value = e.target.selectedOptions[0].textContent.split(' · ')[0];
+    return;
+  }
+});
+
 document.addEventListener('input', e=>{
   if(e.target.id==='ubusca'){
     UB.q = e.target.value; UB.i = 0;
