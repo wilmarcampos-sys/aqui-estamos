@@ -23,7 +23,7 @@
 <meta name="twitter:description" content="Coordinación abierta de ayuda para el terremoto de Pereira.">
 <meta name="twitter:image" content="https://aquiestamos.co/img/hero-donar.jpg">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
-<link rel="stylesheet" href="css/app.css?v=1.72.0">
+<link rel="stylesheet" href="css/app.css?v=1.73.0">
 <script>
 /* URL sin ".html" en el sitio publicado (en localhost la extensión hace falta). */
 (function(){ var h=location.hostname; if(h==='localhost'||h==='127.0.0.1'||h==='') return;
@@ -83,6 +83,7 @@ document.documentElement.setAttribute('data-eff', window.temaEfectivo());
   <nav>
     <button data-v="map" class="on">Mapa</button>
     <button data-v="zonas">Ayudar</button>
+    <button data-v="info">Emergencia</button>
     <button data-v="coord">Coordinar</button>
   </nav>
 
@@ -232,13 +233,7 @@ document.documentElement.setAttribute('data-eff', window.temaEfectivo());
     <!-- ZONAS -->
     <section class="view" id="v-zonas"><div class="pad">
       <div class="tabsub" id="atajos"></div>
-      <div class="bloque" id="b-ofertas" style="display:none">
-        <div class="sec">Disponible para recoger</div>
-        <p class="muted secsub">Cosas que alguien ya tiene listas. Contacta y coordina la entrega.</p>
-        <div class="tabsub" id="of-filtros" style="display:none"></div>
-        <div id="lista-ofertas"></div>
-      </div>
-      <div id="ofrecer-wrap"></div>
+
       <div class="kpis" id="kpis"></div>
       <div class="tabsub" id="filtros">
         <button data-f="todas" class="on">Todas</button>
@@ -267,6 +262,63 @@ document.documentElement.setAttribute('data-eff', window.temaEfectivo());
     </div></section>
 
     <!-- COORDINACIÓN -->
+    <section class="view" id="v-info"><div class="pad emerg">
+      <!-- Estado de la emergencia: hero con profundidad y la infografía -->
+      <div class="bloque" id="b-info">
+        <div class="heropx" id="heropx">
+          <div class="px-foto" style="background-image:url('img/wck-1.jpg')"></div>
+          <div class="px-velo"></div>
+          <div class="px-texto">
+            <h2>Dos semanas<br>después del sismo</h2>
+            <p>7.4 de magnitud · 321 fallecidos · 1.450 viviendas afectadas.
+              Esto es lo que hoy piden las familias censadas.</p>
+          </div>
+          <span class="px-cred">Foto: World Central Kitchen · CC BY 4.0</span>
+        </div>
+        <a class="infoimg" href="img/infografia.png" target="_blank" rel="noopener">
+          <img src="img/infografia.png" alt="Infografía: cifras del terremoto del 10 de agosto de 2026 y necesidades del censo" loading="lazy">
+          <span class="infover">Ver la infografía completa</span>
+        </a>
+        <div class="btnrow" style="margin-top:10px">
+          <button type="button" class="btn2 pri" id="sh-link">Compartir el enlace</button>
+          <button type="button" class="btn2" id="sh-ig">Imagen para Instagram</button>
+          <button type="button" class="btn2" id="sh-wa">Imagen para WhatsApp</button>
+        </div>
+        <p class="muted" style="margin:8px 3px 0;font-size:12px" id="sh-msg"></p>
+      </div>
+
+      <p class="creditos-foto">
+        Fotografías de Pereira tras el sismo: <b>World Central Kitchen</b>,
+        publicadas bajo licencia <a href="https://creativecommons.org/licenses/by/4.0/deed.es"
+        target="_blank" rel="noopener">Creative Commons BY 4.0</a> en Wikimedia Commons.
+        Se redimensionaron para la web; no se alteró su contenido.<br>
+        Cifras del sismo: Servicio Geológico Colombiano, USGS y reportes oficiales en prensa nacional.
+      </p>
+      <div class="bloque" id="b-ofertas" style="display:none">
+        <div class="sec">Disponible para recoger</div>
+        <p class="muted secsub">Cosas que alguien ya tiene listas. Contacta y coordina la entrega.</p>
+        <div class="tabsub" id="of-filtros" style="display:none"></div>
+        <div id="lista-ofertas"></div>
+      </div>
+      <div id="ofrecer-wrap"></div>
+      <!-- Historias del censo: anónimas, con lo que cada familia contó -->
+      <div class="bloque confoto" id="b-historias" style="display:none">
+        <div class="fondo-foto" style="background-image:url('img/wck-2.jpg')"></div>
+        <div class="sec">Quiénes esperan hoy</div>
+        <p class="muted secsub">Historias del censo, contadas por las propias familias.
+          Sin nombres ni direcciones: cada una autorizó que la usemos para pedir ayuda.</p>
+        <div class="carru" id="carru">
+          <div class="carru-pista" id="carru-pista"></div>
+          <div class="carru-nav">
+            <button type="button" id="carru-ant" aria-label="Anterior">‹</button>
+            <div class="carru-puntos" id="carru-puntos"></div>
+            <button type="button" id="carru-sig" aria-label="Siguiente">›</button>
+          </div>
+        </div>
+      </div>
+
+    </div></section>
+
     <section class="view" id="v-coord"><div class="pad">
       <div id="coord-entrada"></div>
       <div class="stat-row" id="coord-stats"></div>
@@ -343,16 +395,18 @@ document.documentElement.setAttribute('data-eff', window.temaEfectivo());
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="js/config.js?v=1.72.0"></script>
-<script src="js/version.js?v=1.72.0"></script>
-<script src="js/data.js?v=1.72.0"></script>
-<script src="js/estado.js?v=1.72.0"></script>
-<script src="js/calc.js?v=1.72.0"></script>
-<script src="js/mapa.js?v=1.72.0"></script>
-<script src="js/hojas.js?v=1.72.0"></script>
-<script src="js/cuenta.js?v=1.72.0"></script>
-<script src="js/ui.js?v=1.72.0"></script>
-<script src="js/dar.js?v=1.72.0"></script>
-<script src="js/aliados.js?v=1.72.0"></script>
+<script src="js/config.js?v=1.73.0"></script>
+<script src="js/version.js?v=1.73.0"></script>
+<script src="js/data.js?v=1.73.0"></script>
+<script src="js/estado.js?v=1.73.0"></script>
+<script src="js/calc.js?v=1.73.0"></script>
+<script src="js/mapa.js?v=1.73.0"></script>
+<script src="js/hojas.js?v=1.73.0"></script>
+<script src="js/cuenta.js?v=1.73.0"></script>
+<script src="js/ui.js?v=1.73.0"></script>
+<script src="js/dar.js?v=1.73.0"></script>
+<script src="js/aliados.js?v=1.73.0"></script>
+<script src="js/historias.js?v=1.73.0"></script>
+<script src="js/compartir-img.js?v=1.73.0"></script>
 </body>
 </html>

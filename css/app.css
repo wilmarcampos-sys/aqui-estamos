@@ -1056,3 +1056,75 @@ input.pin{letter-spacing:9px;font-size:20px;text-align:center;font-weight:700}
 .mini{height:38px;border:0;border-radius:12px;font:750 12.5px/38px inherit;cursor:pointer;
   display:inline-flex;align-items:center;background:var(--chip);color:var(--txt)}
 .mini.wa{background:#25D366;color:#fff}
+
+/* ============================================================
+   HISTORIAS DEL CENSO (carrusel) e IMAGEN PARA COMPARTIR
+   ============================================================ */
+.carru{position:relative;overflow:hidden;border-radius:16px}
+.carru-pista{display:flex;transition:transform .5s var(--ease)}
+@media (prefers-reduced-motion: reduce){ .carru-pista{transition:none} }
+.hcard{flex:0 0 100%;box-sizing:border-box;padding:18px 18px 16px;
+  background:var(--card);border:1px solid var(--line);border-radius:16px}
+.hcab{display:flex;align-items:center;gap:8px;margin-bottom:9px;flex-wrap:wrap}
+.hquien{font-size:13px;font-weight:750;color:var(--dim)}
+.hurg{background:rgba(239,68,68,.15);color:#F87171;font-size:10.5px;font-weight:800;
+  padding:2px 9px;border-radius:999px}
+.htexto{margin:0;font-size:16px;line-height:1.55;font-weight:600;color:var(--txt)}
+.hcond{display:flex;gap:6px;flex-wrap:wrap;margin-top:11px}
+.hcond span{background:rgba(167,139,250,.15);color:#a78bfa;font-size:11px;font-weight:750;
+  padding:3px 9px;border-radius:999px}
+:root[data-eff="light"] .hcond span{background:rgba(109,74,168,.12);color:#5B21B6}
+.hpie{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-top:12px;
+  padding-top:11px;border-top:1px solid var(--line)}
+.hlugar{font-size:12.5px;font-weight:750;color:var(--txt)}
+.hnec{font-size:12.5px;color:var(--dim)}
+.carru-nav{display:flex;align-items:center;justify-content:center;gap:14px;margin-top:12px}
+.carru-nav button{width:40px;height:40px;border-radius:999px;border:1px solid var(--line);
+  background:var(--chip);color:var(--txt);font-size:19px;font-weight:800;cursor:pointer;
+  font-family:inherit;line-height:1}
+.carru-puntos{display:flex;gap:6px;align-items:center}
+.carru-puntos button{width:8px;height:8px;min-width:8px;padding:0;border-radius:999px;border:0;
+  background:var(--line2);cursor:pointer}
+.carru-puntos button.on{background:var(--acc);width:22px}
+
+.infoimg{display:block;position:relative;border-radius:14px;overflow:hidden;
+  border:1px solid var(--line);margin-top:10px;max-height:340px}
+.infoimg img{width:100%;display:block;object-fit:cover;object-position:top}
+.infover{position:absolute;right:10px;bottom:10px;background:rgba(15,23,41,.9);color:#fff;
+  font-size:12px;font-weight:750;padding:6px 12px;border-radius:999px}
+.btnrow{display:flex;gap:8px;flex-wrap:wrap}
+.btn2{flex:1 1 150px;min-height:44px;border-radius:12px;border:1px solid var(--line2);
+  background:var(--chip);color:var(--txt);font-family:inherit;font-size:13.5px;font-weight:750;
+  cursor:pointer;padding:0 14px}
+.btn2.pri{background:var(--acc);border-color:var(--acc);color:#04122B}
+
+/* ---- hero con profundidad (parallax) de "Cómo va la emergencia" ---- */
+.heropx{position:relative;height:260px;border-radius:16px;overflow:hidden;
+  background:#0B1220;isolation:isolate}
+.px-foto{position:absolute;inset:-14% 0;background-size:cover;background-position:center 40%;
+  will-change:transform;transform:translate3d(0,0,0)}
+.px-velo{position:absolute;inset:0;
+  background:linear-gradient(180deg,rgba(8,14,24,.35) 0%,rgba(8,14,24,.62) 55%,rgba(8,14,24,.92) 100%)}
+.px-texto{position:absolute;inset:auto 0 0 0;padding:0 18px 18px}
+.px-texto h2{margin:0;color:#fff;font-size:27px;line-height:1.05;font-weight:850;letter-spacing:-.7px}
+.px-texto p{margin:8px 0 0;color:#CBD5E6;font-size:13px;line-height:1.5;max-width:420px}
+@media (prefers-reduced-motion: reduce){ .px-foto{transform:none!important} }
+@media (min-width:700px){
+  .heropx{height:320px}
+  .px-texto{padding:0 26px 24px}
+  .px-texto h2{font-size:36px}
+  .px-texto p{font-size:14.5px}
+}
+
+/* ---- pestaña Emergencia: fotografía real con crédito ---- */
+.emerg{padding-top:12px}
+.px-cred{position:absolute;right:10px;top:10px;background:rgba(8,14,24,.55);color:#D7DEEA;
+  font-size:10.5px;font-weight:600;padding:4px 9px;border-radius:999px;letter-spacing:.2px}
+.bloque.confoto{position:relative;overflow:hidden;isolation:isolate}
+.bloque.confoto .fondo-foto{position:absolute;inset:0;background-size:cover;
+  background-position:center 35%;opacity:.13;filter:saturate(.65)}
+:root[data-eff="light"] .bloque.confoto .fondo-foto{opacity:.09}
+.bloque.confoto > *{position:relative}
+.creditos-foto{margin:14px 3px 0;font-size:11.5px;line-height:1.65;color:var(--dim)}
+.creditos-foto b{color:var(--txt)}
+.creditos-foto a{color:var(--link)}
