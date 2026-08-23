@@ -8,7 +8,7 @@
 <link rel="icon" type="image/svg+xml" href="logo/marca.svg">
 <title>Aquí Estamos · Administración</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
-<link rel="stylesheet" href="css/app.css?v=1.64.0">
+<link rel="stylesheet" href="css/app.css?v=1.65.0">
 <style>
   /* El panel es mobile-first: una columna, pestañas fijas abajo. En pantalla
      grande se centra en una franja de ancho de celular para no deformarse. */
@@ -124,14 +124,14 @@
   /* Ubicar: en el celular una columna; en escritorio los datos a la izquierda
      y el mapa alto a la derecha, que es lo que de verdad hay que mirar. */
   .ubgrid{display:grid;gap:16px;margin-top:14px}
-  .ubcol{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:18px}
-  .ubmapcol{min-height:300px}
-  #ubmapa{height:340px;border-radius:16px;overflow:hidden;border:1px solid var(--line)}
+  .ubcol{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:18px;order:2}
+  .ubmapcol{min-height:300px;order:1}
+  #ubmapa{height:44vh;min-height:300px;border-radius:16px;overflow:hidden;border:1px solid var(--line)}
   @media (min-width:1000px){
     .ubgrid{grid-template-columns:minmax(380px,460px) 1fr;align-items:start;
       max-width:1500px;height:calc(100vh - 190px)}
-    .ubcol{overflow-y:auto;max-height:100%}
-    .ubmapcol{height:100%}
+    .ubcol{overflow-y:auto;max-height:100%;order:1}
+    .ubmapcol{height:100%;order:2}
     #ubmapa{height:100%;min-height:420px}
   }
 
@@ -467,9 +467,9 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="js/config.js?v=1.64.0"></script>
-<script src="js/version.js?v=1.64.0"></script>
-<script src="js/data.js?v=1.64.0"></script>
+<script src="js/config.js?v=1.65.0"></script>
+<script src="js/version.js?v=1.65.0"></script>
+<script src="js/data.js?v=1.65.0"></script>
 <script>
 /* ============================================================
    PANEL DE ADMINISTRACIÓN — Aquí Estamos
@@ -1293,6 +1293,27 @@ const BARRIO_COMUNA = {
   'lago uribe':'centro', 'san nicolas':'centro', 'centro':'centro',
   'pueblito paisa':'cuba', 'naranjal':'cuba', 'san fernando':'cuba', 'cuba':'cuba',
 };
+/* El barrio suele venir dentro del texto de la dirección ("Samaria 2 casa 8
+   manzana 35") y no en su propio campo. Se busca ahí también, contra los
+   barrios conocidos y contra los que ya tienen viviendas ubicadas. */
+function barrioDeTexto(c){
+  if(c.barrio && c.barrio.trim()) return c.barrio.trim();
+  const t = norma((c.dir||'') + ' ' + (c.detalle||''));
+  if(!t.trim()) return '';
+  const cands = [...Object.keys(BARRIO_COMUNA), ...barriosConocidos().map(b=>norma(b.n)),
+                 ...(ZONAS||[]).map(z=>norma(z.n))];
+  let mejor = '';
+  cands.forEach(k=>{ const kk=k.trim();
+    if(kk.length>3 && t.includes(kk) && kk.length>mejor.length) mejor=kk; });
+  if(!mejor) return '';
+  // devolver el nombre con su escritura bonita
+  const z = (ZONAS||[]).find(x=>norma(x.n)===mejor);
+  if(z) return z.n;
+  const b = barriosConocidos().find(x=>norma(x.n)===mejor);
+  if(b) return b.n;
+  return mejor.replace(/\b\w/g, m=>m.toUpperCase());
+}
+
 function comunaDeBarrio(barrio){
   const b = norma(barrio||'').trim(); if(!b) return null;
   for(const [k,v] of Object.entries(BARRIO_COMUNA))
@@ -1303,6 +1324,8 @@ function comunaDeBarrio(barrio){
 /* Mejor punto disponible para un barrio: primero el promedio de las viviendas
    ya ubicadas en ese mismo barrio (lo más fiel), después la comuna. */
 function puntoDeBarrio(c){
+  const bar = barrioDeTexto(c);
+  c = {...c, barrio: bar};
   if(!c.barrio) {
     const z0 = comunaDeBarrio(c.barrio);
     return z0 ? {n:z0.n, lat:z0.lat, lng:z0.lng, tipo:'comuna'} : null;
@@ -1406,9 +1429,12 @@ function vUbicar(){
             <div class="fila" style="margin-top:6px;gap:7px;flex-wrap:wrap">
               <span class="ciudadchip">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="2.6"/></svg>
-                ${esc(c.ciudad||'Pereira')}${c.barrio?' · '+esc(c.barrio):''}${(()=>{
-                  const z = comunaDeBarrio(c.barrio);
-                  return z && norma(z.n)!==norma(c.barrio) ? ' · comuna '+esc(z.n) : '';
+                ${esc(c.ciudad||'Pereira')}${(()=>{
+                  const b = barrioDeTexto(c);
+                  const z = comunaDeBarrio(b);
+                  const dedu = b && !(c.barrio||'').trim();
+                  return (b ? ' · '+esc(b)+(dedu?' (de la dirección)':'') : '')
+                       + (z && norma(z.n)!==norma(b) ? ' · comuna '+esc(z.n) : '');
                 })()}</span>
               <span class="muted" style="font-size:12.5px">${esc(c.ficha||'')}${c.personas?` · ${c.personas} persona${c.personas>1?'s':''}`:''}</span>
             </div>
@@ -1427,15 +1453,15 @@ function vUbicar(){
           <select class="campo" id="ub-comuna">
             <option value="">Comuna o corregimiento…</option>
             ${(ZONAS||[]).slice().sort((a,b)=>a.n.localeCompare(b.n)).map(z=>
-              `<option value="${z.lat},${z.lng}" ${(comunaDeBarrio(c.barrio)||{}).id===z.id?'selected':''}>${esc(z.n)}</option>`).join('')}
+              `<option value="${z.lat},${z.lng}" ${(comunaDeBarrio(barrioDeTexto(c))||{}).id===z.id?'selected':''}>${esc(z.n)}</option>`).join('')}
           </select>
           <select class="campo" id="ub-barrio">
             <option value="">Barrio del censo…</option>
             ${barriosConocidos().map(b=>
-              `<option value="${b.lat},${b.lng}" ${(c.barrio && norma(b.n)===norma(c.barrio))?'selected':''}>${esc(b.n)}${b.n2?` · ${esc(b.n2)}`:''}</option>`).join('')}
+              `<option value="${b.lat},${b.lng}" ${norma(b.n)===norma(barrioDeTexto(c))?'selected':''}>${esc(b.n)}${b.n2?` · ${esc(b.n2)}`:''}</option>`).join('')}
           </select>
         </div>
-        <input class="campo" id="ub-barrio-txt" value="${esc(c.barrio||'')}" placeholder="Barrio (se guarda con el punto)"
+        <input class="campo" id="ub-barrio-txt" value="${esc(c.barrio || barrioDeTexto(c))}" placeholder="Barrio (se guarda con el punto)"
           style="width:100%;margin-top:8px">
 
         ${c.tel?`<div class="telrow">
@@ -1510,7 +1536,7 @@ function ubMapa(c){
   const lug = document.getElementById('ub-lugares'); if(lug) lug.innerHTML = '';
   clearTimeout(_cercaT);
   if(UB.map){ UB.map.remove(); UB.map=null; }
-  const z = comunaDeBarrio(c.barrio);
+  const z = comunaDeBarrio(barrioDeTexto(c));
   const cc = centroCiudad(c.ciudad);
   const base = c.lat ? [c.lat, c.lng, 16] : (z ? [z.lat, z.lng, 15] : cc);
   UB.map = L.map(el, {zoomControl:true, attributionControl:false})
