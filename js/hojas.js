@@ -12,6 +12,8 @@ function toast(m){ const t=$('#toast'); t.textContent=m; t.classList.add('on');
   clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove('on'),2600); }
 
 document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{
+  // el Reporte vive en su propia página, no es una vista de la app
+  if(b.dataset.ir){ location.href = b.dataset.ir; return; }
   document.querySelectorAll('nav button').forEach(x=>x.classList.toggle('on',x===b));
   document.querySelectorAll('.view').forEach(v=>v.classList.toggle('on', v.id==='v-'+b.dataset.v));
   document.getElementById('app').dataset.vista = b.dataset.v;   // el pie se oculta en Mapa
