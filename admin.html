@@ -11,7 +11,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
-<link rel="stylesheet" href="css/app.css?v=1.94.0">
+<link rel="stylesheet" href="css/app.css?v=1.95.0">
 <style>
   /* El panel es mobile-first: una columna, pestañas fijas abajo. En pantalla
      grande se centra en una franja de ancho de celular para no deformarse. */
@@ -81,6 +81,10 @@
     .jh-tit h3{font-size:29px}
     .jh-marca b{font-size:40px}
   }
+
+  /* cómo queda repartido de verdad, no cuánto cabría */
+  .desglose .cl.rep{border-left:2px solid var(--acc)}
+  .desglose .cl.rep b{color:var(--acc)}
   /* ---- una parada de la ruta ----
      En el teléfono se apila; en pantalla ancha se reparte en columnas para
      que no quede medio metro de vacío entre el nombre y el botón. Cada
@@ -765,9 +769,9 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="js/config.js?v=1.94.0"></script>
-<script src="js/version.js?v=1.94.0"></script>
-<script src="js/data.js?v=1.94.0"></script>
+<script src="js/config.js?v=1.95.0"></script>
+<script src="js/version.js?v=1.95.0"></script>
+<script src="js/data.js?v=1.95.0"></script>
 <script>
 /* ============================================================
    PANEL DE ADMINISTRACIÓN — Aquí Estamos
@@ -2672,7 +2676,12 @@ function dpArmar(){
   const grupos = [];
 
   for(let t=0; t<K && libres.length && quedan>0; t++){
-    const cupo = Math.min(DP.tope, quedan);
+    // El tope es un máximo, no una cuota. Con 10 paradas y 5 equipos, antes
+    // los dos primeros se llevaban 5 cada uno y los otros tres se quedaban
+    // sin nada. Ahora lo que queda se reparte entre los equipos que faltan,
+    // así que cada quien que se ofreció a ayudar sale con ruta.
+    const equiposRestantes = K - t;
+    const cupo = Math.min(DP.tope, Math.max(1, Math.ceil(quedan / equiposRestantes)));
     // semilla: la vivienda con más vecinas dentro del radio (a igualdad, la de
     // más puntaje). Es el centro natural del próximo recorrido.
     let semilla = libres[0], mejor = -1;
@@ -2863,6 +2872,11 @@ function vDespachos(){
         </div>
         <div class="desglose" style="margin-top:8px">
           <div class="cl ${entran===cupo?'ok':''}"><b>${cupo}</b><span>cupos de los equipos — ${DP.equipos} × ${DP.tope} paradas</span></div>
+          ${(()=>{ const K=Math.max(1,DP.equipos), base=Math.floor(entran/K), resto=entran%K;
+            if(!entran) return '';
+            const txt = resto===0 ? `${base} parada${base===1?'':'s'} para cada equipo`
+              : `${resto} equipo${resto===1?'':'s'} con ${base+1} y ${K-resto} con ${base}`;
+            return `<div class="cl rep"><b>${K}</b><span>${txt}</span></div>`; })()}
           <div class="cl ${entran===DP.unidades?'ok':''}"><b>${DP.unidades}</b><span>ayudas listas para entregar</span></div>
           <div class="cl ${entran===cand?'ok':''}"><b>${cand}</b><span>se pueden enrutar${DP.incluirAprox?` — ${exactas} exactas + ${aproxN} parciales`:` — solo las ${exactas} exactas`}</span></div>
           ${entran<cand?`<div class="cl"><b>${cand-entran}</b><span>quedan para la próxima jornada</span></div>`:''}
