@@ -8,7 +8,7 @@
 <link rel="icon" type="image/svg+xml" href="logo/marca.svg">
 <title>Aquí Estamos · Administración</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
-<link rel="stylesheet" href="css/app.css?v=1.65.0">
+<link rel="stylesheet" href="css/app.css?v=1.66.0">
 <style>
   /* El panel es mobile-first: una columna, pestañas fijas abajo. En pantalla
      grande se centra en una franja de ancho de celular para no deformarse. */
@@ -467,9 +467,9 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="js/config.js?v=1.65.0"></script>
-<script src="js/version.js?v=1.65.0"></script>
-<script src="js/data.js?v=1.65.0"></script>
+<script src="js/config.js?v=1.66.0"></script>
+<script src="js/version.js?v=1.66.0"></script>
+<script src="js/data.js?v=1.66.0"></script>
 <script>
 /* ============================================================
    PANEL DE ADMINISTRACIÓN — Aquí Estamos
@@ -1321,6 +1321,42 @@ function comunaDeBarrio(barrio){
   return (ZONAS||[]).find(z=>b.includes(norma(z.n))) || null;
 }
 
+/* La nomenclatura de Pereira ubica sola: el damero del Centro va de la calle
+   14 a la 26 con carreras 4 a 12. "Calle 26 #5-28" es Centro aunque no nombre
+   ningún barrio. */
+function comunaPorNomenclatura(c){
+  // "Calle 16 No 4-20", "Cra 3 # 26-74", "K31 # 15_47": el separador de la
+  // placa viene escrito de muchas formas y hay que quitarlo antes de leer.
+  const t = norma(c.dir||'').replace(/\b(no|nro|num|numero)\b\.?/g,' ').replace(/[#°]/g,' ');
+  const m = t.match(/(calle|carrera|cra|cll|cl|kra|kr|k)\s*(\d{1,3})\s*[a-z]?\s*(?:bis)?\s*(\d{1,3})/);
+  if(!m) return null;
+  const via = m[1].startsWith('c') && !m[1].startsWith('cr') ? 'calle' : 'carrera';
+  const n1 = +m[2], n2 = +m[3];
+  const calle   = via==='calle'   ? n1 : n2;
+  const carrera = via==='carrera' ? n1 : n2;
+  if(calle>=8 && calle<=30 && carrera>=3 && carrera<=13)
+    return (ZONAS||[]).find(z=>norma(z.n)==='centro') || null;
+  return null;
+}
+
+/* Comuna de una ficha, del dato más firme al más flojo: barrio nombrado,
+   nomenclatura del Centro, y de última el punto en el mapa — que solo se usa
+   si una comuna queda claramente más cerca que la siguiente, porque en el
+   centro de Pereira los centroides están a 300 m unos de otros. */
+function comunaDeFicha(c){
+  const z = comunaDeBarrio(barrioDeTexto(c));
+  if(z) return {z, via:'barrio'};
+  const zn = comunaPorNomenclatura(c);
+  if(zn) return {z:zn, via:'nomenclatura'};
+  if(c.lat && c.lng){
+    const d = (ZONAS||[]).map(x=>({x, m:distM(c.lat,c.lng,x.lat,x.lng)})).sort((a,b)=>a.m-b.m);
+    if(d.length && d[0].m < 4000 && (d.length===1 || d[1].m - d[0].m > 250))
+      return {z:d[0].x, via:'ubicación'};
+    if(d.length>1 && d[0].m < 2000) return {z:d[0].x, via:'dudosa', otras:d.slice(1,3).map(o=>o.x.n)};
+  }
+  return null;
+}
+
 /* Mejor punto disponible para un barrio: primero el promedio de las viviendas
    ya ubicadas en ese mismo barrio (lo más fiel), después la comuna. */
 function puntoDeBarrio(c){
@@ -1335,8 +1371,8 @@ function puntoDeBarrio(c){
   if(pares.length) return {n:c.barrio, tipo:'barrio',
     lat: pares.reduce((a,x)=>a+x.lat,0)/pares.length,
     lng: pares.reduce((a,x)=>a+x.lng,0)/pares.length};
-  const z = comunaDeBarrio(c.barrio);
-  return z ? {n:'la comuna '+z.n, lat:z.lat, lng:z.lng, tipo:'comuna'} : null;
+  const cf = comunaDeFicha(c);
+  return cf ? {n:'la comuna '+cf.z.n, lat:cf.z.lat, lng:cf.z.lng, tipo:'comuna'} : null;
 }
 
 async function ubBarrioMinimo(c){
@@ -1431,10 +1467,15 @@ function vUbicar(){
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="2.6"/></svg>
                 ${esc(c.ciudad||'Pereira')}${(()=>{
                   const b = barrioDeTexto(c);
-                  const z = comunaDeBarrio(b);
+                  const cf = comunaDeFicha(c);
                   const dedu = b && !(c.barrio||'').trim();
                   return (b ? ' · '+esc(b)+(dedu?' (de la dirección)':'') : '')
-                       + (z && norma(z.n)!==norma(b) ? ' · comuna '+esc(z.n) : '');
+                       + (cf && norma(cf.z.n)!==norma(b)
+                          ? ' · comuna '+esc(cf.z.n)
+                            + (cf.via==='ubicación' ? ' (por el punto)'
+                             : cf.via==='dudosa'    ? ' (o '+esc((cf.otras||[]).join(' / '))+')'
+                             : '')
+                          : '');
                 })()}</span>
               <span class="muted" style="font-size:12.5px">${esc(c.ficha||'')}${c.personas?` · ${c.personas} persona${c.personas>1?'s':''}`:''}</span>
             </div>
@@ -1453,7 +1494,7 @@ function vUbicar(){
           <select class="campo" id="ub-comuna">
             <option value="">Comuna o corregimiento…</option>
             ${(ZONAS||[]).slice().sort((a,b)=>a.n.localeCompare(b.n)).map(z=>
-              `<option value="${z.lat},${z.lng}" ${(comunaDeBarrio(barrioDeTexto(c))||{}).id===z.id?'selected':''}>${esc(z.n)}</option>`).join('')}
+              `<option value="${z.lat},${z.lng}" ${((comunaDeFicha(c)||{}).z||{}).id===z.id?'selected':''}>${esc(z.n)}</option>`).join('')}
           </select>
           <select class="campo" id="ub-barrio">
             <option value="">Barrio del censo…</option>
@@ -1536,7 +1577,7 @@ function ubMapa(c){
   const lug = document.getElementById('ub-lugares'); if(lug) lug.innerHTML = '';
   clearTimeout(_cercaT);
   if(UB.map){ UB.map.remove(); UB.map=null; }
-  const z = comunaDeBarrio(barrioDeTexto(c));
+  const z = (comunaDeFicha(c)||{}).z;
   const cc = centroCiudad(c.ciudad);
   const base = c.lat ? [c.lat, c.lng, 16] : (z ? [z.lat, z.lng, 15] : cc);
   UB.map = L.map(el, {zoomControl:true, attributionControl:false})
