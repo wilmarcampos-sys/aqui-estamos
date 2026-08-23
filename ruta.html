@@ -139,7 +139,7 @@ body{background:var(--pp);color:var(--tin);font:15px/1.5 Inter,system-ui,sans-se
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="js/config.js?v=2.0.0"></script>
+<script src="js/config.js?v=2.0.1"></script>
 <script>
 const esc = s => String(s??'').replace(/[<>&"]/g, m => ({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[m]));
 const NEC = {alimentos:'Mercado', aseo:'Aseo', arriendo:'Arriendo', agua:'Agua',
@@ -320,18 +320,30 @@ document.addEventListener('click', e=>{
 
 cargar();
 
-/* Cada minuto se vuelve a pedir la ruta: si otro del mismo equipo marcó una
-   entrega desde su teléfono, aparece acá sin recargar. No se refresca si la
-   pestaña está oculta ni mientras se está guardando algo. */
-setInterval(async ()=>{
-  if(document.hidden || marcando || !FILAS.length) return;
+/* Se vuelve a pedir la ruta cada veinte segundos, y de una cuando la persona
+   vuelve a mirar el teléfono: en la calle la pantalla pasa apagada casi todo
+   el tiempo, así que esperar al siguiente turno del reloj deja la lista vieja
+   justo cuando la van a ver. No se refresca mientras se está guardando algo,
+   para no pisar lo que se acaba de marcar. */
+let refrescando = false;
+async function refrescar(){
+  if(refrescando || marcando || !FILAS.length) return;
   const t = new URLSearchParams(location.search).get('t');
+  refrescando = true;
   try{
     const db = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
     const {data} = await db.rpc('ruta_publica', {t});
-    if(data && data.length){ FILAS = data; pintar(); }
+    if(data && data.length){
+      const antes = FILAS.filter(x=>x.entregada).length;
+      FILAS = data;
+      if(FILAS.filter(x=>x.entregada).length !== antes || true) pintar();
+    }
   }catch(e){ /* sin señal: se queda con lo que tiene */ }
-}, 60000);
+  refrescando = false;
+}
+setInterval(()=>{ if(!document.hidden) refrescar(); }, 20000);
+document.addEventListener('visibilitychange', ()=>{ if(!document.hidden) refrescar(); });
+addEventListener('focus', refrescar);
 </script>
 </body>
 </html>

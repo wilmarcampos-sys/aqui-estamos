@@ -11,7 +11,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
-<link rel="stylesheet" href="css/app.css?v=2.0.0">
+<link rel="stylesheet" href="css/app.css?v=2.0.1">
 <style>
   /* El panel es mobile-first: una columna, pestañas fijas abajo. En pantalla
      grande se centra en una franja de ancho de celular para no deformarse. */
@@ -86,8 +86,19 @@
   .desglose .cl.rep{border-left:2px solid var(--acc)}
   .desglose .cl.rep b{color:var(--acc)}
 
+
+  /* la casilla y sus dos botones comparten renglón: sin la casilla marcada
+     no hay enlace de grupo, y por eso los botones viven pegados a ella */
+  .jabre{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:18px}
+  .jabre .capasel{flex:1 1 260px;min-width:0}
+  .jabre .eqacc{flex:0 0 auto}
   /* abrir la ruta y mandársela al equipo, uno al lado del otro */
-  .eqacc{display:flex;gap:8px;flex:0 1 auto;flex-wrap:wrap}
+  /* Tres botones no caben al lado del título en pantalla angosta: se bajan
+     enteros a su propio renglón en vez de treparse encima del nombre. */
+  .card.equipo > .row{flex-wrap:wrap;gap:10px}
+  .card.equipo > .row > .eqtog{flex:1 1 200px;min-width:0}
+  .eqacc{display:flex;gap:8px;flex:1 1 100%;flex-wrap:wrap}
+  @media (min-width:820px){ .eqacc{flex:0 0 auto} }
   .eqacc .btn{width:auto;min-width:104px;text-decoration:none;padding:0 14px;
     min-height:44px;display:inline-flex;align-items:center;justify-content:center;font-size:13.5px}
   .eqacc .wa2{background:#25D366;color:#04220F;border:0;gap:7px}
@@ -777,9 +788,9 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="js/config.js?v=2.0.0"></script>
-<script src="js/version.js?v=2.0.0"></script>
-<script src="js/data.js?v=2.0.0"></script>
+<script src="js/config.js?v=2.0.1"></script>
+<script src="js/version.js?v=2.0.1"></script>
+<script src="js/data.js?v=2.0.1"></script>
 <script>
 /* ============================================================
    PANEL DE ADMINISTRACIÓN — Aquí Estamos
@@ -1516,23 +1527,25 @@ function vJornadas(){
             return a + ps.reduce((b,p,k)=>k? b+distM(ps[k-1].lat,ps[k-1].lng,p.lat,p.lng)/1000 : 0, 0);},0)).toFixed(1):'0'} km</b><span>RECORRIDO TOTAL</span></div>
         </div>
       </div>
-      <label class="capasel solo" style="margin-top:18px">
+      <div class="jabre">
+      <label class="capasel solo">
         <input type="checkbox" id="j-abiertas" ${j.rutas_abiertas?'checked':''}>
         <span>Cada equipo puede ver la ruta de los demás
           <small>Desmárcalo y cada enlace muestra solo su propia ruta</small></span>
       </label>
       ${j.rutas_abiertas?`
-      <div class="eqacc" style="margin-top:10px">
+      <div class="eqacc">
         <button type="button" class="btn flat" data-ver-eq="0">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
-          Ver todas las rutas en vivo</button>
+          Ver todas</button>
         <button type="button" class="btn wa2" data-compartir-eq="0">
           <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.5 2 2 6.5 2 12c0 1.8.5 3.4 1.3 4.9L2 22l5.3-1.4A10 10 0 1 0 12 2Zm0 18.2c-1.5 0-3-.4-4.3-1.2l-.3-.2-3.1.8.8-3-.2-.3A8.2 8.2 0 1 1 12 20.2Z"/></svg>
           Enviar a todos</button>
+      </div>`:''}
       </div>
-      <p class="muted" style="margin:7px 3px 0;font-size:12.5px">
-        Un solo enlace con las ${eq.length} rutas. Sirve para el grupo de
-        WhatsApp de la jornada.</p>`:''}
+      ${j.rutas_abiertas?`<p class="muted" style="margin:7px 3px 0;font-size:12.5px">
+        Un solo enlace con las ${eq.length} rutas, para el grupo de WhatsApp
+        de la jornada.</p>`:''}
       <div class="lbl" style="margin-top:20px">Equipos</div>
       ${eq.map(n=>{
         const ps = j.paradas.filter(p=>p.equipo===n);
