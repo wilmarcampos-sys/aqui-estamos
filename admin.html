@@ -8,7 +8,7 @@
 <link rel="icon" type="image/svg+xml" href="logo/marca.svg">
 <title>Aquí Estamos · Administración</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
-<link rel="stylesheet" href="css/app.css?v=1.62.0">
+<link rel="stylesheet" href="css/app.css?v=1.62.1">
 <style>
   /* El panel es mobile-first: una columna, pestañas fijas abajo. En pantalla
      grande se centra en una franja de ancho de celular para no deformarse. */
@@ -462,9 +462,9 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="js/config.js?v=1.62.0"></script>
-<script src="js/version.js?v=1.62.0"></script>
-<script src="js/data.js?v=1.62.0"></script>
+<script src="js/config.js?v=1.62.1"></script>
+<script src="js/version.js?v=1.62.1"></script>
+<script src="js/data.js?v=1.62.1"></script>
 <script>
 /* ============================================================
    PANEL DE ADMINISTRACIÓN — Aquí Estamos
@@ -2514,7 +2514,8 @@ document.addEventListener('input', e=>{
 document.addEventListener('click', e=>{
   const seg = e.target.closest('#ubseg [data-ub]');
   if(seg){ UB.modo=seg.dataset.ub; UB.i=0; vUbicar(); return; }
-  const cola = ubCola(), c = cola[UB.i];
+  const cola = ubCola();
+  const c = (UB.suelta ? CENSO.find(x=>String(x.id)===String(UB.suelta)) : null) || cola[UB.i];
   if(e.target.closest('#ub-geo'))     { if(c) ubGeocodificar(c); return; }
   if(e.target.closest('#ub-guardar')) { if(c) ubGuardar(c); return; }
   const af = e.target.closest('[data-abrirficha]');
