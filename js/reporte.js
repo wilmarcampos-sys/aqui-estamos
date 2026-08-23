@@ -21,12 +21,19 @@ const REP_NEC = {alimentos:'Mercado', aseo:'Aseo e higiene', arriendo:'Subsidio 
   materiales:'Materiales de obra', movilidad:'Silla de ruedas', servicios:'Servicios públicos',
   albergue:'Albergue', estructural:'Evaluación estructural', mascotas:'Comida para mascotas'};
 
-let RESUMEN = null;
+let RESUMEN = null, NECS_PROPIAS = null;
 async function cargarResumen(){
   try{
     const db = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
     const {data} = await db.from('resumen_censo').select('*').single();
-    if(data){ RESUMEN = data; pintarReporte(); }
+    if(data) RESUMEN = data;
+    // fuera del mapa (página propia) no existe S: se piden las necesidades
+    if(typeof S === 'undefined' || !S.censo || !S.censo.length){
+      const {data:cs} = await db.from('censo_publico').select('necesidades');
+      if(cs){ const g={}; cs.forEach(c=>(c.necesidades||[]).forEach(k=>g[k]=(g[k]||0)+1));
+        NECS_PROPIAS = Object.entries(g).sort((a,b)=>b[1]-a[1]); }
+    }
+    pintarReporte();
   }catch(e){ /* sin resumen, se muestra lo que alcanza el mapa */ }
 }
 
@@ -45,7 +52,7 @@ function repCenso(){
     sinEmpleo: R.sin_empleo ?? 0,
     barrios:   R.barrios ?? new Set(cs.map(c=>c.barrio).filter(Boolean)).size,
     ubicadas:  R.ubicadas ?? cs.filter(c=>c.lat).length,
-    top: Object.entries(g).sort((a,b)=>b[1]-a[1]).slice(0,9),
+    top: (NECS_PROPIAS || Object.entries(g).sort((a,b)=>b[1]-a[1])).slice(0,9),
   };
 }
 
@@ -98,19 +105,24 @@ function pintarReporte(){
       <div><b class="ve">${c.sinEmpleo}</b><span>Sin empleo</span><small>Perdieron trabajo o local por el sismo</small></div>
     </div>
 
+    <h3 class="rep-h">Quiénes están detrás</h3>
+    <p class="rep-lede">Este censo existe porque dos organizaciones lo sostienen en terreno</p>
     <div class="rep-orgs">
-      <h3 class="rep-h" style="margin-top:0">Quiénes están detrás</h3>
-      <p class="rep-lede">Las organizaciones que sostienen el censo y las entregas</p>
-      <ul>
-        <li><b>Red de iglesias AMCER</b> — levantó el censo puerta a puerta en Pereira,
-          Dosquebradas y La Virginia.</li>
-        <li><b>Asociación CREA</b> — coordina el censo, ubica las viviendas y arma las rutas de entrega.</li>
-        <li><b>Fundación del Dr. Simi</b> — 60 sillas de ruedas, muletas, caminadores y bastones.</li>
-        <li><b>alluda.online</b> — red aliada de centros de acopio, visible en el mismo mapa.</li>
-      </ul>
-      <p class="rep-lede" style="margin-top:10px">¿Su organización está ayudando y no aparece?
-        Escríbanos para sumarla al mapa.</p>
-    </div>`;
+      <article>
+        <b>Red de iglesias AMCER</b>
+        <p>Levantó el censo puerta a puerta en Pereira, Dosquebradas y La Virginia,
+          con sus iglesias como punto de encuentro de cada barrio.</p>
+      </article>
+      <article>
+        <b>Asociación CREA</b>
+        <p>Coordina el censo, ubica cada vivienda en el mapa y arma las rutas
+          de entrega de cada jornada.</p>
+      </article>
+    </div>
+    <p class="rep-aliados">Con el aporte de la <b>Fundación del Dr. Simi</b>
+      (sillas de ruedas y ayudas de movilidad) y de <b>alluda.online</b>,
+      red aliada de centros de acopio.<br>
+      ¿Su organización está ayudando y no aparece? Escríbanos para sumarla al mapa.</p>`;
 }
 
 /* la ventana de compartir */

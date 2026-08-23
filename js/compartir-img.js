@@ -63,6 +63,28 @@ function redondo(x, rx, ry, w, h, r){
   x.arcTo(rx, ry, rx+w, ry, r); x.closePath();
 }
 
+/* El pin de la marca, dibujado a mano: dos mitades de color y las dos manos
+   que se encuentran. Mismo dibujo del sitio, en coordenadas de 24 px. */
+function dibujarMarca(x, cx, cy, tam){
+  const k = tam/24;
+  x.save(); x.translate(cx, cy); x.scale(k,k);
+  x.beginPath();
+  x.moveTo(12,1.6);
+  x.bezierCurveTo(7.4,1.6,3.7,5.3,3.7,9.9);
+  x.bezierCurveTo(3.7,15.8,12,22.4,12,22.4);
+  x.bezierCurveTo(12,22.4,20.3,15.8,20.3,9.9);
+  x.bezierCurveTo(20.3,5.3,16.6,1.6,12,1.6);
+  x.closePath(); x.clip();
+  x.fillStyle = '#F2B705'; x.fillRect(0,0,12,24);
+  x.fillStyle = '#D62828'; x.fillRect(12,0,12,24);
+  x.fillStyle = '#fff';
+  x.beginPath(); x.moveTo(5.9,9.1); x.lineTo(12.3,9.1);
+  x.arc(12.3,10.45,1.35,-Math.PI/2,Math.PI/2); x.lineTo(5.9,11.8); x.closePath(); x.fill();
+  x.beginPath(); x.moveTo(18.1,12.2); x.lineTo(11.7,12.2);
+  x.arc(11.7,13.55,1.35,Math.PI/2,-Math.PI/2); x.lineTo(18.1,14.9); x.closePath(); x.fill();
+  x.restore();
+}
+
 /* La foto se carga una vez y se reutiliza en cada imagen. */
 let FOTO = null;
 function cargarFoto(){
@@ -113,6 +135,19 @@ function dibujarTarjeta(alto){
   x.fillStyle = 'rgba(255,255,255,.5)';
   x.font = '600 17px Inter, system-ui, sans-serif';
   x.fillText('Foto: World Central Kitchen · CC BY 4.0', M, heroH-20);
+
+  // marca arriba a la derecha: pin al borde y el nombre a su izquierda
+  const pinT = 40, pinX = W - M - pinT, pinY = 44;
+  dibujarMarca(x, pinX, pinY, pinT);
+  x.font = '900 28px Inter, system-ui, sans-serif';
+  const t1 = 'Aquí ', t2 = 'Estamos';
+  const w1 = x.measureText(t1).width, w2 = x.measureText(t2).width;
+  const baseY = pinY + 28, ini = pinX - 14 - (w1 + w2);
+  x.fillStyle = '#fff';    x.fillText(t1, ini, baseY);
+  x.fillStyle = '#E8A33D'; x.fillText(t2, ini + w1, baseY);
+  x.fillStyle = 'rgba(255,255,255,.6)'; x.font = '600 16px Inter, system-ui, sans-serif';
+  const wu = x.measureText('aquiestamos.co').width;
+  x.fillText('aquiestamos.co', pinX - 14 - wu, baseY + 24);
 
   let y = heroH + 74;
 
@@ -202,8 +237,9 @@ function dibujarTarjeta(alto){
   x.strokeStyle = 'rgba(255,255,255,.16)'; x.lineWidth = 1;
   x.beginPath(); x.moveTo(M, pieY+124); x.lineTo(W-M, pieY+124); x.stroke();
   x.fillStyle = '#8FA0B8'; x.font = '600 19px Inter, system-ui, sans-serif';
-  x.fillText('Censo levantado por la red de iglesias AMCER y la Asociación CREA', M, pieY+154);
-  x.fillText('con la Fundación del Dr. Simi y la red de acopios alluda.online', M, pieY+180);
+  x.fillText('Censo levantado en terreno por', M, pieY+152);
+  x.fillStyle = '#fff'; x.font = '800 21px Inter, system-ui, sans-serif';
+  x.fillText('Red de iglesias AMCER  ·  Asociación CREA', M, pieY+180);
 
   return c;
 }
@@ -244,14 +280,14 @@ async function compartirEnlace(){
   const msg = document.getElementById('sh-msg');
   const datos = {title:'Aquí Estamos · Pereira',
     text:'Mira qué falta y dónde tras el terremoto. Puedes ayudar directo a una familia.',
-    url:'https://aquiestamos.co/'};
+    url:'https://aquiestamos.co/reporte'};
   if(navigator.share){
     try{ await navigator.share(datos); if(msg) msg.textContent=''; return; }
     catch(e){ if(e && e.name==='AbortError') return; }
   }
   try{ await navigator.clipboard.writeText(datos.url);
-    if(msg) msg.textContent = 'Enlace copiado: aquiestamos.co';
-  }catch(e){ if(msg) msg.textContent = 'Comparte este enlace: aquiestamos.co'; }
+    if(msg) msg.textContent = 'Enlace copiado: aquiestamos.co/reporte';
+  }catch(e){ if(msg) msg.textContent = 'Comparte este enlace: aquiestamos.co/reporte'; }
 }
 
 document.addEventListener('click', e=>{

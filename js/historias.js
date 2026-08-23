@@ -120,3 +120,51 @@ setTimeout(cargarHistorias, 900);
   window.addEventListener('resize', pedir, {passive:true});
   setTimeout(mover, 300);
 })();
+
+/* ============================================================
+   FONDOS QUE ROTAN
+   ============================================================
+   Dos capas por hero: una visible y otra que entra por debajo con un
+   fundido. Cambia cada 10 s, se detiene si la pestaña no está a la vista
+   y no corre con prefers-reduced-motion.
+   ============================================================ */
+const FOTOS = ['img/wck-1.jpg','img/wck-2.jpg','img/wck-3.jpg','img/wck-4.jpg'];
+
+(function(){
+  if(window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+  // precargar para que el fundido no muestre un hueco
+  FOTOS.forEach(f=>{ const i = new Image(); i.src = f; });
+
+  function rotar(el, arranque){
+    if(!el) return;
+    const padre = el.parentElement;
+    // segunda capa, clonada de la primera para heredar filtro y posición
+    const b = el.cloneNode(false);
+    b.id = ''; b.style.opacity = '0';
+    b.style.transition = 'opacity 1.1s ease';
+    el.style.transition = 'opacity 1.1s ease';
+    padre.insertBefore(b, el.nextSibling);
+
+    let i = arranque % FOTOS.length, frente = el;
+    b.style.backgroundImage = `url('${FOTOS[(i+1)%FOTOS.length]}')`;
+
+    setInterval(()=>{
+      if(document.hidden) return;
+      const v = padre.getBoundingClientRect();
+      if(v.bottom < 0 || v.top > innerHeight) return;   // fuera de pantalla: no gastar
+      i = (i+1) % FOTOS.length;
+      const atras = frente === el ? b : el;
+      atras.style.backgroundImage = `url('${FOTOS[i]}')`;
+      atras.style.opacity = '1';
+      frente.style.opacity = '0';
+      frente = atras;
+      // la siguiente se deja lista en la capa que quedó atrás
+      setTimeout(()=>{ (frente === el ? b : el)
+        .style.backgroundImage = `url('${FOTOS[(i+1)%FOTOS.length]}')`; }, 1200);
+    }, 10000);
+  }
+
+  rotar(document.getElementById('h-foto'), 0);
+  rotar(document.querySelector('#heropx .px-foto'), 1);   // arranca en otra foto
+})();

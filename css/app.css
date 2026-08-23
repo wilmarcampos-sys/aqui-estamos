@@ -1238,3 +1238,23 @@ input.pin{letter-spacing:9px;font-size:20px;text-align:center;font-weight:700}
 .opc .oi svg{width:21px;height:21px}
 .opc .ot b{display:block;font-size:14.5px;font-weight:750}
 .opc .ot small{display:block;font-size:12px;color:var(--dim);margin-top:2px;line-height:1.4}
+
+/* ---- el reporte tiene ancho de lectura fijo; en móvil ocupa todo ---- */
+.emerg{max-width:840px;margin:0 auto}
+@media (min-width:900px){
+  .emerg .historias{margin-left:0;margin-right:0}
+}
+.rwrap{max-width:840px;margin:0 auto}
+.enlace-reporte{display:block;margin-top:12px;padding:12px 14px;border-radius:12px;
+  background:var(--chip);border:1px solid var(--line);color:var(--link);
+  font-size:13.5px;font-weight:750;text-decoration:none;text-align:center}
+.enlace-reporte:hover{border-color:var(--acc)}
+/* las dos organizaciones que sostienen el censo, con peso propio */
+.rep-orgs{display:grid;gap:1px;grid-template-columns:1fr;background:var(--line);
+  border:1px solid var(--line);border-radius:16px;overflow:hidden}
+@media (min-width:640px){ .rep-orgs{grid-template-columns:1fr 1fr} }
+.rep-orgs article{background:var(--card);padding:20px}
+.rep-orgs b{display:block;font-size:17px;font-weight:850;letter-spacing:-.3px}
+.rep-orgs p{margin:7px 0 0;font-size:13px;line-height:1.55;color:var(--dim)}
+.rep-aliados{margin:12px 3px 0;font-size:12.3px;line-height:1.6;color:var(--dim)}
+.rep-aliados b{color:var(--txt)}
