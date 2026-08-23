@@ -1078,7 +1078,7 @@ input.pin{letter-spacing:9px;font-size:20px;text-align:center;font-weight:700}
   linear-gradient(180deg,rgba(8,14,24,.35) 0%,rgba(8,14,24,.12) 30%,
     rgba(8,14,24,.72) 76%,rgba(8,14,24,.94) 100%)}
 @media (prefers-reduced-motion: reduce){ .h-foto{transform:none!important} }
-.historias > *:not(.h-foto):not(.h-velo){position:relative;z-index:1}
+.historias > *:not(.h-foto):not(.h-velo):not(.h-marca){position:relative;z-index:1}
 .h-tit{margin:0;color:#fff;font-size:24px;font-weight:850;letter-spacing:-.6px;
   text-shadow:0 2px 14px rgba(0,0,0,.5)}
 .h-sub{margin:6px 0 20px;color:#C3CFE0;font-size:13px;line-height:1.5;max-width:440px;
@@ -1139,7 +1139,7 @@ input.pin{letter-spacing:9px;font-size:20px;text-align:center;font-weight:700}
 
 /* ---- pestaña Emergencia: fotografía real con crédito ---- */
 .emerg{padding-top:12px}
-.px-cred{position:absolute;right:10px;top:10px;background:rgba(8,14,24,.55);color:#D7DEEA;
+.px-cred{position:absolute;right:10px;bottom:10px;background:rgba(8,14,24,.55);color:#D7DEEA;
   font-size:10.5px;font-weight:600;padding:4px 9px;border-radius:999px;letter-spacing:.2px}
 .bloque.confoto{position:relative;overflow:hidden;isolation:isolate}
 .bloque.confoto .fondo-foto{position:absolute;inset:0;background-size:cover;
@@ -1258,3 +1258,16 @@ input.pin{letter-spacing:9px;font-size:20px;text-align:center;font-weight:700}
 .rep-orgs p{margin:7px 0 0;font-size:13px;line-height:1.55;color:var(--dim)}
 .rep-aliados{margin:12px 3px 0;font-size:12.3px;line-height:1.6;color:var(--dim)}
 .rep-aliados b{color:var(--txt)}
+/* la marca sobre cada hero: sin marco, arriba a la derecha */
+.h-marca{position:absolute!important;top:16px;right:18px;z-index:3;
+  display:inline-flex;align-items:center;gap:8px;
+  filter:drop-shadow(0 2px 10px rgba(0,0,0,.55))}
+.h-marca svg{width:22px;height:22px;flex:0 0 auto}
+.h-marca b{color:#fff;font-size:14px;font-weight:850;letter-spacing:-.3px;
+  display:block;text-align:right;line-height:1.15}
+.h-marca b i{font-style:normal;color:#F2B705}
+.h-marca b em{display:block;font-style:normal;font-weight:700;font-size:10.5px;
+  letter-spacing:.2px;color:rgba(255,255,255,.72);margin-top:1px}
+.h-marca.chico svg{width:19px;height:19px}
+.h-marca.chico b{font-size:13px}
+.h-marca.chico b em{font-size:10px}
