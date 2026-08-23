@@ -2,44 +2,59 @@
      Noche (oscuro) por defecto; de día el navegador pide el claro y se
      cambian solas las variables. Todo el color de superficie sale de aquí. */
   :root{
-    --bg:#0f172a; --bg2:#152036; --card:#1b2740; --surf:#1b2740; --chip:#233149;
-    --inp:#111b2e; --line:#2b3a55; --line2:#3a4a68; --map-bg:#1a2436;
-    --panel:rgba(15,23,42,.94);
-    --txt:#eaf0fa; --dim:#93a3bd; --acc:#4f9cf9; --link:#8ec1ff;
-    --c0:#3f8f5f; --c1:#c9a227; --c2:#d97706; --c3:#dc2626; --c4:#8b1a1a;
+    /* Superficies: la tinta del reporte, no un azul de tablero. */
+    --bg:#0D1520; --bg2:#131F2E; --card:#16222F; --surf:#16222F; --chip:#1F2C3C;
+    --inp:#101A26; --line:#26364A; --line2:#35485F; --map-bg:#141F2C;
+    --panel:rgba(13,21,32,.94);
+    --txt:#EAF0F7; --dim:#8FA0B6;
+    /* El acento es el ámbar de la marca, el mismo del pin y del logo. */
+    --acc:#F2B705; --acc-tx:#0D1520; --link:#F5C63A;
+    /* Escala de gravedad, una sola para toda la app: rojo urgente,
+       ámbar prioridad, morado vulnerabilidad, gris lo demás. */
+    --urg:#E8453C; --pri:#E8A33D; --vul:#9B7BD4; --otro:#8794A8;
+    --c0:#3F9A68; --c1:#C9A227; --c2:#D9861B; --c3:#E8453C; --c4:#A31D1D;
     --safe:env(safe-area-inset-bottom,0px);
     /* lenguaje app móvil: chip activo del nav y curva de movimiento */
-    --seg:#2b3341; --glass:rgba(15,23,42,.72);
+    --seg:#22303F; --glass:rgba(13,21,32,.72);
     --ease:cubic-bezier(.32,.72,0,1);
   }
   /* TEMA CLARO — se activa cuando data-eff="light" (lo pone el script del
      <head> según el sistema o la preferencia guardada). Así el botón de
      día/noche puede forzarlo, no solo seguir al sistema. */
   :root[data-eff="light"]{
-    --bg:#F5F7FB; --bg2:#FFFFFF; --card:#FFFFFF; --surf:#F7F9FC; --chip:#EEF2F8;
-    --inp:#FFFFFF; --line:#DCE3EE; --line2:#C6D0E0; --map-bg:#E8EDF4;
+    --bg:#F6F4F0; --bg2:#FFFFFF; --card:#FFFFFF; --surf:#FAF9F6; --chip:#EFECE6;
+    --inp:#FFFFFF; --line:#E4E1DA; --line2:#CFCBC2; --map-bg:#E9EDF2;
     --panel:rgba(255,255,255,.94);
-    --txt:#0E1729; --dim:#5B6B87; --acc:#1A62C8; --link:#1A62C8;
+    --txt:#141D29; --dim:#68738A;
+    /* El ámbar de marca sobre blanco no se lee: como texto va tostado,
+       y cuando es fondo el texto encima se pone oscuro (--acc-tx). */
+    --acc:#9A6B00; --acc-tx:#FFFFFF; --link:#9A6B00;
+    --urg:#C81E1E; --pri:#B4780F; --vul:#6D4AA8; --otro:#68738A;
     /* escala de desatención recalculada para fondo claro (contrastes AA) */
-    --c0:#26714A; --c1:#8A6508; --c2:#B45309; --c3:#C11B1B; --c4:#7A1616;
+    --c0:#26714A; --c1:#8A6508; --c2:#B45309; --c3:#C81E1E; --c4:#7A1616;
     --seg:#FFFFFF; --glass:rgba(255,255,255,.72);
   }
   :root[data-eff="light"] .leaflet-tile{filter:saturate(.95)}
   :root:not([data-eff="light"]) #map .leaflet-tile{filter:invert(1) hue-rotate(180deg) brightness(.86) contrast(.92)}
   :root[data-eff="light"] header h1 span{color:#B8860B}
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+
   /* En iOS el viewport cambia con la barra de Safari. Si body va con 100%
      (viewport grande) y #app con dvh (actual), el body queda más alto y se ve
      un hueco abajo. Ambos en dvh para que encajen siempre. */
   html,body{margin:0;height:100vh;height:100dvh;overflow:hidden;overscroll-behavior:none}
   /* superficies del navegador tematizadas (no defaults grises) */
-  ::selection{background:rgba(79,156,249,.28);color:var(--txt)}
+  ::selection{background:color-mix(in srgb, var(--acc) 30%, transparent);color:var(--txt)}
   :focus-visible{outline:2px solid var(--acc);outline-offset:2px}
   /* cifras que no "bailan" */
   .capnums b,.cappct,.rank,.fbadge,.kpi b,.online b{font-variant-numeric:tabular-nums}
+  /* Inter, la misma del reporte. El sistema ponía una letra distinta en
+     cada equipo y las tres superficies parecían de proyectos diferentes.
+     Si no carga, el sistema sigue de respaldo. */
   body{
-    font:16px/1.45 system-ui,-apple-system,sans-serif;
+    font:16px/1.45 Inter,-apple-system,BlinkMacSystemFont,system-ui,sans-serif;
     background:var(--bg);color:var(--txt);
+    -webkit-font-smoothing:antialiased;
   }
   /* Altura dinámica: en el celular la barra del navegador cambia de tamaño;
      con 100dvh la pantalla siempre encaja y los botones de reportar no se
@@ -563,7 +578,7 @@
   }
   .opt:hover{border-color:var(--line2)}
   .opt:active{transform:scale(.98)}
-  .opt.sel{background:rgba(79,156,249,.18);border-color:var(--acc)}
+  .opt.sel{background:color-mix(in srgb, var(--acc) 18%, transparent);border-color:var(--acc)}
   .opt.pend-o{border-color:#7f1d1d;background:rgba(220,38,38,.09)}
 
   /* sugerencias de punto de referencia cercano */
@@ -571,7 +586,7 @@
   .sugb{background:var(--surf);border:1.5px solid var(--line2);border-radius:11px;padding:9px 12px;
     font-size:13px;color:var(--txt);font-family:inherit;cursor:pointer;text-align:left;line-height:1.25}
   .sugb .muted{font-size:13px;margin-left:5px}
-  .sugb.sel{background:rgba(79,156,249,.2);border-color:var(--acc)}
+  .sugb.sel{background:color-mix(in srgb, var(--acc) 20%, transparent);border-color:var(--acc)}
 
   /* buscador por categorías */
   .cats{display:flex;gap:7px;overflow-x:auto;padding:9px 0 4px;margin-bottom:4px;
@@ -580,7 +595,7 @@
   .cats button{flex:0 0 auto;background:var(--surf);border:1px solid var(--line);color:var(--dim);
     border-radius:999px;padding:8px 14px;min-height:40px;font-size:13px;font-weight:600;font-family:inherit;
     cursor:pointer;white-space:nowrap}
-  .cats button.on{background:var(--acc);border-color:var(--acc);color:#04122b}
+  .cats button.on{background:var(--acc);border-color:var(--acc);color:var(--acc-tx)}
 
   /* barra fija con lo seleccionado — la guía tiene que saltar a la vista */
   .selbar{position:sticky;bottom:0;z-index:20;display:flex;align-items:center;gap:10px;
@@ -600,19 +615,19 @@
   .pasohead{display:flex;align-items:center;gap:10px;margin:2px 0 8px}
   .pasohead h3{margin:0;font-size:19px;flex:1}
   .pasohead .pasonum{font-size:12px;color:var(--acc);font-weight:800;flex:0 0 auto;
-    background:rgba(79,156,249,.14);border:1px solid #2a4a75;border-radius:8px;padding:3px 8px}
+    background:color-mix(in srgb, var(--acc) 14%, transparent);border:1px solid var(--line2);border-radius:8px;padding:3px 8px}
   .pasosub{font-size:13px;color:var(--dim);margin:0 0 14px;line-height:1.4}
   .pasosub b{color:var(--txt)}
   /* etiquetas de "qué es obligatorio ahora" */
   .tag{display:inline-block;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;
     padding:2px 7px;border-radius:7px;margin-left:7px;vertical-align:1px}
-  .tag.req{background:rgba(79,156,249,.18);color:var(--link);border:1px solid #2a4a75}
+  .tag.req{background:color-mix(in srgb, var(--acc) 18%, transparent);color:var(--link);border:1px solid #2a4a75}
   .tag.opt{background:var(--chip);color:var(--dim);border:1px solid var(--line)}
   /* indicador de pasos: dónde voy y qué sigue */
   .pasos{display:flex;align-items:center;gap:6px;margin:0 0 12px;font-size:11px;font-weight:800}
   .pasos .pon{flex:1;text-align:center;padding:7px 3px;border-radius:9px;background:var(--inp);
     border:1px solid var(--line);color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .pasos .pon.now{background:rgba(79,156,249,.18);border-color:var(--acc);color:var(--link)}
+  .pasos .pon.now{background:color-mix(in srgb, var(--acc) 18%, transparent);border-color:var(--acc);color:var(--link)}
   .pasos .pon.done{background:rgba(63,143,95,.16);border-color:#2f5c41;color:#86efac}
   /* guía gráfica: el siguiente campo a tocar late para llevar el ojo allí */
   @keyframes guiapulso{
@@ -641,7 +656,7 @@
   .urg{display:flex;gap:7px}
   .urg button{flex:1;padding:11px 6px;border-radius:11px;border:1.5px solid var(--line);min-height:46px;
     background:var(--surf);color:var(--dim);font-size:13px;font-weight:700;font-family:inherit;cursor:pointer}
-  .urg button.sel{color:#fff;background:var(--acc);border-color:var(--acc)}
+  .urg button.sel{color:var(--acc-tx);background:var(--acc);border-color:var(--acc)}
   .urg button[data-u="3"].sel{background:#dc2626;border-color:#dc2626}
   .urg button[data-u="2"].sel{background:#d97706;border-color:#d97706}
   .urg button[data-u="1"].sel{background:#3f8f5f;border-color:#3f8f5f}
@@ -659,7 +674,7 @@
   textarea{min-height:64px;resize:vertical}
   label.f{font-size:13px;color:var(--dim);display:block;margin-top:11px}
 
-  .btn{width:100%;background:var(--acc);color:#04122b;border:0;border-radius:14px;padding:15px;
+  .btn{width:100%;background:var(--acc);color:var(--acc-tx);border:0;border-radius:14px;padding:15px;
     font-size:16px;font-weight:800;letter-spacing:-.2px;font-family:inherit;cursor:pointer;margin-top:14px;
     transition:transform .12s,filter .15s}
   .btn:hover{filter:brightness(1.05)}
@@ -691,7 +706,7 @@
   @keyframes pp{0%{transform:scale(.55);opacity:.85}100%{transform:scale(1.5);opacity:0}}
   .btn.wa{background:#25d366;color:#04220f;display:flex;align-items:center;justify-content:center;
     gap:9px;text-decoration:none}
-  .btn.loc{background:rgba(79,156,249,.12);color:var(--acc);border:1.5px solid var(--acc);margin-top:9px;
+  .btn.loc{background:color-mix(in srgb, var(--acc) 12%, transparent);color:var(--acc);border:1.5px solid var(--acc);margin-top:9px;
     font-size:16px;font-weight:700}
   .btn.loc.ok{background:#2f5c41;border-color:#3f8f5f;color:#c9f5d8}
   .pickinfo{font-size:13px;color:var(--dim);margin-top:7px}
@@ -735,7 +750,7 @@
   .nchk{flex:0 0 auto;width:22px;height:22px;border-radius:7px;border:2px solid var(--line2);
     background:var(--bg2);position:relative}
   .nec-card.sel{box-shadow:inset 0 0 0 2px var(--acc)}
-  .nec-card.sel .nchk{background:var(--acc);border-color:var(--acc)}
+  .nec-card.sel .nchk{background:var(--acc);border-color:var(--acc);color:var(--acc-tx)}
   .nec-card.sel .nchk::after{content:"";position:absolute;left:6px;top:2px;width:6px;height:11px;
     border:solid #fff;border-width:0 2.5px 2.5px 0;transform:rotate(45deg)}
   #ya-multi{margin-top:10px}
@@ -802,7 +817,7 @@
   .zalert.warn{background:rgba(217,119,6,.08);border-color:#7c4a10}
   .zalert.ok{background:rgba(63,143,95,.08);border-color:#2f5c41}
 
-  .note{position:relative;background:rgba(79,156,249,.09);border:1px solid #2a4a75;
+  .note{position:relative;background:color-mix(in srgb, var(--acc) 9%, transparent);border:1px solid var(--line2);
     border-radius:12px;padding:11px 34px 11px 12px;font-size:13px;color:var(--link);margin-bottom:12px}
   .nota-x{position:absolute;top:4px;right:4px;background:none;border:0;color:var(--link);
     font-size:22px;line-height:1;cursor:pointer;padding:4px 9px;opacity:.7}
@@ -939,9 +954,9 @@ input.pin{letter-spacing:9px;font-size:20px;text-align:center;font-weight:700}
 :root[data-eff="light"] .selbar .grow.falta{color:#8A4708}
 :root[data-eff="light"] .selbar .grow.falta::before{background:#8A4708}
 /* opciones y sugerencias */
-:root[data-eff="light"] .opt.sel{background:#E7F0FD;border-color:var(--acc);color:#12447F}
+:root[data-eff="light"] .opt.sel{background:#FBF3DE;border-color:var(--acc);color:#6B4A00}
 :root[data-eff="light"] .opt.pend-o,:root[data-eff="light"] .foco.orf{background:#FDF1F1;border-color:#F3B9B9}
-:root[data-eff="light"] .sugb.sel{background:#E7F0FD;border-color:var(--acc)}
+:root[data-eff="light"] .sugb.sel{background:#FBF3DE;border-color:var(--acc)}
 /* pasos, tags y azules de selección */
 :root[data-eff="light"] .pasos .pon.now{background:#E7F0FD;border-color:#BBD4F5;color:#12447F}
 :root[data-eff="light"] .pasos .pon.done{background:#E6F4EC;border-color:#B7DCC6}
@@ -1117,7 +1132,7 @@ input.pin{letter-spacing:9px;font-size:20px;text-align:center;font-weight:700}
 .btn2{flex:1 1 150px;min-height:44px;border-radius:12px;border:1px solid var(--line2);
   background:var(--chip);color:var(--txt);font-family:inherit;font-size:13.5px;font-weight:750;
   cursor:pointer;padding:0 14px}
-.btn2.pri{background:var(--acc);border-color:var(--acc);color:#04122B}
+.btn2.pri{background:var(--acc);border-color:var(--acc);color:var(--acc-tx)}
 
 /* ---- hero con profundidad (parallax) de "Cómo va la emergencia" ---- */
 .heropx{position:relative;height:260px;border-radius:16px;overflow:hidden;

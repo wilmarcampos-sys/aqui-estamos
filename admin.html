@@ -7,8 +7,11 @@
 <meta name="robots" content="noindex">
 <link rel="icon" type="image/svg+xml" href="logo/marca.svg">
 <title>Aquí Estamos · Administración</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
-<link rel="stylesheet" href="css/app.css?v=1.86.0">
+<link rel="stylesheet" href="css/app.css?v=1.87.0">
 <style>
   /* El panel es mobile-first: una columna, pestañas fijas abajo. En pantalla
      grande se centra en una franja de ancho de celular para no deformarse. */
@@ -34,6 +37,15 @@
   /* ---- barra de pestañas fija abajo ---- */
 
 
+
+  /* ---- clave con ojo para revisarla ---- */
+  .claveln{position:relative;margin-top:10px}
+  .claveln input{width:100%;padding-right:46px}
+  .verclave{position:absolute;right:6px;top:50%;transform:translateY(-50%);
+    width:36px;height:36px;display:grid;place-items:center;background:none;border:0;
+    color:var(--dim);cursor:pointer;border-radius:9px}
+  .verclave svg{width:19px;height:19px}
+  .verclave.on{color:var(--acc)}
   /* ---- portada del reporte dentro del panel ---- */
   .dhero{position:relative;display:block;overflow:hidden;border-radius:16px;
     margin-bottom:14px;text-decoration:none;color:#fff;min-height:186px;
@@ -535,7 +547,12 @@
     <h2 style="margin:0 0 6px">Administración</h2>
     <p class="muted" style="margin:0 0 18px">Entre con su correo y su clave.</p>
     <input id="mail" type="email" inputmode="email" placeholder="su-correo@ejemplo.com" autocomplete="username">
-    <input id="clave" type="password" placeholder="Su clave" autocomplete="current-password" style="margin-top:10px">
+    <div class="claveln">
+      <input id="clave" type="password" placeholder="Su clave o PIN" autocomplete="current-password">
+      <button type="button" class="verclave" id="verclave" aria-label="Ver la clave">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
+      </button>
+    </div>
     <button class="btn" id="entrar" style="margin-top:12px">Entrar</button>
     <p class="muted" id="msg" style="margin-top:14px"></p>
     <button type="button" class="lnk" id="ver-enlace" style="margin-top:10px">Prefiero que me llegue un enlace al correo</button>
@@ -616,9 +633,9 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="js/config.js?v=1.86.0"></script>
-<script src="js/version.js?v=1.86.0"></script>
-<script src="js/data.js?v=1.86.0"></script>
+<script src="js/config.js?v=1.87.0"></script>
+<script src="js/version.js?v=1.87.0"></script>
+<script src="js/data.js?v=1.87.0"></script>
 <script>
 /* ============================================================
    PANEL DE ADMINISTRACIÓN — Aquí Estamos
@@ -3463,22 +3480,40 @@ async function salir(){ if(DEMO){ toast('En demo no hay sesión que cerrar.'); r
 /* Clave, no enlace: Hotmail y Yahoo descartan en silencio el correo del
    enlace mágico. El enlace queda como alternativa para quien lo prefiera. */
 $('#entrar').onclick = async ()=>{
-  const email = $('#mail').value.trim();
-  const clave = $('#clave').value;
+  const email = $('#mail').value.trim().toLowerCase();
+  // Al pegar un PIN desde WhatsApp casi siempre viaja un espacio pegado, y
+  // el teclado del teléfono agrega otro al final. Ninguna clave nuestra
+  // lleva espacios, así que se quitan todos antes de intentar.
+  const clave = $('#clave').value.replace(/\s+/g,'');
   if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return toast('Revise el correo');
   if(!clave) return toast('Escriba su clave');
   const b=$('#entrar'); b.disabled=true; b.textContent='Entrando…';
   const {error} = await db.auth.signInWithPassword({email, password:clave});
   b.disabled=false; b.textContent='Entrar';
   if(error){
-    $('#msg').textContent = /invalid/i.test(error.message)
-      ? 'Correo o clave incorrectos.'
-      : 'No se pudo entrar: '+error.message;
+    // Decir qué revisar sirve más que un "incorrectos" a secas: Supabase
+    // responde igual si el correo no existe o si la clave no coincide.
+    $('#msg').innerHTML = /invalid/i.test(error.message)
+      ? 'No coincide el correo con la clave.<br><span style="opacity:.75">Revise que el correo esté completo y que la clave sea la que le pasaron, sin espacios.</span>'
+      : 'No se pudo entrar: '+esc(error.message)
+        +'<br><span style="opacity:.75">Mándele esta pantalla a quien administra.</span>';
     return;
   }
   $('#msg').textContent=''; $('#login').hidden=true; arrancar();
 };
 $('#clave').addEventListener('keydown', e=>{ if(e.key==='Enter') $('#entrar').click(); });
+/* Si lo que escribe son puros dígitos, el teléfono debe mostrar el teclado
+   numérico; si es una clave de letras, el normal. */
+$('#clave').addEventListener('input', e=>{
+  const soloNum = /^\d*$/.test(e.target.value.replace(/\s/g,''));
+  e.target.setAttribute('inputmode', soloNum ? 'numeric' : 'text');
+});
+$('#verclave').onclick = ()=>{
+  const i = $('#clave');
+  i.type = i.type === 'password' ? 'text' : 'password';
+  $('#verclave').classList.toggle('on', i.type === 'text');
+  i.focus();
+};
 $('#ver-enlace').onclick = ()=>{
   const w=$('#porenlace'); w.hidden = !w.hidden;
   $('#ver-enlace').textContent = w.hidden
