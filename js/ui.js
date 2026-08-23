@@ -366,6 +366,8 @@ function render(){
       medicamentos:'Medicamentos', ropa:'Carpas y cobijas', bebes:'Pañales y bebés',
       aseo:'Aseo e higiene', albergue:'Cupos de albergue', arriendo:'Subsidio de arriendo',
       servicios:'Servicios públicos', movilidad:'Silla de ruedas / movilidad',
+      materiales:'Materiales de construcción', utensilios:'Utensilios de cocina',
+      transporte:'Transporte / logística', mascotas:'Comida para mascotas',
       estructural:'Evaluación estructural', otra:'Otras'};
     const g={};
     const suma=(lbl,u)=>{ const e=g[lbl]=g[lbl]||{lbl,n:0,u:0}; e.n++; e.u=Math.max(e.u,u||0); };

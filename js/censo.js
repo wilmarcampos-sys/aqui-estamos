@@ -20,6 +20,10 @@ const NECS = [
   {k:'estructural', t:'Evaluación estructural', ic:'<path d="m14 7 3-3 3 3-3 3M5 21l7-7M3 13l4 4"/>'},
   {k:'servicios',   t:'Servicios públicos', ic:'<path d="M13 2 4.5 13H11l-1 9 8.5-11H12l1-9Z"/>'},
   {k:'movilidad',   t:'Silla de ruedas / movilidad', ic:'<circle cx="9" cy="18" r="4"/><path d="M9 4v9h6l3 5"/><circle cx="9" cy="4" r="1.6"/>'},
+  {k:'materiales',  t:'Materiales de construcción', ic:'<path d="M3 21h18M5 21V10l7-5 7 5v11"/><path d="M9 21v-6h6v6"/>'},
+  {k:'utensilios',  t:'Utensilios de cocina', ic:'<path d="M6 3v8a3 3 0 0 0 6 0V3M9 11v10"/><path d="M17 3c-1.5 0-2.5 2-2.5 4.5S15.5 12 17 12v9"/>'},
+  {k:'transporte',  t:'Transporte / logística', ic:'<path d="M3 7h11v10H3z"/><path d="M14 10h4l3 3v4h-7z"/><circle cx="7" cy="18" r="1.8"/><circle cx="17.5" cy="18" r="1.8"/>'},
+  {k:'mascotas',    t:'Comida para mascotas', ic:'<circle cx="7" cy="8" r="2"/><circle cx="12" cy="6" r="2"/><circle cx="17" cy="8" r="2"/><path d="M12 12c-3 0-5 2.5-5 5a3 3 0 0 0 3 3h4a3 3 0 0 0 3-3c0-2.5-2-5-5-5Z"/>'},
 ];
 const COND_TXT = {discapacidad:'discapacidad', embarazo:'embarazo', cronica:'enfermedad crónica', mascotas:'mascotas'};
 const EV_TXT = {habitable:'Habitable', danos:'Con daños', inhabitable:'Inhabitable'};
