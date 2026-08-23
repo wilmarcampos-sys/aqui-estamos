@@ -8,7 +8,7 @@
 <link rel="icon" type="image/svg+xml" href="logo/marca.svg">
 <title>Aquí Estamos · Administración</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
-<link rel="stylesheet" href="css/app.css?v=1.62.2">
+<link rel="stylesheet" href="css/app.css?v=1.63.0">
 <style>
   /* El panel es mobile-first: una columna, pestañas fijas abajo. En pantalla
      grande se centra en una franja de ancho de celular para no deformarse. */
@@ -462,9 +462,9 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="js/config.js?v=1.62.2"></script>
-<script src="js/version.js?v=1.62.2"></script>
-<script src="js/data.js?v=1.62.2"></script>
+<script src="js/config.js?v=1.63.0"></script>
+<script src="js/version.js?v=1.63.0"></script>
+<script src="js/data.js?v=1.63.0"></script>
 <script>
 /* ============================================================
    PANEL DE ADMINISTRACIÓN — Aquí Estamos
@@ -1271,6 +1271,30 @@ function ubCola(){
    no sabe —ni tiene por qué— si esa ficha está sin ubicar o aproximada. */
 /* Barrios que ya tienen al menos una vivienda ubicada: sirven de referencia
    para llevar el mapa cerca cuando la dirección no dice nada al geocodificador. */
+/* A qué comuna pertenece cada barrio. Sale de lo que devuelve OpenStreetMap
+   al consultar cada barrio como lugar, y de la nomenclatura de la Alcaldía
+   (Guayabal es de Villa Santana, no de Dosquebradas). Sirve para preseleccionar
+   la comuna y llevar el mapa cerca cuando la ficha solo dice el barrio. */
+const BARRIO_COMUNA = {
+  'guayabal':'villa santana', 'tokio':'villa santana', 'el chocho':'villa santana',
+  'nuevo plan':'villa santana', 'las brisas':'villa santana', 'el danubio':'villa santana',
+  'monserrate':'villa santana', 'intermedio':'villa santana', 'veracruz':'villa santana',
+  'samaria':'el poblado', 'perla del otun':'el poblado',
+  'rocio alto':'el rocio', 'el rocio':'el rocio',
+  'restrepo':'consota', 'el restrepo':'consota', 'miraflores':'consota',
+  'quintas de los sauces':'el oso', 'sauces':'el oso', 'el oso':'el oso',
+  'bello horizonte':'san joaquin',
+  'san carlos':'arabia', 'san juan':'rio otun', 'corosito':'rio otun',
+  'lago uribe':'centro', 'san nicolas':'centro', 'centro':'centro',
+  'pueblito paisa':'cuba', 'naranjal':'cuba', 'san fernando':'cuba', 'cuba':'cuba',
+};
+function comunaDeBarrio(barrio){
+  const b = norma(barrio||'').trim(); if(!b) return null;
+  for(const [k,v] of Object.entries(BARRIO_COMUNA))
+    if(b.includes(k)) return (ZONAS||[]).find(z=>norma(z.n)===v) || null;
+  return (ZONAS||[]).find(z=>b.includes(norma(z.n))) || null;
+}
+
 function barriosConocidos(){
   const g = {};
   CENSO.forEach(c=>{
@@ -1344,7 +1368,10 @@ function vUbicar(){
             <div class="fila" style="margin-top:6px;gap:7px;flex-wrap:wrap">
               <span class="ciudadchip">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="2.6"/></svg>
-                ${esc(c.ciudad||'Pereira')}${c.barrio?' · '+esc(c.barrio):''}</span>
+                ${esc(c.ciudad||'Pereira')}${c.barrio?' · '+esc(c.barrio):''}${(()=>{
+                  const z = comunaDeBarrio(c.barrio);
+                  return z && norma(z.n)!==norma(c.barrio) ? ' · comuna '+esc(z.n) : '';
+                })()}</span>
               <span class="muted" style="font-size:12.5px">${esc(c.ficha||'')}${c.personas?` · ${c.personas} persona${c.personas>1?'s':''}`:''}</span>
             </div>
           </div>
@@ -1362,7 +1389,7 @@ function vUbicar(){
           <select class="campo" id="ub-comuna">
             <option value="">Comuna o corregimiento…</option>
             ${(ZONAS||[]).slice().sort((a,b)=>a.n.localeCompare(b.n)).map(z=>
-              `<option value="${z.lat},${z.lng}" ${(c.barrio && norma(z.n)===norma(c.barrio))?'selected':''}>${esc(z.n)}</option>`).join('')}
+              `<option value="${z.lat},${z.lng}" ${(comunaDeBarrio(c.barrio)||{}).id===z.id?'selected':''}>${esc(z.n)}</option>`).join('')}
           </select>
           <select class="campo" id="ub-barrio">
             <option value="">Barrio del censo…</option>
@@ -1442,9 +1469,11 @@ function ubMapa(c){
   const lug = document.getElementById('ub-lugares'); if(lug) lug.innerHTML = '';
   clearTimeout(_cercaT);
   if(UB.map){ UB.map.remove(); UB.map=null; }
+  const z = comunaDeBarrio(c.barrio);
   const cc = centroCiudad(c.ciudad);
+  const base = c.lat ? [c.lat, c.lng, 16] : (z ? [z.lat, z.lng, 15] : cc);
   UB.map = L.map(el, {zoomControl:true, attributionControl:false})
-            .setView([c.lat ?? cc[0], c.lng ?? cc[1]], c.lat ? 16 : cc[2]);
+            .setView([base[0], base[1]], base[2]);
   L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
     {maxZoom:19, subdomains:'abcd'}).addTo(UB.map);
   // El contenedor toma su alto con el layout, después de crear el mapa: sin
