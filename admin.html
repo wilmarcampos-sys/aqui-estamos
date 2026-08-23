@@ -8,7 +8,7 @@
 <link rel="icon" type="image/svg+xml" href="logo/marca.svg">
 <title>Aquí Estamos · Administración</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
-<link rel="stylesheet" href="css/app.css?v=1.59.0">
+<link rel="stylesheet" href="css/app.css?v=1.59.1">
 <style>
   /* El panel es mobile-first: una columna, pestañas fijas abajo. En pantalla
      grande se centra en una franja de ancho de celular para no deformarse. */
@@ -450,9 +450,9 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="js/config.js?v=1.59.0"></script>
-<script src="js/version.js?v=1.59.0"></script>
-<script src="js/data.js?v=1.59.0"></script>
+<script src="js/config.js?v=1.59.1"></script>
+<script src="js/version.js?v=1.59.1"></script>
+<script src="js/data.js?v=1.59.1"></script>
 <script>
 /* ============================================================
    PANEL DE ADMINISTRACIÓN — Aquí Estamos
@@ -1111,7 +1111,10 @@ function vJornadas(){
         <button class="btn flat" id="j-imprimir" style="flex:1 1 200px">Imprimir hojas de ruta</button>
         ${j.estado!=='cerrada'?`<button class="btn" id="j-cerrar" style="flex:1 1 200px">Cerrar la jornada</button>`:
           '<span class="sbadge bok" style="align-self:center">Jornada cerrada</span>'}
-      </div>`;
+      </div>
+      <button type="button" class="cerrar-txt" id="j-borrar"
+        style="display:block;margin:16px auto 0;background:none;border:0;color:var(--dim);font-family:inherit;
+        font-size:12.5px;cursor:pointer;text-decoration:underline;min-height:44px;padding:0 12px">Borrar esta jornada…</button>`;
     jPintarMapas(j);
     return;
   }
@@ -1178,6 +1181,37 @@ async function jEntregar(paradaId){
       nota:'Jornada '+(j.titulo||j.fecha)+(p.folio?' · '+p.folio:'')});
     await cargar();
   }
+}
+
+/* Borrar una jornada sí borra de verdad (no es dato de una familia, es una
+   planificación). Por eso se pregunta con lo que se pierde a la vista, y las
+   entregas ya registradas no se tocan. */
+function jBorrar(){
+  const j = JORNADAS.find(x=>String(x.id)===String(JVER)); if(!j) return;
+  const hechas = (j.paradas||[]).filter(p=>p.entregada).length;
+  abrirSheet(`
+    <div class="sec" style="margin-top:4px">Borrar la jornada</div>
+    <div class="fila"><b>${esc(j.titulo||('Jornada del '+j.fecha))}</b></div>
+    <p class="muted" style="margin:8px 0 12px">Se borran sus ${(j.paradas||[]).length} paradas y sus hojas de ruta.
+      ${hechas?`<b>Las ${hechas} entregas ya registradas no se pierden</b>: quedan en el historial de cada vivienda.`
+              :'No hay entregas registradas en ella.'}</p>
+    <p class="hint warn">Esto no se puede deshacer.</p>
+    <div class="btnrow" style="margin-top:14px">
+      <button class="btn" id="jb-si" style="flex:1 1 200px;background:#dc2626">Sí, borrarla</button>
+      <button class="btn flat" id="jb-no" style="flex:0 1 auto;width:auto;min-width:120px">Cancelar</button>
+    </div>`);
+  document.getElementById('jb-no').onclick = cerrarSheet;
+  document.getElementById('jb-si').onclick = async ()=>{
+    if(!DEMO){
+      const {error} = await db.from('jornadas').delete().eq('id', j.id);
+      if(error){ toast('No se pudo borrar.'); console.error(error); return; }
+    }
+    JORNADAS = JORNADAS.filter(x=>String(x.id)!==String(j.id));
+    JVER = null; JEQ.clear();
+    Object.values(JMAPS).forEach(m=>m.remove()); JMAPS = {};
+    cerrarSheet(); vJornadas(); render();
+    toast('Jornada borrada.');
+  };
 }
 
 async function jCerrar(){
@@ -2355,6 +2389,7 @@ document.addEventListener('click', e=>{
     if(JMAPS[n]){ JMAPS[n].remove(); delete JMAPS[n]; }
     vJornadas(); return; }
   if(e.target.closest('#j-imprimir')){ window.print(); return; }
+  if(e.target.closest('#j-borrar')){ jBorrar(); return; }
   const en = e.target.closest('[data-entregar]');
   if(en){ jEntregar(en.dataset.entregar); return; }
   const jr = e.target.closest('[data-jornada]');
