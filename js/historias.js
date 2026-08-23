@@ -39,16 +39,15 @@ function pintarHistorias(){
   pista.innerHTML = hs.map(h=>{
     const cond = (h.condiciones||[]).map(k=>H_COND[k]).filter(Boolean);
     const nec  = (h.necesidades||[]).map(k=>H_NEC[k]||k);
+    // el barrio a veces repite la ciudad ("Dosquebradas · Dosquebradas")
+    const lugar = [...new Set([h.barrio, h.ciudad].filter(Boolean)
+                    .map(t=>t.trim()))].join(' · ') || 'Pereira';
     return `<article class="hcard">
-      <div class="hcab">
-        <span class="hquien">${h.nombre ? esc(h.nombre) : 'Una familia'}${h.personas?` · ${h.personas} persona${h.personas>1?'s':''}`:''}</span>
-        ${h.urgencia===3?'<span class="hurg">Urgente</span>':''}
-      </div>
       <p class="htexto">${esc(h.historia)}</p>
       ${cond.length?`<div class="hcond">${cond.map(t=>`<span>${esc(t)}</span>`).join('')}</div>`:''}
       <div class="hpie">
-        <span class="hlugar">${esc([h.barrio,h.ciudad].filter(Boolean).join(' · ') || 'Pereira')}</span>
-        ${nec.length?`<span class="hnec">Necesita: ${esc(nec.slice(0,3).join(' · '))}</span>`:''}
+        <span class="hlugar">${esc(lugar)}${h.personas?` · ${h.personas} persona${h.personas>1?'s':''}`:''}</span>
+        ${nec.length?`<span class="hnec">Necesita ${esc(nec.slice(0,3).join(' · ').toLowerCase())}</span>`:''}
       </div>
     </article>`;
   }).join('');
@@ -99,3 +98,25 @@ document.addEventListener('click', e=>{
 })();
 
 setTimeout(cargarHistorias, 900);
+
+/* La foto se mueve más despacio que la página. Misma lógica que el otro hero:
+   se apaga con prefers-reduced-motion y cuando la banda no está a la vista. */
+(function(){
+  const banda = document.getElementById('b-historias');
+  const foto  = document.getElementById('h-foto');
+  if(!banda || !foto || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  let pedido = false;
+  function mover(){
+    pedido = false;
+    const r = banda.getBoundingClientRect();
+    if(r.bottom < -120 || r.top > innerHeight + 120) return;
+    const avance = (r.top + r.height/2 - innerHeight/2) / innerHeight;
+    foto.style.transform = `translate3d(0, ${(avance*34).toFixed(1)}px, 0)`;
+  }
+  const pedir = ()=>{ if(!pedido){ pedido = true; requestAnimationFrame(mover); } };
+  const cont = document.querySelector('#v-info') || window;
+  cont.addEventListener('scroll', pedir, {passive:true});
+  window.addEventListener('scroll', pedir, {passive:true});
+  window.addEventListener('resize', pedir, {passive:true});
+  setTimeout(mover, 300);
+})();

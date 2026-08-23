@@ -23,7 +23,7 @@
 <meta name="twitter:description" content="Coordinación abierta de ayuda para el terremoto de Pereira.">
 <meta name="twitter:image" content="https://aquiestamos.co/img/hero-donar.jpg">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
-<link rel="stylesheet" href="css/app.css?v=1.73.0">
+<link rel="stylesheet" href="css/app.css?v=1.74.0">
 <script>
 /* URL sin ".html" en el sitio publicado (en localhost la extensión hace falta). */
 (function(){ var h=location.hostname; if(h==='localhost'||h==='127.0.0.1'||h==='') return;
@@ -234,6 +234,14 @@ document.documentElement.setAttribute('data-eff', window.temaEfectivo());
     <section class="view" id="v-zonas"><div class="pad">
       <div class="tabsub" id="atajos"></div>
 
+      <div class="bloque" id="b-ofertas" style="display:none">
+        <div class="sec">Disponible para recoger</div>
+        <p class="muted secsub">Cosas que alguien ya tiene listas. Contacta y coordina la entrega.</p>
+        <div class="tabsub" id="of-filtros" style="display:none"></div>
+        <div id="lista-ofertas"></div>
+      </div>
+      <div id="ofrecer-wrap"></div>
+
       <div class="kpis" id="kpis"></div>
       <div class="tabsub" id="filtros">
         <button data-f="todas" class="on">Todas</button>
@@ -263,50 +271,12 @@ document.documentElement.setAttribute('data-eff', window.temaEfectivo());
 
     <!-- COORDINACIÓN -->
     <section class="view" id="v-info"><div class="pad emerg">
-      <!-- Estado de la emergencia: hero con profundidad y la infografía -->
-      <div class="bloque" id="b-info">
-        <div class="heropx" id="heropx">
-          <div class="px-foto" style="background-image:url('img/wck-1.jpg')"></div>
-          <div class="px-velo"></div>
-          <div class="px-texto">
-            <h2>Dos semanas<br>después del sismo</h2>
-            <p>7.4 de magnitud · 321 fallecidos · 1.450 viviendas afectadas.
-              Esto es lo que hoy piden las familias censadas.</p>
-          </div>
-          <span class="px-cred">Foto: World Central Kitchen · CC BY 4.0</span>
-        </div>
-        <a class="infoimg" href="img/infografia.png" target="_blank" rel="noopener">
-          <img src="img/infografia.png" alt="Infografía: cifras del terremoto del 10 de agosto de 2026 y necesidades del censo" loading="lazy">
-          <span class="infover">Ver la infografía completa</span>
-        </a>
-        <div class="btnrow" style="margin-top:10px">
-          <button type="button" class="btn2 pri" id="sh-link">Compartir el enlace</button>
-          <button type="button" class="btn2" id="sh-ig">Imagen para Instagram</button>
-          <button type="button" class="btn2" id="sh-wa">Imagen para WhatsApp</button>
-        </div>
-        <p class="muted" style="margin:8px 3px 0;font-size:12px" id="sh-msg"></p>
-      </div>
-
-      <p class="creditos-foto">
-        Fotografías de Pereira tras el sismo: <b>World Central Kitchen</b>,
-        publicadas bajo licencia <a href="https://creativecommons.org/licenses/by/4.0/deed.es"
-        target="_blank" rel="noopener">Creative Commons BY 4.0</a> en Wikimedia Commons.
-        Se redimensionaron para la web; no se alteró su contenido.<br>
-        Cifras del sismo: Servicio Geológico Colombiano, USGS y reportes oficiales en prensa nacional.
-      </p>
-      <div class="bloque" id="b-ofertas" style="display:none">
-        <div class="sec">Disponible para recoger</div>
-        <p class="muted secsub">Cosas que alguien ya tiene listas. Contacta y coordina la entrega.</p>
-        <div class="tabsub" id="of-filtros" style="display:none"></div>
-        <div id="lista-ofertas"></div>
-      </div>
-      <div id="ofrecer-wrap"></div>
       <!-- Historias del censo: anónimas, con lo que cada familia contó -->
-      <div class="bloque confoto" id="b-historias" style="display:none">
-        <div class="fondo-foto" style="background-image:url('img/wck-2.jpg')"></div>
-        <div class="sec">Quiénes esperan hoy</div>
-        <p class="muted secsub">Historias del censo, contadas por las propias familias.
-          Sin nombres ni direcciones: cada una autorizó que la usemos para pedir ayuda.</p>
+      <section class="historias" id="b-historias" style="display:none">
+        <div class="h-foto" id="h-foto" style="background-image:url('img/wck-1.jpg')"></div>
+        <div class="h-velo"></div>
+        <h2 class="h-tit">Quiénes esperan hoy</h2>
+        <p class="h-sub">Contado por las propias familias. Sin nombres ni direcciones.</p>
         <div class="carru" id="carru">
           <div class="carru-pista" id="carru-pista"></div>
           <div class="carru-nav">
@@ -317,6 +287,59 @@ document.documentElement.setAttribute('data-eff', window.temaEfectivo());
         </div>
       </div>
 
+      <!-- Estado de la emergencia: hero con profundidad y la infografía -->
+      <div class="bloque" id="b-info">
+        <div class="heropx" id="heropx">
+          <div class="px-foto" style="background-image:url('img/wck-2.jpg')"></div>
+          <div class="px-velo"></div>
+          <div class="px-texto">
+            <h2>Dos semanas<br>después del sismo</h2>
+            <p>7.4 de magnitud · 321 fallecidos · 1.450 viviendas afectadas.
+              Esto es lo que hoy piden las familias censadas.</p>
+          </div>
+          <span class="px-cred">Foto: World Central Kitchen · CC BY 4.0</span>
+        </div>
+        <div class="reporte" id="reporte"></div>
+        <button type="button" class="btn2 pri compartir-cta" id="ab-compartir">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4"/></svg>
+          Compartir este reporte
+        </button>
+      </div>
+
+      <p class="creditos-foto">
+        Fotografías de Pereira tras el sismo: <b>World Central Kitchen</b>,
+        publicadas bajo licencia <a href="https://creativecommons.org/licenses/by/4.0/deed.es"
+        target="_blank" rel="noopener">Creative Commons BY 4.0</a> en Wikimedia Commons.
+        Se redimensionaron para la web; no se alteró su contenido.<br>
+        Cifras del sismo: Servicio Geológico Colombiano, USGS y reportes oficiales en prensa nacional.
+      </p>
+      <!-- Estado de la emergencia: hero con profundidad y la infografía -->
+      <div class="bloque" id="b-info">
+        <div class="heropx" id="heropx">
+          <div class="px-foto" style="background-image:url('img/wck-2.jpg')"></div>
+          <div class="px-velo"></div>
+          <div class="px-texto">
+            <h2>Dos semanas<br>después del sismo</h2>
+            <p>7.4 de magnitud · 321 fallecidos · 1.450 viviendas afectadas.
+              Esto es lo que hoy piden las familias censadas.</p>
+          </div>
+          <span class="px-cred">Foto: World Central Kitchen · CC BY 4.0</span>
+        </div>
+        <div class="reporte" id="reporte"></div>
+        <button type="button" class="btn2 pri compartir-cta" id="ab-compartir">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4"/></svg>
+          Compartir este reporte
+        </button>
+      </div>
+
+      <p class="creditos-foto">
+        Fotografías de Pereira tras el sismo: <b>World Central Kitchen</b>,
+        publicadas bajo licencia <a href="https://creativecommons.org/licenses/by/4.0/deed.es"
+        target="_blank" rel="noopener">Creative Commons BY 4.0</a> en Wikimedia Commons.
+        Se redimensionaron para la web; no se alteró su contenido.<br>
+        Cifras del sismo: Servicio Geológico Colombiano, USGS y reportes oficiales en prensa nacional.
+      </p>
+      
     </div></section>
 
     <section class="view" id="v-coord"><div class="pad">
@@ -380,6 +403,33 @@ document.documentElement.setAttribute('data-eff', window.temaEfectivo());
   </footer>
 </div>
 
+
+<!-- VENTANA DE COMPARTIR -->
+<div class="scrim-c" id="scrim-c" hidden>
+  <div class="modal-c">
+    <div class="mc-head">
+      <h2>Compartir este reporte</h2>
+      <button type="button" class="mc-x" id="cerrar-compartir" aria-label="Cerrar">&times;</button>
+    </div>
+    <div class="mc-body">
+      <p class="muted" style="margin:0 0 14px;font-size:13.5px">La imagen se arma en este momento con las cifras de hoy.</p>
+      <button type="button" class="opc" id="sh-link">
+        <span class="oi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.5 1.5"/><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7L12 19"/></svg></span>
+        <span class="ot"><b>Enviar el enlace</b><small>aquiestamos.co &middot; por WhatsApp, correo o donde quieras</small></span></button>
+      <button type="button" class="opc" id="sh-ig">
+        <span class="oi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1.2" fill="currentColor"/></svg></span>
+        <span class="ot"><b>Imagen para Instagram</b><small>Formato de publicaci&oacute;n, 1080 &times; 1350</small></span></button>
+      <button type="button" class="opc" id="sh-wa">
+        <span class="oi"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.5 2 2 6.5 2 12c0 1.8.5 3.4 1.3 4.9L2 22l5.3-1.4A10 10 0 1 0 12 2Zm0 18.2c-1.5 0-3-.4-4.3-1.2l-.3-.2-3.1.8.8-3-.2-.3A8.2 8.2 0 1 1 12 20.2Z"/></svg></span>
+        <span class="ot"><b>Imagen para WhatsApp</b><small>Formato de estado, 1080 &times; 1920 &middot; incluye una historia</small></span></button>
+      <a class="opc" href="img/infografia.png" target="_blank" rel="noopener">
+        <span class="oi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="14" rx="2.5"/><path d="m6 15 4-4 3 3 2-2 3 3"/></svg></span>
+        <span class="ot"><b>Ver la infograf&iacute;a completa</b><small>Imagen grande, para imprimir o descargar</small></span></a>
+      <p class="muted" style="margin:12px 3px 0;font-size:12px" id="sh-msg"></p>
+    </div>
+  </div>
+</div>
+
 <!-- HOJA INFERIOR -->
 <div class="sheet" id="sheet">
   <div class="scrim" data-close></div>
@@ -395,18 +445,19 @@ document.documentElement.setAttribute('data-eff', window.temaEfectivo());
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="js/config.js?v=1.73.0"></script>
-<script src="js/version.js?v=1.73.0"></script>
-<script src="js/data.js?v=1.73.0"></script>
-<script src="js/estado.js?v=1.73.0"></script>
-<script src="js/calc.js?v=1.73.0"></script>
-<script src="js/mapa.js?v=1.73.0"></script>
-<script src="js/hojas.js?v=1.73.0"></script>
-<script src="js/cuenta.js?v=1.73.0"></script>
-<script src="js/ui.js?v=1.73.0"></script>
-<script src="js/dar.js?v=1.73.0"></script>
-<script src="js/aliados.js?v=1.73.0"></script>
-<script src="js/historias.js?v=1.73.0"></script>
-<script src="js/compartir-img.js?v=1.73.0"></script>
+<script src="js/config.js?v=1.74.0"></script>
+<script src="js/version.js?v=1.74.0"></script>
+<script src="js/data.js?v=1.74.0"></script>
+<script src="js/estado.js?v=1.74.0"></script>
+<script src="js/calc.js?v=1.74.0"></script>
+<script src="js/mapa.js?v=1.74.0"></script>
+<script src="js/hojas.js?v=1.74.0"></script>
+<script src="js/cuenta.js?v=1.74.0"></script>
+<script src="js/ui.js?v=1.74.0"></script>
+<script src="js/dar.js?v=1.74.0"></script>
+<script src="js/aliados.js?v=1.74.0"></script>
+<script src="js/historias.js?v=1.74.0"></script>
+<script src="js/reporte.js?v=1.74.0"></script>
+<script src="js/compartir-img.js?v=1.74.0"></script>
 </body>
 </html>
