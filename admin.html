@@ -8,7 +8,7 @@
 <link rel="icon" type="image/svg+xml" href="logo/marca.svg">
 <title>Aquí Estamos · Administración</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
-<link rel="stylesheet" href="css/app.css?v=1.66.0">
+<link rel="stylesheet" href="css/app.css?v=1.67.0">
 <style>
   /* El panel es mobile-first: una columna, pestañas fijas abajo. En pantalla
      grande se centra en una franja de ancho de celular para no deformarse. */
@@ -395,10 +395,16 @@
       <path d="M18.1 12.2h-6.4a1.35 1.35 0 0 0 0 2.7h6.4z" fill="#fff"/>
     </svg>
     <h2 style="margin:0 0 6px">Administración</h2>
-    <p class="muted" style="margin:0 0 18px">Le llega un enlace al correo. No hay contraseña que recordar ni que compartir.</p>
-    <input id="mail" type="email" inputmode="email" placeholder="su-correo@ejemplo.com" autocomplete="email">
-    <button class="btn" id="enviar">Enviarme el enlace</button>
+    <p class="muted" style="margin:0 0 18px">Entre con su correo y su clave.</p>
+    <input id="mail" type="email" inputmode="email" placeholder="su-correo@ejemplo.com" autocomplete="username">
+    <input id="clave" type="password" placeholder="Su clave" autocomplete="current-password" style="margin-top:10px">
+    <button class="btn" id="entrar" style="margin-top:12px">Entrar</button>
     <p class="muted" id="msg" style="margin-top:14px"></p>
+    <button type="button" class="lnk" id="ver-enlace" style="margin-top:10px">Prefiero que me llegue un enlace al correo</button>
+    <div id="porenlace" hidden style="margin-top:10px">
+      <button class="btn flat" id="enviar" style="width:100%">Enviarme el enlace</button>
+      <p class="muted" style="margin-top:8px;font-size:12.5px">Ojo: Hotmail, Outlook y Yahoo suelen descartar ese correo.</p>
+    </div>
   </div>
 
   <!-- PANEL -->
@@ -467,9 +473,9 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="js/config.js?v=1.66.0"></script>
-<script src="js/version.js?v=1.66.0"></script>
-<script src="js/data.js?v=1.66.0"></script>
+<script src="js/config.js?v=1.67.0"></script>
+<script src="js/version.js?v=1.67.0"></script>
+<script src="js/data.js?v=1.67.0"></script>
 <script>
 /* ============================================================
    PANEL DE ADMINISTRACIÓN — Aquí Estamos
@@ -2885,6 +2891,32 @@ async function salir(){ if(DEMO){ toast('En demo no hay sesión que cerrar.'); r
   await db.auth.signOut(); location.reload(); }
 
 /* ---------- login ---------- */
+/* Clave, no enlace: Hotmail y Yahoo descartan en silencio el correo del
+   enlace mágico. El enlace queda como alternativa para quien lo prefiera. */
+$('#entrar').onclick = async ()=>{
+  const email = $('#mail').value.trim();
+  const clave = $('#clave').value;
+  if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return toast('Revise el correo');
+  if(!clave) return toast('Escriba su clave');
+  const b=$('#entrar'); b.disabled=true; b.textContent='Entrando…';
+  const {error} = await db.auth.signInWithPassword({email, password:clave});
+  b.disabled=false; b.textContent='Entrar';
+  if(error){
+    $('#msg').textContent = /invalid/i.test(error.message)
+      ? 'Correo o clave incorrectos.'
+      : 'No se pudo entrar: '+error.message;
+    return;
+  }
+  $('#msg').textContent=''; $('#login').hidden=true; arrancar();
+};
+$('#clave').addEventListener('keydown', e=>{ if(e.key==='Enter') $('#entrar').click(); });
+$('#ver-enlace').onclick = ()=>{
+  const w=$('#porenlace'); w.hidden = !w.hidden;
+  $('#ver-enlace').textContent = w.hidden
+    ? 'Prefiero que me llegue un enlace al correo'
+    : 'Volver a entrar con clave';
+};
+
 $('#enviar').onclick = async ()=>{
   const email = $('#mail').value.trim();
   if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return toast('Revise el correo');
