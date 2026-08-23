@@ -907,11 +907,12 @@ input.pin{letter-spacing:9px;font-size:20px;text-align:center;font-weight:700}
 .telactual .muted{font-size:12px}
 
 /* ---- estado vacío: una lista sin datos tiene que decirlo con palabras ---- */
-.vacio{background:var(--surf);border:1px dashed var(--line2);border-radius:13px;
-  padding:20px 16px;text-align:center;color:var(--dim);font-size:13px;line-height:1.5}
+.vacio{background:none;border:0;border-top:1px solid var(--line);border-radius:0;
+  padding:28px 16px 8px;text-align:center;color:var(--dim);font-size:13.5px;line-height:1.55}
 .vacio .vic{opacity:.5;margin-bottom:8px}
 .vacio .vic svg{width:26px;height:26px}
-.vacio b{display:block;color:var(--txt);font-size:16px;margin-bottom:5px}
+.vacio b{display:block;color:var(--txt);font-size:16.5px;font-weight:800;
+  letter-spacing:-.3px;margin-bottom:5px}
 .vacio p{margin:0 0 10px}
 
 /* ---- aviso dentro de una hoja ---- */

@@ -11,7 +11,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
-<link rel="stylesheet" href="css/app.css?v=1.89.0">
+<link rel="stylesheet" href="css/app.css?v=1.90.0">
 <style>
   /* El panel es mobile-first: una columna, pestañas fijas abajo. En pantalla
      grande se centra en una franja de ancho de celular para no deformarse. */
@@ -39,19 +39,65 @@
 
 
 
+
+  /* ---- una parada de la ruta ----
+     En el teléfono se apila; en pantalla ancha se reparte en columnas para
+     que no quede medio metro de vacío entre el nombre y el botón. Cada
+     parada se ve dónde empieza y dónde termina. */
+  .jrow{display:grid;gap:4px 14px;align-items:start;padding:14px 12px;
+    grid-template-columns:auto 1fr auto;
+    grid-template-areas:"tick nom wa" ". dir dir" ". tel tel";
+    border:1px solid var(--line);border-radius:13px;background:var(--bg2);
+    margin-bottom:9px}
+  .jrow:hover{border-color:var(--line2)}
+  .jrow.hecha{opacity:.5;background:none}
+  .jrow > .tick2{grid-area:tick;margin-top:2px}
+  .jrow .jq{grid-area:nom;min-width:0}
+  .jrow .jd{grid-area:dir;min-width:0}
+  .jrow .jt{grid-area:tel;min-width:0}
+  .jrow .waq{grid-area:wa}
+  .jrow .waq.vacio2{background:none;pointer-events:none}
+  .jnom{display:flex;align-items:center;gap:9px;font-size:15px;font-weight:800;
+    letter-spacing:-.2px;line-height:1.3}
+  .jnom .jn{flex:0 0 auto;width:24px;height:24px;border-radius:7px;background:var(--chip);
+    color:var(--dim);font-size:12px;font-weight:850;display:grid;place-items:center}
+  .jmot{font-size:12.5px;color:var(--pri);font-weight:700;margin-top:4px}
+  .jlbl{display:block;font-size:10px;font-weight:850;letter-spacing:1.1px;
+    text-transform:uppercase;color:var(--dim);margin-bottom:1px}
+  .jbar{font-size:12px;color:var(--dim);margin-top:2px}
+  .dline .dtx.sin{color:var(--dim);font-weight:600;font-style:italic}
+  @media (min-width:860px){
+    .jrow{grid-template-columns:auto minmax(200px,1.1fr) minmax(210px,1fr) minmax(160px,.7fr) auto;
+      grid-template-areas:"tick nom dir tel wa";align-items:center;gap:16px;padding:14px 16px}
+    .jrow .jq{align-self:center}
+  }
   /* ---- dirección y teléfono de cada parada, con su copiar ---- */
   /* El botón se queda al lado aunque la dirección ocupe dos renglones:
      con wrap se caía debajo y la fila perdía la lectura. */
-  .dline{display:flex;align-items:flex-start;gap:8px;margin-top:5px;flex-wrap:nowrap}
+  .dline{display:flex;align-items:flex-start;gap:8px;margin-top:2px;flex-wrap:nowrap}
   .dline .dtx{font-size:13.5px;font-weight:700;color:var(--txt);letter-spacing:.2px;
-    text-decoration:none;overflow-wrap:anywhere;flex:1 1 auto;min-width:0;
-    line-height:1.4;padding-top:6px}
+    text-decoration:none;overflow-wrap:anywhere;flex:0 1 auto;min-width:0;
+    line-height:1.35;padding-top:5px}
   .dline .dtx.tel{color:var(--acc);letter-spacing:.4px}
   .dcopy{flex:0 0 auto;background:var(--chip);border:1px solid var(--line);color:var(--dim);
     border-radius:8px;padding:0 11px;min-height:34px;font-family:inherit;font-size:11.5px;
     font-weight:800;cursor:pointer;display:inline-flex;align-items:center}
   .dcopy:active{opacity:.7}
   .dcopy.ok{background:rgba(63,154,104,.18);border-color:#3F9A68;color:#7ED4A2}
+
+  /* En pantalla ancha las etiquetas sobran: la columna ya dice qué es, y
+     repetirlas diez veces por equipo solo gasta renglones. */
+  .dcopy svg{width:15px;height:15px}
+  .dcopy{padding:0 9px;min-height:30px}
+  .dcopy.ok::after{content:"Copiado";font-size:11px;margin-left:6px}
+  .dcopy.ok svg{display:none}
+  @media (min-width:860px){
+    .jrow .jlbl{display:none}
+    .jrow{padding:11px 16px;gap:14px}
+    .jnom{font-size:14.5px}
+    .jmot{display:inline-block;margin:4px 0 0;padding:2px 8px;border-radius:999px;
+      background:color-mix(in srgb, var(--pri) 16%, transparent);font-size:11.5px}
+  }
   /* ---- clave con ojo para revisarla ---- */
   .claveln{position:relative;margin-top:10px}
   .claveln input{width:100%;padding-right:46px}
@@ -425,15 +471,19 @@
   .login .mark{width:56px;height:56px;margin-bottom:14px}
 
   /* ---- alerta accionable (Inicio) ---- */
-  .alert{border-radius:16px;padding:13px 14px;margin-bottom:10px;
-    border:1px solid var(--line);border-left-width:4px;background:#16223a}
-  .alert.amber{border-left-color:#f5a524;background:#1d1a10}
-  .alert.red{border-left-color:#f87171;background:#1e1414}
-  .alert.green{border-left-color:#22c55e;background:#111f18;display:flex;align-items:center;gap:9px}
-  .alert .ti{font-size:14.5px;font-weight:700;line-height:1.25}
-  .alert .cx{font-size:13px;color:var(--dim);margin-top:3px}
-  .alert .btn{margin-top:11px;padding:12px}
-  .alert.green .ic{color:#22c55e;flex:0 0 auto}
+  /* La alerta informa; el botón estirado a todo el ancho gritaba más que
+     el problema. Va en línea y con el tamaño de una acción secundaria. */
+  .alert{border-radius:14px;padding:14px 16px 14px 18px;margin-bottom:9px;
+    border:1px solid var(--line);background:var(--card);
+    box-shadow:inset 3px 0 0 var(--otro)}
+  .alert.red{box-shadow:inset 3px 0 0 var(--urg)}
+  .alert.amber{box-shadow:inset 3px 0 0 var(--pri)}
+  .alert.green{box-shadow:inset 3px 0 0 var(--c0);display:flex;align-items:center;gap:11px}
+  .alert .ti{font-size:15px;font-weight:800;line-height:1.3;letter-spacing:-.2px}
+  .alert .cx{font-size:13.2px;color:var(--dim);margin-top:3px;line-height:1.45}
+  .alert .btn{margin-top:11px;width:auto;min-width:0;padding:0 16px;min-height:40px;
+    font-size:13.5px;display:inline-flex;align-items:center;border-radius:10px}
+  .alert.green .ic{color:var(--c0);flex:0 0 auto;width:22px;height:22px}
 
   /* ---- fila grande "pendiente de mí" ---- */
   .bigrow{display:flex;align-items:center;gap:12px;background:var(--card);border:1px solid var(--line);
@@ -463,9 +513,12 @@
     font-family:inherit;line-height:1}
 
   /* ---- fila compacta de persona ---- */
-  .prow{display:flex;align-items:center;gap:11px;background:var(--card);border:1px solid var(--line);
-    border-radius:14px;padding:10px 11px;margin-bottom:8px}
-  .prow.pendiente{border-color:#7c4a10}
+  /* Con 200 fichas, una tarjeta por fila es mucho borde y poca
+     información. Filas separadas por filete: rinden el doble. */
+  .prow{display:flex;align-items:center;gap:12px;background:none;border:0;
+    border-bottom:1px solid var(--line);border-radius:0;padding:13px 2px;margin-bottom:0}
+  .prow:last-child{border-bottom:0}
+  .prow.pendiente{box-shadow:inset 3px 0 0 var(--pri);padding-left:12px}
   .prow.anulada{opacity:.6}
   .prow .info{flex:1;min-width:0;cursor:pointer}
   .prow .nm{font-size:15px;font-weight:700;display:flex;align-items:center;gap:5px}
@@ -647,9 +700,9 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="js/config.js?v=1.89.0"></script>
-<script src="js/version.js?v=1.89.0"></script>
-<script src="js/data.js?v=1.89.0"></script>
+<script src="js/config.js?v=1.90.0"></script>
+<script src="js/version.js?v=1.90.0"></script>
+<script src="js/data.js?v=1.90.0"></script>
 <script>
 /* ============================================================
    PANEL DE ADMINISTRACIÓN — Aquí Estamos
@@ -1389,25 +1442,32 @@ function vJornadas(){
           <div class="rutamapa" id="jmap-${n}"></div>
           <p class="muted" style="margin:8px 3px 10px;font-size:12.5px">Toca la casilla al entregar cada una.</p>
           <div>
-            ${ps.map(p=>`<div class="prow" style="border:0;padding:9px 0;${p.entregada?'opacity:.55':''}">
+            ${ps.map(p=>`<div class="jrow${p.entregada?' hecha':''}">
               <button type="button" class="tick2 ${p.entregada?'on':''}" data-entregar="${esc(p.id)}"
                 title="${p.entregada?'Entregada — toca para desmarcar':'Marcar como entregada'}"
                 aria-pressed="${p.entregada?'true':'false'}"
                 aria-label="${p.entregada?'Entregada a '+esc(p.nombre||'')+'. Toca para desmarcar':'Marcar como entregada a '+esc(p.nombre||'')}">${p.entregada?'✓':''}</button>
-              <div class="info">
-                <div class="nm">${p.orden}. ${esc(p.nombre||'Vivienda')}${p.personas?` · ${p.personas}p`:''}</div>
-                ${p.barrio?`<div class="mt">${esc(p.barrio)}</div>`:''}
+              <div class="jq">
+                <div class="jnom"><span class="jn">${p.orden}</span>
+                  <span class="jnt">${esc(p.nombre||'Vivienda')}${p.personas?` · ${p.personas}p`:''}</span></div>
+                ${p.motivo?`<div class="jmot">${esc(p.motivo)}</div>`:''}
+              </div>
+              <div class="jd">
+                <span class="jlbl">Dirección</span>
                 ${p.direccion?`<div class="dline">
                   <span class="dtx">${esc(p.direccion)}</span>
-                  <button type="button" class="dcopy" data-copiar="${esc(p.direccion)}">Copiar</button>
-                </div>`:''}
+                  <button type="button" class="dcopy" data-copiar="${esc(p.direccion)}" aria-label="Copiar la dirección" title="Copiar la dirección"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12" rx="2.4"/><path d="M6 15H4.5A1.5 1.5 0 0 1 3 13.5v-9A1.5 1.5 0 0 1 4.5 3h9A1.5 1.5 0 0 1 15 4.5V6"/></svg></button>
+                </div>`:'<div class="dline"><span class="dtx sin">Sin dirección</span></div>'}
+                ${p.barrio?`<div class="jbar">${esc(p.barrio)}</div>`:''}
+              </div>
+              <div class="jt">
+                <span class="jlbl">Teléfono</span>
                 ${p.tel_e164?`<div class="dline">
                   <a class="dtx tel" href="tel:${esc(p.tel_e164)}">${esc(telBonito(p.tel_e164))}</a>
-                  <button type="button" class="dcopy" data-copiar="${esc(telBonito(p.tel_e164))}">Copiar</button>
-                </div>`:''}
-                ${p.motivo?`<div class="mt" style="color:var(--acc)">${esc(p.motivo)}</div>`:''}
+                  <button type="button" class="dcopy" data-copiar="${esc(telBonito(p.tel_e164))}" aria-label="Copiar el teléfono" title="Copiar el teléfono"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12" rx="2.4"/><path d="M6 15H4.5A1.5 1.5 0 0 1 3 13.5v-9A1.5 1.5 0 0 1 4.5 3h9A1.5 1.5 0 0 1 15 4.5V6"/></svg></button>
+                </div>`:'<div class="dline"><span class="dtx sin">Sin teléfono</span></div>'}
               </div>
-              ${p.tel_e164?`<a class="waq" href="${waLink(p.tel_e164,'Hola, somos Aquí Estamos. Vamos en camino con su ayuda.')}" target="_blank" rel="noopener">${WA_SVG}</a>`:''}
+              ${p.tel_e164?`<a class="waq" href="${waLink(p.tel_e164,'Hola, somos Aquí Estamos. Vamos en camino con su ayuda.')}" target="_blank" rel="noopener">${WA_SVG}</a>`:'<span class="waq vacio2"></span>'}
             </div>`).join('')}
           </div>`}
         </div>`;
