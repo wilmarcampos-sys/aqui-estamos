@@ -211,7 +211,7 @@
   .sbtn span{position:relative;font-weight:800;font-size:15px;line-height:1.1}
   .sbtn-need{background:linear-gradient(160deg,#EF4444,#C81E1E);box-shadow:0 8px 20px rgba(0,0,0,.40);padding:0 14px;min-width:0}
   .sbtn-need span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .sbtn-censo{flex-direction:column;gap:4px;width:74px;background:linear-gradient(160deg,#8B5CF6,#6D28D9);
+  .sbtn-censo{flex-direction:column;gap:4px;width:74px;background:linear-gradient(160deg,#22303F,#16222F);
     box-shadow:0 8px 18px rgba(0,0,0,.38)}
   .sbtn-censo span{font-size:11.5px;font-weight:700}
   .msheet-body{flex:1 1 auto;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;
@@ -345,7 +345,7 @@
   .mpin-alb{background:linear-gradient(160deg,#FBBF24,#F59E0B);color:#3a1500}
   .mpin-ent{background:linear-gradient(160deg,#22C55E,#15803D)}
   .mpin-ent .ic{width:12px;height:12px}
-  .mpin-cen{background:linear-gradient(160deg,#8B5CF6,#6D28D9);border-radius:50%;border-width:2px}
+  .mpin-cen{background:linear-gradient(160deg,#7E5FBF,#5B3E96);border-radius:50%;border-width:2px}
   .mpin-cen .ic{width:12px;height:12px}
 
   /* columna de controles del mapa (arriba derecha, estilo app móvil):
@@ -414,14 +414,16 @@
   /* promo "Quiero coordinar mi barrio" + intro del rol */
   .promo-coord{display:flex;align-items:center;gap:12px;width:100%;text-align:left;font-family:inherit;
     padding:15px;border-radius:20px;border:0;cursor:pointer;margin-bottom:12px;
-    background:linear-gradient(140deg,#4F46E5,#7C3AED 55%,#9333EA);color:#fff;
+    background:linear-gradient(140deg,#1F3350,#16222F 58%,#101A26);color:#fff;
+    border:1px solid rgba(242,183,5,.28);
     box-shadow:0 10px 26px rgba(0,0,0,.35);position:relative;overflow:hidden;
     transition:transform .16s var(--ease)}
   .promo-coord:active{transform:scale(.98)}
   :root[data-eff="light"] .promo-coord{box-shadow:0 8px 20px rgba(15,23,41,.2)}
   .promo-coord::after{content:"";position:absolute;right:-30px;top:-40px;width:130px;height:130px;
     border-radius:50%;background:rgba(255,255,255,.12)}
-  .promo-coord .pi{width:44px;height:44px;border-radius:14px;background:rgba(255,255,255,.2);
+  .promo-coord .pi{width:44px;height:44px;border-radius:14px;
+    background:rgba(242,183,5,.16);color:#F2B705;
     display:grid;place-items:center;flex:0 0 auto}
   .promo-coord .pi svg{width:22px;height:22px}
   .promo-coord .pt{flex:1;min-width:0;position:relative}
@@ -432,7 +434,7 @@
   .promo-coord .pa svg{width:15px;height:15px}
   .promo-coord .pi .ic{width:22px;height:22px}
   a.promo-coord{display:flex;color:#fff}
-  .promo-coord.grad-azul{background:linear-gradient(140deg,#0EA5E9,#2563EB 60%,#1D4ED8);margin-top:12px}
+  .promo-coord.grad-azul{background:linear-gradient(140deg,#1E3350,#16222F 60%,#101A26);margin-top:12px}
   .cintro-b{display:flex;align-items:flex-start;gap:11px;padding:11px 12px;margin-bottom:8px;
     background:var(--surf);border:1px solid var(--line);border-radius:14px}
   .cintro-b .cib{width:36px;height:36px;border-radius:12px;flex:0 0 auto;display:grid;place-items:center;
@@ -1349,3 +1351,53 @@ input.pin{letter-spacing:9px;font-size:20px;text-align:center;font-weight:700}
 .carru-pista{align-items:flex-start}
 .carru-pista > .hcard{align-self:flex-start}
 .rep-orgs{padding:0}
+
+/* ============================================================
+   LENGUAJE DEL REPORTE EN EL APP
+   ============================================================
+   Segunda capa del rediseño. El reporte dejó una gramática clara:
+   un solo papel, secciones separadas por filete y aire, titulares que
+   pesan y una foto que abre cada sección. Aquí se aplica a Ayudar y
+   Coordinar, que eran tarjetas dentro de tarjetas.
+   ============================================================ */
+
+/* Las secciones dejan de ser cajas. El filete y el aire las separan. */
+.view .bloque{background:none;border:0;border-radius:0;padding:0;
+  margin:22px 0 0;padding-top:20px;border-top:1px solid var(--line)}
+.view .bloque:first-child{margin-top:0;padding-top:0;border-top:0}
+.view .bloque > .sec:first-child{margin-top:0}
+
+/* Los títulos de sección pesan: eran una etiqueta gris en mayúsculas. */
+.sec{font-size:18px;text-transform:none;letter-spacing:-.5px;color:var(--txt);
+  margin:20px 0 3px;font-weight:850}
+.secsub{margin:0 0 12px;font-size:13px;line-height:1.5}
+
+/* ---- portada de sección, con foto ---- */
+.vhero{position:relative;overflow:hidden;border-radius:16px;margin-bottom:18px;
+  min-height:150px;background:var(--noc,#0D1520);display:flex;align-items:flex-end}
+.vhero .vh-foto{position:absolute;inset:0;background-size:cover;background-position:center 48%}
+.vhero .vh-velo{position:absolute;inset:0;
+  background:linear-gradient(0deg,rgba(13,21,32,.95) 22%,rgba(13,21,32,.55) 70%,rgba(13,21,32,.28) 100%)}
+.vhero .vh-cont{position:relative;padding:18px 20px 30px;width:100%}
+.vhero h2{margin:0;font-size:25px;font-weight:900;letter-spacing:-1px;color:#fff}
+.vhero p{margin:6px 0 0;font-size:13.5px;line-height:1.5;color:#C6D0E0;max-width:420px}
+.vhero .vh-cred{position:absolute;right:12px;bottom:10px;font-size:10px;
+  color:rgba(255,255,255,.4);text-shadow:0 1px 5px rgba(0,0,0,.6)}
+@media (min-width:700px){
+  .vhero{min-height:190px} .vhero h2{font-size:31px} .vhero .vh-cont{padding:22px 26px}
+}
+
+/* Registrar en el censo usaba un morado propio que ahora choca con el
+   morado de vulnerabilidad. Pasa al acento de la marca. */
+.censar-link{color:var(--link)}
+:root[data-eff="light"] .censar-link{color:var(--link)}
+
+/* Un solo tamaño de toque y una sola respuesta al presionar. */
+.btn, .btn2, .gopt, .opt{min-height:48px}
+.btn:active, .btn2:active, .gopt:active{transform:scale(.985)}
+
+/* La barra de donación desde USA usa el degradado de la marca,
+   no un naranja suelto. */
+.usbar{background:linear-gradient(96deg,var(--marca-am,#F2B705),#E8453C 58%,#C81E1E);
+  color:#0D1520;font-weight:800}
+.usbar .ic{color:#0D1520}

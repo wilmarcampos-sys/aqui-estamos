@@ -336,7 +336,7 @@ function render(){
             <div class="muted" style="font-size:12px;margin-top:4px">Lo tiene: <b style="color:var(--txt)">${esc(o.quien)}</b>${o.ciudad?` · ${esc(o.ciudad)}`:''}</div>
             ${o.cond?`<div class="ofcond">${ico('help')} ${esc(o.cond)}</div>`:''}
             <div style="margin-top:9px;display:flex;gap:7px;flex-wrap:wrap">
-              ${o.enlace?`<a class="mini" style="background:#2563EB;color:#fff;text-decoration:none;flex:0 1 auto;padding:0 13px" href="${esc(o.enlace)}" target="_blank" rel="noopener">Abrir formulario</a>`:''}
+              ${o.enlace?`<a class="mini" style="background:var(--acc);color:var(--acc-tx);text-decoration:none;flex:0 1 auto;padding:0 13px" href="${esc(o.enlace)}" target="_blank" rel="noopener">Abrir formulario</a>`:''}
               ${o.tel?`<button type="button" class="mini wa" style="flex:0 1 auto;padding:0 13px" data-wa-of="${esc(String(o.tel).replace(/\D/g,''))}">WhatsApp</button>`:''}
               ${o.tel?`<button type="button" class="mini" style="flex:0 1 auto;padding:0 13px" data-copiar-tel="+${esc(String(o.tel).replace(/\D/g,''))}">Copiar tel.</button>`:''}
             </div>
