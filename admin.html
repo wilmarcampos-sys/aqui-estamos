@@ -8,7 +8,7 @@
 <link rel="icon" type="image/svg+xml" href="logo/marca.svg">
 <title>Aquí Estamos · Administración</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
-<link rel="stylesheet" href="css/app.css?v=1.69.0">
+<link rel="stylesheet" href="css/app.css?v=1.70.0">
 <style>
   /* El panel es mobile-first: una columna, pestañas fijas abajo. En pantalla
      grande se centra en una franja de ancho de celular para no deformarse. */
@@ -473,9 +473,9 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="js/config.js?v=1.69.0"></script>
-<script src="js/version.js?v=1.69.0"></script>
-<script src="js/data.js?v=1.69.0"></script>
+<script src="js/config.js?v=1.70.0"></script>
+<script src="js/version.js?v=1.70.0"></script>
+<script src="js/data.js?v=1.70.0"></script>
 <script>
 /* ============================================================
    PANEL DE ADMINISTRACIÓN — Aquí Estamos
@@ -882,7 +882,7 @@ function abrirPedido(id){
 function abrirVivienda(id){
   const c = CENSO.find(x=>String(x.id)===String(id)); if(!c) return;
   const ev = EV_TXT[c.ev]||null;
-  const cond = (c.cond||[]).join(', ');
+  const cond = (c.cond||[]).map(k=>COND_TXT[k]||k).join(' · ');
   abrirSheet(`
     <div class="sec" style="margin-top:4px">Ficha ${esc(c.ficha||'del censo')}</div>
     <div class="fila"><b>${esc(c.nombre||'Vivienda')}</b>
@@ -911,6 +911,11 @@ function abrirVivienda(id){
 /* Editar la ficha: quien digita el censo es quien detecta el error (un
    teléfono con un dígito de más, "5 personas" que son 8) y hasta ahora no
    tenía dónde corregirlo. Lo pueden hacer los dos roles del panel. */
+const COND_TXT = {discapacidad:'Discapacidad o movilidad reducida', embarazo:'Embarazo o lactancia',
+  cronica:'Enfermedad crónica', sensorial:'Discapacidad auditiva o visual',
+  grave:'Enfermedad grave en tratamiento', sin_empleo:'Sin empleo por el terremoto',
+  mascotas:'Mascotas'};
+
 const NECS_ED = [['agua','Agua'],['alimentos','Mercado'],['medicamentos','Medicinas'],
   ['ropa','Carpas / cobijas'],['bebes','Pañales'],['aseo','Aseo'],['albergue','Albergue'],
   ['arriendo','Arriendo'],['estructural','Evaluación'],
@@ -1884,10 +1889,11 @@ const DESP_REGLAS = [
   {k:'inhabit',   n:'Viviendas inhabitables',      d:'Los que están durmiendo fuera'},
   {k:'olvidadas', n:'Las que nunca han recibido',  d:'Prioriza a quien no le ha llegado nada'},
   {k:'grandes',   n:'Hogares numerosos',           d:'Más personas, más peso en la fila'},
+  {k:'vulnerable',n:'Hogares vulnerables',         d:'Embarazo, enfermedad grave, discapacidad, sin empleo'},
 ];
 
 let DP = { paso:1, tipo:'alimentos', unidades:60, equipos:3, tope:8,
-           incluirAprox:false, todas:false, conReportes:false, radio:5, reglas:new Set(['urgencia','olvidadas']), rutas:null };
+           incluirAprox:false, todas:false, conReportes:false, radio:5, reglas:new Set(['urgencia','vulnerable','olvidadas']), rutas:null };
 
 /* Candidatas: solo con punto exacto (a un punto aproximado no se puede
    despachar a nadie) y sin haber recibido lo mismo en la última semana. */
@@ -1941,6 +1947,15 @@ function dpPuntaje(c){
   if(DP.reglas.has('mayores')  && c.may65>0){ p+=20; por.push(c.may65+' mayor'+(c.may65>1?'es':'')+' de 65'); }
   if(DP.reglas.has('inhabit')  && c.ev==='inhabitable'){ p+=35; por.push('vivienda inhabitable'); }
   if(DP.reglas.has('grandes')) p += Math.min(c.personas||0, 12) * 3;
+  if(DP.reglas.has('vulnerable')){
+    // pesos distintos: no es lo mismo un embarazo de alto riesgo que la
+    // pérdida del empleo, aunque las dos cuenten.
+    const PESO = {grave:40, embarazo:30, discapacidad:30, sensorial:25, cronica:20, sin_empleo:10};
+    const NOM  = {grave:'enfermedad grave', embarazo:'embarazo o lactancia',
+                  discapacidad:'discapacidad', sensorial:'discapacidad sensorial',
+                  cronica:'enfermedad crónica', sin_empleo:'sin empleo'};
+    (c.cond||[]).forEach(k=>{ if(PESO[k]){ p += PESO[k]; if(PESO[k]>=25) por.push(NOM[k]); } });
+  }
   if(DP.reglas.has('olvidadas')){
     const cerca = ENTREGAS.some(y=>y.lat && distM(c.lat,c.lng,y.lat,y.lng)<300);
     if(!cerca){ p+=30; por.push('nunca ha recibido'); }

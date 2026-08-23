@@ -25,7 +25,9 @@ const NECS = [
   {k:'transporte',  t:'Transporte / logística', ic:'<path d="M3 7h11v10H3z"/><path d="M14 10h4l3 3v4h-7z"/><circle cx="7" cy="18" r="1.8"/><circle cx="17.5" cy="18" r="1.8"/>'},
   {k:'mascotas',    t:'Comida para mascotas', ic:'<circle cx="7" cy="8" r="2"/><circle cx="12" cy="6" r="2"/><circle cx="17" cy="8" r="2"/><path d="M12 12c-3 0-5 2.5-5 5a3 3 0 0 0 3 3h4a3 3 0 0 0 3-3c0-2.5-2-5-5-5Z"/>'},
 ];
-const COND_TXT = {discapacidad:'discapacidad', embarazo:'embarazo', cronica:'enfermedad crónica', mascotas:'mascotas'};
+const COND_TXT = {discapacidad:'discapacidad', embarazo:'embarazo', cronica:'enfermedad crónica',
+  sensorial:'discapacidad auditiva o visual', grave:'enfermedad grave en tratamiento',
+  sin_empleo:'sin empleo por el terremoto', mascotas:'mascotas'};
 const EV_TXT = {habitable:'Habitable', danos:'Con daños', inhabitable:'Inhabitable'};
 
 let paso = 1;

@@ -8,8 +8,8 @@
 <title>Censo de vivienda · Aquí Estamos</title>
 <meta name="description" content="Registro de viviendas y familias afectadas por el terremoto de Pereira, para coordinar y verificar la entrega de ayudas.">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
-<link rel="stylesheet" href="css/app.css?v=1.69.0">
-<link rel="stylesheet" href="css/censo.css?v=1.69.0">
+<link rel="stylesheet" href="css/app.css?v=1.70.0">
+<link rel="stylesheet" href="css/censo.css?v=1.70.0">
 <script>
 window.temaEfectivo = function(){
   try{ var p = localStorage.getItem('ae_tema');
@@ -89,6 +89,9 @@ document.documentElement.setAttribute('data-eff', window.temaEfectivo());
         <button type="button" class="srow" data-c="discapacidad"><span class="st"><b>Persona con discapacidad</b><small>o movilidad reducida</small></span><span class="sw"></span></button>
         <button type="button" class="srow" data-c="embarazo"><span class="st"><b>Embarazo o lactancia</b></span><span class="sw"></span></button>
         <button type="button" class="srow" data-c="cronica"><span class="st"><b>Enfermedad crónica</b><small>Diabetes, hipertensión, oxígeno</small></span><span class="sw"></span></button>
+        <button type="button" class="srow" data-c="sensorial"><span class="st"><b>Discapacidad auditiva o visual</b><small>Sordera, ceguera</small></span><span class="sw"></span></button>
+        <button type="button" class="srow" data-c="grave"><span class="st"><b>Enfermedad grave en tratamiento</b><small>Cáncer, diálisis, oxígeno</small></span><span class="sw"></span></button>
+        <button type="button" class="srow" data-c="sin_empleo"><span class="st"><b>Sin empleo por el terremoto</b><small>Perdió el trabajo o el local</small></span><span class="sw"></span></button>
         <button type="button" class="srow" data-c="mascotas"><span class="st"><b>Mascotas</b></span><span class="sw"></span></button>
       </div>
     </section>
@@ -150,8 +153,8 @@ document.documentElement.setAttribute('data-eff', window.temaEfectivo());
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="js/config.js?v=1.69.0"></script>
-<script src="js/version.js?v=1.69.0"></script>
-<script src="js/censo.js?v=1.69.0"></script>
+<script src="js/config.js?v=1.70.0"></script>
+<script src="js/version.js?v=1.70.0"></script>
+<script src="js/censo.js?v=1.70.0"></script>
 </body>
 </html>
