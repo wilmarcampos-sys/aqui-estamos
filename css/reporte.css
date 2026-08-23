@@ -47,9 +47,9 @@ a{color:inherit}
 /* La foto cubre todo el hero; el velo la apaga del lado del texto sin cortarla
    en seco, y oscurece el borde de abajo para que la barra de cifras se apoye. */
 .rhero .velo{position:absolute;inset:0;
-  background:linear-gradient(95deg,rgba(13,21,32,.97) 0%,rgba(13,21,32,.95) 26%,
-    rgba(13,21,32,.78) 44%,rgba(13,21,32,.4) 62%,rgba(13,21,32,.1) 84%,rgba(13,21,32,.04) 100%),
-  linear-gradient(0deg,rgba(13,21,32,.8) 0%,rgba(13,21,32,0) 22%)}
+  background:linear-gradient(95deg,rgba(13,21,32,.88) 0%,rgba(13,21,32,.82) 28%,
+    rgba(13,21,32,.6) 46%,rgba(13,21,32,.3) 64%,rgba(13,21,32,.08) 86%,rgba(13,21,32,.02) 100%),
+  linear-gradient(0deg,rgba(13,21,32,.78) 0%,rgba(13,21,32,0) 24%)}
 .rhero .env{position:relative;padding:52px 20px 78px;min-height:min(78vh,620px);
   display:flex;flex-direction:column;justify-content:center}
 .rhero .cont{max-width:560px}
