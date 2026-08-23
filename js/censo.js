@@ -18,6 +18,8 @@ const NECS = [
   {k:'albergue',    t:'Albergue / techo',ic:'<path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.8V20h14V9.8"/>'},
   {k:'arriendo',    t:'Subsidio de arriendo', ic:'<path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.8V20h14V9.8"/><path d="M9 15h6M12 12v6"/>'},
   {k:'estructural', t:'Evaluación estructural', ic:'<path d="m14 7 3-3 3 3-3 3M5 21l7-7M3 13l4 4"/>'},
+  {k:'servicios',   t:'Servicios públicos', ic:'<path d="M13 2 4.5 13H11l-1 9 8.5-11H12l1-9Z"/>'},
+  {k:'movilidad',   t:'Silla de ruedas / movilidad', ic:'<circle cx="9" cy="18" r="4"/><path d="M9 4v9h6l3 5"/><circle cx="9" cy="4" r="1.6"/>'},
 ];
 const COND_TXT = {discapacidad:'discapacidad', embarazo:'embarazo', cronica:'enfermedad crónica', mascotas:'mascotas'};
 const EV_TXT = {habitable:'Habitable', danos:'Con daños', inhabitable:'Inhabitable'};
