@@ -251,7 +251,7 @@ body{background:var(--pp);color:var(--tin);font:15px/1.5 Inter,system-ui,sans-se
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="js/config.js?v=2.3.0"></script>
+<script src="js/config.js?v=2.4.0"></script>
 <script>
 const esc = s => String(s??'').replace(/[<>&"]/g, m => ({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[m]));
 const NEC = {alimentos:'Mercado', aseo:'Aseo', arriendo:'Arriendo', agua:'Agua',
@@ -527,7 +527,7 @@ async function hacerPDF(btn){
   const M = 14, A = 210, ancho = A - M*2;
   let y = 18;
 
-  const salto = alto => { if(y + alto > 282){ doc.addPage(); y = 18; } };
+  const salto = alto => { if(y + alto > 272){ doc.addPage(); y = 18; } };
 
   doc.setFont('helvetica','bold'); doc.setFontSize(16);
   doc.text(f0.abierta ? `${f0.jornada || 'Jornada'} · Equipo ${EQ}` : `Equipo ${f0.mi_equipo}`, M, y);
@@ -551,8 +551,19 @@ async function hacerPDF(btn){
     const necL = necs ? doc.splitTextToSize(necs, ancho - 26) : [];
     salto(12 + dirL.length*4.4 + necL.length*4 + (p.motivo?4.5:0));
 
-    doc.setDrawColor(60); doc.setLineWidth(0.4);
-    doc.rect(M, y - 3.6, 6, 6);                       // casilla para marcar a mano
+    // AcroForm se puede tocar en Acrobat y en visores de computador; en el
+    // celular casi ninguno lo soporta, así que igual queda el cuadro para
+    // marcar con lapicero. Se pone la casilla, no las dos cosas.
+    try{
+      const cb = new window.jspdf.AcroFormCheckBox();
+      cb.fieldName = 'p' + p.orden;
+      cb.Rect = [M, y - 3.6, 6, 6];
+      cb.appearanceState = 'Off';
+      doc.addField(cb);
+    }catch(_){
+      doc.setDrawColor(60); doc.setLineWidth(0.4);
+      doc.rect(M, y - 3.6, 6, 6);
+    }
     doc.setFont('helvetica','bold'); doc.setFontSize(11); doc.setTextColor(20);
     doc.text(String(p.orden) + '.', M + 9, y);
     doc.text((p.nombre || 'Vivienda') + (p.personas ? `  (${p.personas}p)` : ''), M + 17, y);
@@ -562,8 +573,22 @@ async function hacerPDF(btn){
     doc.text(dirL, M + 17, y); y += dirL.length * 4.4;
 
     if(p.tel_e164){
+      // Tocar el número marca; tocar WhatsApp abre el chat con el saludo ya
+      // escrito. En papel se leen igual, y en el celular ahorran el copiado.
+      const tel = telBonito(p.tel_e164);
       doc.setFont('helvetica','bold'); doc.setFontSize(10.5); doc.setTextColor(20);
-      doc.text(telBonito(p.tel_e164), M + 17, y); y += 4.8;
+      doc.text(tel, M + 17, y);
+      const anchoTel = doc.getTextWidth(tel);
+      doc.link(M + 17, y - 3.4, anchoTel, 4.6,
+        {url: 'tel:' + String(p.tel_e164).replace(/[^0-9+]/g,'')});
+
+      doc.setFont('helvetica','bold'); doc.setFontSize(8.5); doc.setTextColor(20, 120, 66);
+      const eti = 'WhatsApp';
+      doc.text(eti, M + 17 + anchoTel + 5, y);
+      doc.link(M + 17 + anchoTel + 5, y - 3, doc.getTextWidth(eti), 4.2,
+        {url: waLink(p.tel_e164,
+          'Hola, somos Aquí Estamos. Vamos en camino con su ayuda.')});
+      y += 4.8;
     }
     if(necL.length){
       doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(95);
@@ -580,9 +605,17 @@ async function hacerPDF(btn){
   const hojas = doc.getNumberOfPages();
   for(let i = 1; i <= hojas; i++){
     doc.setPage(i);
-    doc.setFont('helvetica','normal'); doc.setFontSize(7.5); doc.setTextColor(140);
-    doc.text('Datos de familias censadas. Uso exclusivo del equipo de entrega.', M, 290);
-    doc.text(`${i} de ${hojas}`, A - M, 290, {align:'right'});
+    doc.setDrawColor(205); doc.setLineWidth(0.2); doc.line(M, 279, A - M, 279);
+
+    doc.setFont('helvetica','bold'); doc.setFontSize(8); doc.setTextColor(60);
+    doc.text('Aquí Estamos · aquiestamos.co', M, 284);
+    doc.setFont('helvetica','normal'); doc.setFontSize(7.5); doc.setTextColor(120);
+    doc.text('Censo levantado en terreno por Red de iglesias AMCER y Asociación CREA.', M, 288);
+    doc.text('Con el aporte de la Fundación del Dr. Simi.', M, 291.5);
+    doc.setTextColor(150);
+    doc.text('Datos de familias censadas. Uso exclusivo del equipo de entrega.', M, 295);
+    doc.setFont('helvetica','bold'); doc.setTextColor(90);
+    doc.text(`${i} de ${hojas}`, A - M, 295, {align:'right'});
   }
 
   const nom = `ruta-equipo-${f0.abierta ? EQ : f0.mi_equipo}-${f0.fecha || 'jornada'}.pdf`;
@@ -641,7 +674,7 @@ try{ if(localStorage.getItem('aviso_ruta')) document.getElementById('aviso').hid
    muestra el dinosaurio. */
 if('serviceWorker' in navigator){
   addEventListener('load', ()=> navigator.serviceWorker
-    .register('sw-ruta.js?v=2.3.0').catch(()=>{}));
+    .register('sw-ruta.js?v=2.4.0').catch(()=>{}));
 }
 
 /* Cuántos están mirando esta misma ruta ahora. En la calle sirve para saber
