@@ -8,7 +8,7 @@
 <link rel="icon" type="image/svg+xml" href="logo/marca.svg">
 <title>Aquí Estamos · Administración</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
-<link rel="stylesheet" href="css/app.css?v=1.60.1">
+<link rel="stylesheet" href="css/app.css?v=1.61.0">
 <style>
   /* El panel es mobile-first: una columna, pestañas fijas abajo. En pantalla
      grande se centra en una franja de ancho de celular para no deformarse. */
@@ -184,6 +184,12 @@
     display:grid;place-items:center;font-size:12px;font-weight:850;border:2px solid #fff;
     box-shadow:0 2px 5px rgba(0,0,0,.35)}
   .pinnum.ok{background:#2f9e5f;color:#fff}
+
+  /* la ciudad es la primera pista para ubicar: va como distintivo, no en un párrafo */
+  .ciudadchip{display:inline-flex;align-items:center;gap:5px;padding:4px 11px;border-radius:999px;
+    background:rgba(124,58,237,.16);color:#a78bfa;font-size:12.5px;font-weight:750;white-space:nowrap}
+  .ciudadchip svg{width:13px;height:13px}
+  :root[data-eff="light"] .ciudadchip{background:rgba(124,58,237,.13);color:#6D28D9}
 
   .navcola{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:12px}
   .navcola span{font-size:12.5px;font-weight:700;color:var(--dim)}
@@ -450,9 +456,9 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="js/config.js?v=1.60.1"></script>
-<script src="js/version.js?v=1.60.1"></script>
-<script src="js/data.js?v=1.60.1"></script>
+<script src="js/config.js?v=1.61.0"></script>
+<script src="js/version.js?v=1.61.0"></script>
+<script src="js/data.js?v=1.61.0"></script>
 <script>
 /* ============================================================
    PANEL DE ADMINISTRACIÓN — Aquí Estamos
@@ -1229,19 +1235,19 @@ async function jCerrar(){
    persona lo confirma o lo arrastra, y queda guardado como ubicación real.
    Primero las que no tienen ningún punto; después las aproximadas.
    ============================================================ */
-let UB = { i:0, lat:null, lng:null, map:null, mk:null, modo:'sin', q:'' };
+let UB = { i:0, lat:null, lng:null, map:null, mk:null, modo:'sin', q:'', suelta:null };
 
 /* Atajo desde la lista: abre esa ficha exacta en la cola de Ubicar, en la
    pestaña que le corresponde (sin punto o aproximada). */
 function abrirEnUbicar(id){
   const c = CENSO.find(x=>String(x.id)===String(id)); if(!c) return;
-  UB.q = '';
-  UB.modo = c.lat ? 'aprox' : 'sin';
+  UB.q = ''; UB.suelta = null;
+  UB.modo = c.lat && c.aprox ? 'aprox' : 'sin';
   ir('ubicar');
   const i = ubCola().findIndex(x=>String(x.id)===String(id));
-  UB.i = i<0 ? 0 : i;
+  if(i>=0){ UB.i = i; }
+  else { UB.suelta = c.id; }   // ya ubicada: se abre igual, para revisar o corregir
   vUbicar();
-  if(i<0) toast('Esa ficha ya no está en la cola.');
 }
 
 function ubCola(){
@@ -1285,7 +1291,9 @@ function vUbicar(){
   const aprox = CENSO.filter(c=>c.lat && c.aprox).length;
   const cola  = ubCola();
   if(UB.i >= cola.length) UB.i = 0;
-  const c = cola[UB.i];
+  // `suelta` es una ficha abierta desde el buscador que no pertenece a la cola
+  const suelta = UB.suelta ? CENSO.find(x=>String(x.id)===String(UB.suelta)) : null;
+  const c = suelta || cola[UB.i];
 
   $('#v-ubicar').innerHTML = `
     <div class="buscabox" style="margin-bottom:10px">
@@ -1315,15 +1323,24 @@ function vUbicar(){
         : 'Ninguna vivienda quedó con ubicación aproximada.'}</p></div>` : `
     <div class="ubgrid">
       <div class="ubcol">
-        <div class="navcola">
+        ${suelta ? `<div class="navcola">
+          <button type="button" class="nc" id="ub-volver" aria-label="Volver a la cola">‹</button>
+          <span>Fuera de la cola · ya tiene punto exacto</span>
+          <span style="width:44px"></span>
+        </div>` : `<div class="navcola">
           <button type="button" class="nc" id="ub-ant" ${cola.length>1?'':'disabled'} aria-label="Ficha anterior">‹</button>
           <span>${UB.i+1} de ${cola.length}</span>
           <button type="button" class="nc" id="ub-sig" ${cola.length>1?'':'disabled'} aria-label="Siguiente ficha">›</button>
-        </div>
+        </div>`}
         <div class="fila" style="align-items:flex-start">
           <div class="grow">
             <h3 style="margin:0;font-size:20px;font-weight:800;letter-spacing:-.4px">${esc(c.nombre||'Vivienda')}</h3>
-            <p class="muted" style="margin:4px 0 0">${esc(c.ficha||'')}${c.personas?` · ${c.personas} persona${c.personas>1?'s':''}`:''}</p>
+            <div class="fila" style="margin-top:6px;gap:7px;flex-wrap:wrap">
+              <span class="ciudadchip">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="2.6"/></svg>
+                ${esc(c.ciudad||'Pereira')}${c.barrio?' · '+esc(c.barrio):''}</span>
+              <span class="muted" style="font-size:12.5px">${esc(c.ficha||'')}${c.personas?` · ${c.personas} persona${c.personas>1?'s':''}`:''}</span>
+            </div>
           </div>
           ${c.urg?`<span class="sbadge ${c.urg===3?'b3':c.urg===2?'b2':'b1'}">${c.urg===3?'Urgente':c.urg===2?'Prioritaria':'Programable'}</span>`:''}
         </div>
@@ -1332,9 +1349,6 @@ function vUbicar(){
         <input class="campo" id="ub-dir" value="${esc(c.dir||'')}" placeholder="Sin dirección escrita — corrígela aquí si la sabes"
           style="width:100%;margin-top:5px">
         <p class="muted" style="margin:5px 3px 0;font-size:12px">Si viene mal escrita, corrígela: se guarda junto con el punto.</p>
-        <p class="muted" style="margin:8px 0 0">
-          <b style="color:var(--txt)">${esc(c.ciudad||'Pereira')}</b>
-          · ${c.barrio?esc(c.barrio):'sin barrio en el formulario'}</p>
         ${c.sena?`<p class="muted" style="margin:4px 0 0">Seña: ${esc(c.sena)}</p>`:''}
 
         <div class="lbl" style="margin-top:16px">Punto de referencia <span style="font-weight:600;opacity:.8">— lleva el mapa cerca</span></div>
@@ -1363,8 +1377,11 @@ function vUbicar(){
           El punto que fijes <b>reemplaza</b> ese.</p>`:''}
 
         <div class="lbl" style="margin-top:18px">Cómo fijar el punto</div>
+        <p class="muted" style="margin:0 0 8px 3px;font-size:12.3px">
+          Buscar consulta esa dirección en el mapa y propone un punto — tú lo confirmas o lo mueves.</p>
         <div class="btnrow" style="margin-top:6px">
-          <button class="btn flat" id="ub-geo" style="flex:1 1 160px;width:auto" ${(c.dir||c.barrio)?'':'disabled'}>Buscar la dirección</button>
+          <button class="btn flat" id="ub-geo" style="flex:1 1 190px;width:auto" ${(c.dir||c.barrio)?'':'disabled'}
+            title="Consulta la dirección escrita en OpenStreetMap y propone un punto">Buscar en el mapa esta dirección</button>
           ${c.tel?`<a class="btn flat" id="ub-wa" style="flex:1 1 160px;width:auto;text-align:center;text-decoration:none"
             href="${waLink(c.tel, msgUbicar(c))}" target="_blank" rel="noopener">Pedirla por WhatsApp</a>`:''}
         </div>
@@ -2425,6 +2442,7 @@ document.addEventListener('click', e=>{
   if(e.target.closest('#ub-descartar')){ if(c) ubDescartar(c); return; }
   if(e.target.closest('#ub-wa'))      { if(c) ubPedida(c); return; }   // deja rastro; el enlace abre igual
   if(e.target.closest('#ub-saltar'))  { if(c) ubAplazar(c); return; }
+  if(e.target.closest('#ub-volver')) { UB.suelta=null; vUbicar(); return; }
   if(e.target.closest('#ub-sig')) { UB.i=(UB.i+1)%Math.max(1,cola.length); vUbicar(); return; }
   if(e.target.closest('#ub-ant')) { UB.i=(UB.i-1+cola.length)%Math.max(1,cola.length); vUbicar(); return; }
 });
