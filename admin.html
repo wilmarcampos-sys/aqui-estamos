@@ -8,7 +8,7 @@
 <link rel="icon" type="image/svg+xml" href="logo/marca.svg">
 <title>Aquí Estamos · Administración</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
-<link rel="stylesheet" href="css/app.css?v=1.71.1">
+<link rel="stylesheet" href="css/app.css?v=1.71.2">
 <style>
   /* El panel es mobile-first: una columna, pestañas fijas abajo. En pantalla
      grande se centra en una franja de ancho de celular para no deformarse. */
@@ -570,9 +570,9 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="js/config.js?v=1.71.1"></script>
-<script src="js/version.js?v=1.71.1"></script>
-<script src="js/data.js?v=1.71.1"></script>
+<script src="js/config.js?v=1.71.2"></script>
+<script src="js/version.js?v=1.71.2"></script>
+<script src="js/data.js?v=1.71.2"></script>
 <script>
 /* ============================================================
    PANEL DE ADMINISTRACIÓN — Aquí Estamos
@@ -1391,16 +1391,16 @@ function repFiltrar(){
     if(REP.urg.size && !REP.urg.has(String(c.urg||0))) return false;
     if(REP.barrio && norma(c.barrio)!==norma(REP.barrio)) return false;
     if(REP.red && norma(c.red)!==norma(REP.red)) return false;
-    if(REP.nec.size && ![...REP.nec].every(k=>(c.needs||[]).includes(k))) return false;
+    if(REP.nec.size && ![...REP.nec].some(k=>(c.needs||[]).includes(k))) return false;
     if(REP.cond.size){
-      const ok = [...REP.cond].every(k=>
+      const ok = [...REP.cond].some(k=>
         k==='__vuln'  ? repVulnerable(c)
         : k==='menores' ? (c.men5>0) : k==='mayores' ? (c.may65>0) : (c.cond||[]).includes(k));
       if(!ok) return false;
     }
     if(REP.est.size){
       const e = repEstado(c), u = repUltima(c);
-      const ok = [...REP.est].every(k=>
+      const ok = [...REP.est].some(k=>
         k==='nunca' ? !u : k==='viejo' ? (u && now()-u > 7*24*H) : e===k);
       if(!ok) return false;
     }
@@ -1531,19 +1531,22 @@ function repModal(cuenta, nRes){
       <button class="quitar" id="rep-limpiar2">Quitar todo</button>
       <button class="x" id="rep-cerrar" aria-label="Cerrar">×</button></div>
     <div class="mbody">
-      <div class="grupo"><h3>Urgencia</h3><div class="chips">
+      <p class="muted" style="margin:12px 3px 0;font-size:12.3px">
+        Dentro de cada grupo se suman las opciones; entre grupos se combinan.
+        Ej.: <b>Urgente</b> + <b>Mercado o Aseo</b> = urgentes que pidan cualquiera de las dos.</p>
+      <div class="grupo"><h3>Urgencia <span style="font-weight:600;text-transform:none;letter-spacing:0">— cualquiera</span></h3><div class="chips">
         ${chip('urg','3','Urgente',cuenta(c=>c.urg===3),'rojo')}
         ${chip('urg','2','Prioritaria',cuenta(c=>c.urg===2))}
         ${chip('urg','1','Programable',cuenta(c=>c.urg===1))}
       </div></div>
-      <div class="grupo"><h3>Condición del hogar</h3><div class="chips">
+      <div class="grupo"><h3>Condición del hogar <span style="font-weight:600;text-transform:none;letter-spacing:0">— cualquiera</span></h3><div class="chips">
         ${REP_COND.map(([k,t])=>chip('cond',k,t,
           cuenta(c=> k==='menores'?c.men5>0 : k==='mayores'?c.may65>0 : (c.cond||[]).includes(k)),'vio')).join('')}
       </div></div>
-      <div class="grupo"><h3>Necesidad</h3><div class="chips">
+      <div class="grupo"><h3>Necesidad <span style="font-weight:600;text-transform:none;letter-spacing:0">— cualquiera</span></h3><div class="chips">
         ${NECS_ED.map(([k,t])=>chip('nec',k,t,cuenta(c=>(c.needs||[]).includes(k)))).join('')}
       </div></div>
-      <div class="grupo"><h3>Estado</h3><div class="chips">
+      <div class="grupo"><h3>Estado <span style="font-weight:600;text-transform:none;letter-spacing:0">— cualquiera</span></h3><div class="chips">
         ${REP_EST.map(([k,t])=>chip('est',k,t, cuenta(c=>{
           const u=repUltima(c);
           return k==='nunca'? !u : k==='viejo'? (u && now()-u>7*24*H) : repEstado(c)===k;
@@ -3056,6 +3059,7 @@ document.addEventListener('click', e=>{
     REP.urg.clear(); REP.cond.clear(); REP.nec.clear(); REP.est.clear();
     REP.barrio=''; REP.red=''; REP.q=''; REP.ver=40; vReporte(); return; }
   if(e.target.closest('#rep-criticos')){
+    // cruce entre grupos: urgente Y vulnerable Y sin recibir
     REP.urg=new Set(['3']); REP.cond=new Set(['__vuln']); REP.est=new Set(['nunca']);
     REP.nec.clear(); REP.barrio=''; REP.red=''; REP.q=''; REP.ver=40; vReporte(); return; }
   const ord = e.target.closest('[data-rord]');
