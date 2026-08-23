@@ -44,6 +44,14 @@ body{background:var(--pp);color:var(--tin);font:15px/1.5 Inter,system-ui,sans-se
 .avance .pista{flex:1;height:6px;border-radius:3px;background:rgba(255,255,255,.12);overflow:hidden}
 .avance .pista i{display:block;height:100%;background:var(--acc);border-radius:3px;
   transition:width .5s ease}
+.comp{margin-left:auto;display:flex;gap:8px;flex:0 0 auto}
+.comp button{width:42px;height:42px;border-radius:12px;background:var(--card);
+  border:1px solid var(--fil);color:var(--dim);display:grid;place-items:center;
+  cursor:pointer;font:inherit;transition:border-color .2s,color .2s,transform .15s}
+.comp button:hover{border-color:var(--acc);color:var(--acc)}
+.comp button:active{transform:scale(.93)}
+.comp button svg{width:19px;height:19px}
+.comp button.ok{border-color:var(--ok);color:#7ED4A2}
 .aviso{display:flex;gap:10px;align-items:flex-start;margin-top:16px;padding:11px 13px;
   border-radius:11px;background:rgba(232,69,60,.12);border:1px solid rgba(232,69,60,.3);
   font-size:12.5px;line-height:1.5;color:#F3B9B5}
@@ -118,6 +126,16 @@ body{background:var(--pp);color:var(--tin);font:15px/1.5 Inter,system-ui,sans-se
   <div class="avance" id="av" hidden>
     <b><span id="hechas">0</span><s>/<span id="total">0</span></s></b>
     <span class="pista"><i id="barra" style="width:0"></i></span>
+    <span class="comp">
+      <button type="button" id="sh-wa" title="Pasársela a alguien del equipo"
+        aria-label="Compartir por WhatsApp">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.5 2 2 6.5 2 12c0 1.8.5 3.4 1.3 4.9L2 22l5.3-1.4A10 10 0 1 0 12 2Zm0 18.2c-1.5 0-3-.4-4.3-1.2l-.3-.2-3.1.8.8-3-.2-.3A8.2 8.2 0 1 1 12 20.2Z"/></svg>
+      </button>
+      <button type="button" id="sh-cp" title="Copiar el enlace de la ruta"
+        aria-label="Copiar el enlace">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12" rx="2.4"/><path d="M6 15H4.5A1.5 1.5 0 0 1 3 13.5v-9A1.5 1.5 0 0 1 4.5 3h9A1.5 1.5 0 0 1 15 4.5V6"/></svg>
+      </button>
+    </span>
   </div>
   <div class="aviso">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4M12 17h.01"/><path d="M10.3 3.9 2.4 18a2 2 0 0 0 1.7 3h15.8a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>
@@ -139,7 +157,7 @@ body{background:var(--pp);color:var(--tin);font:15px/1.5 Inter,system-ui,sans-se
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="js/config.js?v=2.0.1"></script>
+<script src="js/config.js?v=2.0.2"></script>
 <script>
 const esc = s => String(s??'').replace(/[<>&"]/g, m => ({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[m]));
 const NEC = {alimentos:'Mercado', aseo:'Aseo', arriendo:'Arriendo', agua:'Agua',
@@ -301,7 +319,30 @@ async function marcar(btn){
   marcando = false;
 }
 
+/* Compartir la ruta es pasársela a otro del mismo equipo —el que maneja, el
+   que se bajó a tocar la puerta—, no publicarla. Por eso el mensaje repite
+   el aviso: quien la reenvía debe saber lo que está mandando. */
+function textoCompartir(){
+  const f0 = FILAS[0] || {};
+  const mias = FILAS.filter(x=>x.equipo===EQ);
+  const cual = f0.abierta ? `${f0.jornada||'Jornada'} · todas las rutas`
+                          : `Equipo ${f0.mi_equipo} · ${f0.jornada||'jornada'}`;
+  return `${cual}\n${mias.length} paradas.\n\n${location.href}\n\n`
+       + `Es solo para el equipo: lleva datos de las familias.`;
+}
 document.addEventListener('click', e=>{
+  if(e.target.closest('#sh-wa')){
+    open('https://wa.me/?text='+encodeURIComponent(textoCompartir()), '_blank');
+    return;
+  }
+  const cp = e.target.closest('#sh-cp');
+  if(cp){
+    navigator.clipboard?.writeText(location.href).then(()=>{
+      cp.classList.add('ok');
+      clearTimeout(cp._t); cp._t = setTimeout(()=>cp.classList.remove('ok'), 1800);
+    });
+    return;
+  }
   const m = e.target.closest('[data-marcar]');
   if(m){ marcar(m); return; }
   const b = e.target.closest('[data-cp]');
