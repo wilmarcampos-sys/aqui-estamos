@@ -81,7 +81,8 @@ function pintar(){
       if(!e.dataset.animando && !e.dataset.hecho) e.textContent = e.dataset.fin;
     });
   }
-  pintarBarras(); pintarHistoria(); pintarChips(); pintarMapa();
+  pintarBarras(); pintarPuntosHistoria(); pintarHistoria(); girarHistorias();
+  pintarChips(); pintarMapa();
 }
 
 /* ---------- necesidades ---------- */
@@ -109,6 +110,23 @@ function pintarBarras(){
 }
 
 /* ---------- historia ---------- */
+/* Pasan solas cada 8 s. Se detienen si alguien está leyendo con el mouse
+   encima, si la pestaña no está a la vista o si la banda quedó fuera de
+   pantalla: un carrusel que cambia mientras se lee es una molestia. */
+let hTimer = null;
+function girarHistorias(){
+  clearInterval(hTimer);
+  if(matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  hTimer = setInterval(()=>{
+    const c = document.getElementById('hist');
+    if(!c || document.hidden || c.matches(':hover')) return;
+    if(!document.getElementById('scrim-c')?.hidden) return;
+    const r = c.getBoundingClientRect();
+    if(r.bottom < 40 || r.top > innerHeight - 40) return;
+    hIdx++; pintarHistoria();
+  }, 8000);
+}
+
 function pintarHistoria(){
   if(!HIST.length) return;
   const h = HIST[hIdx % HIST.length];
@@ -120,6 +138,17 @@ function pintarHistoria(){
   // cada relato con una foto distinta, para que no se repita la imagen
   const fotos = ['img/wck-2.jpg','img/wck-1.jpg','img/wck-4.jpg','img/wck-3.jpg'];
   $('#hist-foto').style.backgroundImage = `url('${fotos[hIdx % fotos.length]}')`;
+  // un fundido corto para que el cambio no sea un salto
+  const c = $('#hist .cont');
+  if(c){ c.classList.remove('entra'); void c.offsetWidth; c.classList.add('entra'); }
+  const p = $('#h-puntos');
+  if(p) p.querySelectorAll('i').forEach((b,j)=>b.classList.toggle('on', j===hIdx%HIST.length));
+}
+
+/* cuántas historias hay y en cuál vamos */
+function pintarPuntosHistoria(){
+  const p = $('#h-puntos'); if(!p || !HIST.length) return;
+  p.innerHTML = HIST.map(()=>'<i></i>').join('');
 }
 
 /* ---------- mapa ---------- */
@@ -220,7 +249,7 @@ document.addEventListener('click', e=>{
   if(e.target.closest('[data-compartir]')) return abrirCompartir(true);
   if(e.target.closest('#cerrar-compartir') || e.target.id==='scrim-c') return abrirCompartir(false);
   if(e.target.closest('#ver-todas')){ verTodas = !verTodas; pintarBarras(); return; }
-  if(e.target.closest('#h-mas')){ hIdx++; pintarHistoria(); return; }
+  if(e.target.closest('#h-mas')){ hIdx++; pintarHistoria(); girarHistorias(); return; }
   if(e.target.closest('#sh-link2') || e.target.closest('#pie-link')) return copiarEnlace();
   if(e.target.closest('#sh-wa2') || e.target.closest('#pie-wa')){
     return void open('https://wa.me/?text=' + encodeURIComponent(
