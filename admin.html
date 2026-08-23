@@ -8,7 +8,7 @@
 <link rel="icon" type="image/svg+xml" href="logo/marca.svg">
 <title>Aquí Estamos · Administración</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
-<link rel="stylesheet" href="css/app.css?v=1.60.0">
+<link rel="stylesheet" href="css/app.css?v=1.60.1">
 <style>
   /* El panel es mobile-first: una columna, pestañas fijas abajo. En pantalla
      grande se centra en una franja de ancho de celular para no deformarse. */
@@ -450,9 +450,9 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="js/config.js?v=1.60.0"></script>
-<script src="js/version.js?v=1.60.0"></script>
-<script src="js/data.js?v=1.60.0"></script>
+<script src="js/config.js?v=1.60.1"></script>
+<script src="js/version.js?v=1.60.1"></script>
+<script src="js/data.js?v=1.60.1"></script>
 <script>
 /* ============================================================
    PANEL DE ADMINISTRACIÓN — Aquí Estamos
@@ -1332,7 +1332,10 @@ function vUbicar(){
         <input class="campo" id="ub-dir" value="${esc(c.dir||'')}" placeholder="Sin dirección escrita — corrígela aquí si la sabes"
           style="width:100%;margin-top:5px">
         <p class="muted" style="margin:5px 3px 0;font-size:12px">Si viene mal escrita, corrígela: se guarda junto con el punto.</p>
-        ${c.sena?`<p class="muted" style="margin:8px 0 0">Seña: ${esc(c.sena)}</p>`:''}
+        <p class="muted" style="margin:8px 0 0">
+          <b style="color:var(--txt)">${esc(c.ciudad||'Pereira')}</b>
+          · ${c.barrio?esc(c.barrio):'sin barrio en el formulario'}</p>
+        ${c.sena?`<p class="muted" style="margin:4px 0 0">Seña: ${esc(c.sena)}</p>`:''}
 
         <div class="lbl" style="margin-top:16px">Punto de referencia <span style="font-weight:600;opacity:.8">— lleva el mapa cerca</span></div>
         <div class="row2" style="margin-top:6px">
@@ -1387,12 +1390,27 @@ function vUbicar(){
 }
 
 /* mapa de la ficha en curso */
+// Centro por ciudad: si la ficha dice Dosquebradas, empezar en Pereira obliga
+// a un viaje de mapa que el formulario ya había evitado.
+const CIUDADES = {
+  'pereira':[4.8133,-75.6961,13], 'dosquebradas':[4.8339,-75.6713,13],
+  'la virginia':[4.8994,-75.8836,14], 'santa rosa':[4.8687,-75.6249,13],
+  'santa rosa de cabal':[4.8687,-75.6249,13], 'cartago':[4.7460,-75.9115,13],
+  'marsella':[4.9364,-75.7396,14], 'apia':[5.1063,-75.9411,14],
+};
+function centroCiudad(nom){
+  const k = norma(nom||'');
+  for(const [c,v] of Object.entries(CIUDADES)) if(k.includes(c)) return v;
+  return CIUDADES['pereira'];
+}
+
 function ubMapa(c){
   const el = document.getElementById('ubmapa'); if(!el || !window.L) return;
   UB.lat = c.lat ?? null; UB.lng = c.lng ?? null; UB.mk = null;
   if(UB.map){ UB.map.remove(); UB.map=null; }
+  const cc = centroCiudad(c.ciudad);
   UB.map = L.map(el, {zoomControl:true, attributionControl:false})
-            .setView([c.lat ?? 4.8133, c.lng ?? -75.6961], c.lat ? 16 : 13);
+            .setView([c.lat ?? cc[0], c.lng ?? cc[1]], c.lat ? 16 : cc[2]);
   L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
     {maxZoom:19, subdomains:'abcd'}).addTo(UB.map);
   // El contenedor toma su alto con el layout, después de crear el mapa: sin
