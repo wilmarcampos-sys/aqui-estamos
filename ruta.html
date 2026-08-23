@@ -160,6 +160,43 @@ body{background:var(--pp);color:var(--tin);font:15px/1.5 Inter,system-ui,sans-se
 .nohay:hover{border-color:var(--pri,#E8A33D);color:#E8A33D}
 .nohay:active{transform:scale(.94)}
 .nohay svg{width:17px;height:17px}
+
+/* Motivos frecuentes en vez del cuadro del navegador: en la calle, con una
+   mano ocupada, escoger es mucho más rápido que escribir. */
+.scrim{position:fixed;inset:0;z-index:200;background:rgba(4,9,20,.72);
+  backdrop-filter:blur(3px);display:flex;align-items:flex-end;justify-content:center}
+.scrim[hidden]{display:none}
+@media (min-width:640px){ .scrim{align-items:center;padding:20px} }
+.hoja{width:min(460px,100%);background:var(--sup);border:1px solid var(--fil);
+  border-radius:20px 20px 0 0;max-height:88vh;overflow-y:auto;
+  padding:20px 16px calc(16px + var(--safe,0px));
+  animation:sube .26s cubic-bezier(.2,.7,.2,1)}
+@media (min-width:640px){ .hoja{border-radius:20px} }
+@keyframes sube{from{transform:translateY(26px);opacity:0}}
+@media (prefers-reduced-motion:reduce){ .hoja{animation:none} }
+.hoja-cab h2{margin:0;font-size:19px;font-weight:900;letter-spacing:-.5px}
+.hoja-cab p{margin:5px 0 15px;font-size:13px;color:var(--dim);line-height:1.45}
+.hoja-ops{display:flex;flex-direction:column;gap:7px}
+.hoja-ops[hidden]{display:none}
+.hoja-op{width:100%;text-align:left;padding:14px 15px;border-radius:12px;
+  background:var(--card);border:1px solid var(--fil);color:var(--txt);
+  font:inherit;font-size:14.5px;font-weight:700;cursor:pointer;min-height:50px}
+.hoja-op:hover{border-color:var(--acc)}
+.hoja-op:active{transform:scale(.99)}
+.hoja-op.otro{color:var(--dim);font-weight:650;border-style:dashed}
+.hoja-otro{display:flex;gap:8px;margin-top:4px}
+.hoja-otro[hidden]{display:none}
+.hoja-otro input{flex:1;min-width:0;height:50px;border-radius:12px;padding:0 14px;
+  background:var(--card);border:1px solid var(--fil);color:var(--txt);
+  font:inherit;font-size:15px}
+.hoja-otro input:focus{outline:none;border-color:var(--acc)}
+.hoja-ok{flex:0 0 auto;padding:0 18px;height:50px;border-radius:12px;border:0;
+  background:var(--acc);color:#0D1520;font:inherit;font-size:14.5px;font-weight:850;
+  cursor:pointer}
+.hoja-x{width:100%;margin-top:12px;padding:13px;border-radius:12px;background:none;
+  border:0;color:var(--dim);font:inherit;font-size:14px;font-weight:700;cursor:pointer}
+.hoja-x:hover{color:var(--txt)}
+.hoja-pie{margin:2px 0 0;text-align:center;font-size:11px;color:#6B7688}
 .planb{display:flex;align-items:center;gap:8px;width:100%;margin-top:10px;
   padding:11px 13px;border-radius:11px;background:var(--card);
   border:1px dashed var(--fil);color:var(--dim);font:inherit;font-size:13px;
@@ -185,6 +222,16 @@ body{background:var(--pp);color:var(--tin);font:15px/1.5 Inter,system-ui,sans-se
   border-radius:10px;background:var(--chip);border:1px solid var(--fil);
   color:var(--dim);font-size:12.5px;line-height:1.45;font-weight:650}
 .cerrada svg{width:15px;height:15px;min-width:15px;flex:0 0 15px;margin-top:1px}
+/* Ya fueron y no encontraron a nadie: el que vuelva tiene que saberlo. */
+.intento{display:flex;align-items:flex-start;gap:8px;margin:10px 0 0;padding:9px 11px;
+  border-radius:10px;background:rgba(232,163,61,.12);border:1px solid rgba(232,163,61,.32);
+  color:#F0C878;font-size:12.5px;line-height:1.45;font-weight:600}
+.intento svg{width:15px;height:15px;min-width:15px;flex:0 0 15px;margin-top:1px}
+.intento b{font-weight:850}
+.notaent{display:flex;align-items:flex-start;gap:8px;margin:10px 0 0;padding:9px 11px;
+  border-radius:10px;background:rgba(63,154,104,.12);border:1px solid rgba(63,154,104,.3);
+  color:#8FDCB0;font-size:12.5px;line-height:1.45;font-weight:600}
+.notaent svg{width:15px;height:15px;min-width:15px;flex:0 0 15px;margin-top:1px}
 
 /* Progreso de todos los equipos en una sola línea */
 /* La línea va hasta el total de la jornada; las marcas dicen dónde termina
@@ -328,9 +375,25 @@ body{background:var(--pp);color:var(--tin);font:15px/1.5 Inter,system-ui,sans-se
     aquiestamos.co</p>
 </div>
 
+<div class="scrim" id="scrim" hidden>
+  <div class="hoja" role="dialog" aria-modal="true" aria-labelledby="hoja-tit">
+    <div class="hoja-cab">
+      <h2 id="hoja-tit">¿Qué pasó?</h2>
+      <p id="hoja-sub"></p>
+    </div>
+    <div class="hoja-ops" id="hoja-ops"></div>
+    <div class="hoja-otro" id="hoja-otro" hidden>
+      <input type="text" id="hoja-txt" maxlength="80" placeholder="Escribe qué pasó"
+             autocomplete="off">
+      <button type="button" class="hoja-ok" id="hoja-guardar">Continuar</button>
+    </div>
+    <button type="button" class="hoja-x" id="hoja-cerrar">Cancelar</button>
+    <p class="hoja-pie">Las fotos de la entrega llegan pronto.</p>
+  </div>
+</div>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="js/config.js?v=2.7.0"></script>
+<script src="js/config.js?v=2.8.0"></script>
 <script>
 const esc = s => String(s??'').replace(/[<>&"]/g, m => ({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[m]));
 const NEC = {alimentos:'Mercado', aseo:'Aseo', arriendo:'Arriendo', agua:'Agua',
@@ -385,9 +448,9 @@ function leerCopia(t){
 const COLA = t => 'cola_' + t;
 function enCola(t){ try{ return JSON.parse(localStorage.getItem(COLA(t)) || '[]'); }catch(e){ return []; } }
 function guardarCola(t, c){ try{ localStorage.setItem(COLA(t), JSON.stringify(c)); }catch(e){} }
-function encolar(t, parada, hecha){
+function encolar(t, parada, hecha, nota){
   const c = enCola(t).filter(x => String(x.parada) !== String(parada));
-  c.push({parada, hecha, en: Date.now()});
+  c.push({parada, hecha, nota, en: Date.now()});
   guardarCola(t, c);
   pintarPendientes();
 }
@@ -399,16 +462,32 @@ async function vaciarCola(){
   const quedan = [];
   for(const m of c){
     try{
-      const {error} = await db.rpc('marcar_parada', {t, parada:m.parada, hecha:m.hecha});
+      const {error} = await db.rpc('marcar_parada',
+        {t, p_parada:m.parada, hecha:m.hecha, p_nota:m.nota || null});
       if(error) throw error;
     }catch(e){ quedan.push(m); }
   }
   guardarCola(t, quedan);
+
+  let ci = [];
+  try{ ci = JSON.parse(localStorage.getItem(COLA_I(t)) || '[]'); }catch(e){}
+  const quedanI = [];
+  for(const m of ci){
+    try{
+      const {error} = await db.rpc('registrar_intento',
+        {t, p_parada: m.parada, p_motivo: m.motivo});
+      if(error) throw error;
+    }catch(e){ quedanI.push(m); }
+  }
+  try{ localStorage.setItem(COLA_I(t), JSON.stringify(quedanI)); }catch(e){}
+
   pintarPendientes();
 }
 function pintarPendientes(){
   const t = new URLSearchParams(location.search).get('t');
-  const n = enCola(t).length;
+  let ni = 0;
+  try{ ni = JSON.parse(localStorage.getItem('colai_' + t) || '[]').length; }catch(e){}
+  const n = enCola(t).length + ni;
   const c = document.getElementById('pend');
   if(!c) return;
   c.hidden = !n;
@@ -582,6 +661,15 @@ function pintar(){
           ? `<span class="tx">${esc(p.direccion)}</span>
              <button type="button" class="cp" data-cp="${esc(p.direccion)}">Copiar</button>`
           : '<span class="tx sin">Sin dirección</span>'}</div>
+      ${(p.entregada && p.nota_entrega && p.nota_entrega !== 'Entregado') ? `<p class="notaent">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8l-5-5z"/><path d="M14 3v5h5M9 14h6"/></svg>
+        ${esc(p.nota_entrega)}</p>` : ''}
+      ${(!p.fallida && p.intentos > 0) ? `<p class="intento">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 7v5.4l3.3 2"/><circle cx="12" cy="12" r="9"/></svg>
+        <span>${p.intentos === 1 ? 'Ya fueron una vez' : `Ya fueron ${p.intentos} veces`}${
+          p.nota?` · ${esc(p.nota)}`:''}.${p.intentos_ficha > p.intentos
+            ? ` En total ${p.intentos_ficha} intentos a esta casa.` : ''}
+          <b>Llama antes de volver.</b></span></p>` : ''}
       ${p.fallida ? `<p class="cerrada">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
         Cerrada${p.nota?` · ${esc(p.nota)}`:''}${p.reemplazada_por
@@ -633,22 +721,25 @@ function mapa(ps){
    para reportar, no reporta. Se pinta primero y se corrige si el servidor
    dice que no, para que en la calle con mala señal no se sienta trabado. */
 let marcando = false;
-async function marcar(btn){
+async function marcar(btn, nota){
   if(marcando) return;
   const id = btn.getAttribute('data-marcar');
   const fila = FILAS.find(x=>String(x.id)===String(id));
   if(!fila) return;
   const nuevo = !fila.entregada;
+  // Al entregar se pregunta si hay algo que anotar; al desmarcar, no.
+  if(nuevo && nota === undefined){ abrirNota(btn, id, fila); return; }
   marcando = true;
   fila.entregada = nuevo; pintar();
   try{
     const db = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
     const t = new URLSearchParams(location.search).get('t');
-    const {error} = await db.rpc('marcar_parada', {t, parada:id, hecha:nuevo});
+    const {error} = await db.rpc('marcar_parada',
+      {t, p_parada:id, hecha:nuevo, p_nota: nota || null});
     if(error) throw error;
   }catch(e){
     // No se revierte: la entrega sí ocurrió. Se guarda y se manda después.
-    encolar(t2(), id, nuevo);
+    encolar(t2(), id, nuevo, nota);
     pintar();
   }
   marcando = false;
@@ -658,18 +749,137 @@ const t2 = () => new URLSearchParams(location.search).get('t');
 /* "No estaban" no es lo mismo que "no entregué": deja constancia de que el
    equipo sí fue, y abre el Plan B en el mismo gesto para que nadie se
    devuelva con el mercado en el carro. */
+const MOTIVOS = [
+  'No estaban en la casa',
+  'No abrieron',
+  'Ya no vive ahí',
+  'No encontramos la dirección',
+  'Ya recibió ayuda',
+  'No quiso recibir',
+  'No se pudo entrar al sector',
+];
+let PEND = null;   // {btn, parada} o {btn, parada, tipo:'nota'}
+
+/* Al entregar casi nunca hay nada que anotar, pero cuando lo hay importa:
+   quién recibió, qué faltó, si hay que volver por algo. Se pregunta sin
+   estorbar —"Entregar sin nota" es el camino corto— y queda listo el lugar
+   para las fotos, que van después. */
+function abrirNota(btn, parada, fila){
+  PEND = {btn, parada, tipo:'nota'};
+  document.getElementById('hoja-tit').textContent = 'Entrega registrada';
+  document.getElementById('hoja-sub').textContent =
+    'En la casa de ' + (fila.nombre || 'esta parada') + '. ¿Algo que anotar?';
+  document.getElementById('hoja-ops').hidden = false;
+  document.getElementById('hoja-ops').innerHTML =
+    ['Entregado completo', 'Recibió un vecino', 'Faltó parte de la ayuda',
+     'Hay que volver por algo']
+      .map(m=>`<button type="button" class="hoja-op" data-nota="${esc(m)}">${esc(m)}</button>`)
+      .join('') +
+    '<button type="button" class="hoja-op otro" data-nota="__otro">Escribir una nota…</button>';
+  document.getElementById('hoja-otro').hidden = true;
+  document.getElementById('hoja-txt').value = '';
+  document.getElementById('scrim').hidden = false;
+  document.body.style.overflow = 'hidden';
+}
+
 async function noHay(btn, parada){
   const f = FILAS.find(x=>String(x.id)===String(parada)) || {};
-  const que = prompt('¿Qué pasó en la casa de ' + (f.nombre||'esta parada') + '?\n\n' +
-    'Escribe el motivo o deja el que está.', 'No estaban en la casa');
-  if(que === null) return;
+  PEND = {btn, parada};
+  document.getElementById('hoja-sub').textContent =
+    'En la casa de ' + (f.nombre || 'esta parada') + '. Queda anotado y te muestro casas cerca.';
+  document.getElementById('hoja-ops').innerHTML = MOTIVOS.map(m=>
+    `<button type="button" class="hoja-op" data-motivo="${esc(m)}">${esc(m)}</button>`).join('') +
+    '<button type="button" class="hoja-op otro" data-motivo="__otro">Otro motivo…</button>';
+  document.getElementById('hoja-otro').hidden = true;
+  document.getElementById('hoja-txt').value = '';
+  document.getElementById('scrim').hidden = false;
+  document.body.style.overflow = 'hidden';
+}
+
+function cerrarHoja(){
+  document.getElementById('scrim').hidden = true;
+  document.body.style.overflow = '';
+  PEND = null;
+}
+
+async function usarMotivo(motivo){
+  if(!PEND) return;
+  const {btn, parada} = PEND;
   const caja = document.getElementById('pb-' + parada);
-  if(caja){
-    caja.hidden = false;
-    caja.dataset.motivo = que || 'No estaban en la casa';
+  if(caja) caja.dataset.motivo = motivo;
+  cerrarHoja();
+
+  /* El intento se graba ya, sin esperar a que escojan reemplazo. Un equipo
+     que fue y no encontro a nadie hizo trabajo real: si no queda registro,
+     esa familia vuelve a salir candidata el domingo y nadie sabe que ya
+     fueron dos veces. Queda en la parada y en la ficha del censo. */
+  try{
+    const db = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
+    const {error} = await db.rpc('registrar_intento',
+      {t: t2(), p_parada: parada, p_motivo: motivo});
+    if(error) throw error;
+    await cargar();
+  }catch(e){
+    encolarIntento(t2(), parada, motivo);
+    const f = FILAS.find(x=>String(x.id)===String(parada));
+    if(f){ f.intentos = (f.intentos||0)+1; f.nota = motivo; pintar(); }
   }
   await planB(btn, parada, true);
 }
+
+/* Sin señal el intento tambien se guarda: se manda con el resto de la cola. */
+const COLA_I = t => 'colai_' + t;
+function encolarIntento(t, parada, motivo){
+  try{
+    const c = JSON.parse(localStorage.getItem(COLA_I(t)) || '[]');
+    c.push({parada, motivo, en: Date.now()});
+    localStorage.setItem(COLA_I(t), JSON.stringify(c));
+  }catch(e){}
+  pintarPendientes();
+}
+
+document.addEventListener('click', e=>{
+  if(e.target.closest('#hoja-cerrar') || e.target.id === 'scrim'){ cerrarHoja(); return; }
+  const nt = e.target.closest('[data-nota]');
+  if(nt){
+    const v = nt.getAttribute('data-nota');
+    if(v === '__otro'){
+      document.getElementById('hoja-ops').hidden = true;
+      document.getElementById('hoja-otro').hidden = false;
+      document.getElementById('hoja-txt').focus();
+      return;
+    }
+    const {btn, parada} = PEND || {};
+    cerrarHoja();
+    if(btn) marcar(btn, v === 'Entregado completo' ? 'Entregado' : v);
+    return;
+  }
+  const op = e.target.closest('[data-motivo]');
+  if(op){
+    const m = op.getAttribute('data-motivo');
+    if(m === '__otro'){
+      document.getElementById('hoja-ops').hidden = true;
+      document.getElementById('hoja-otro').hidden = false;
+      document.getElementById('hoja-txt').focus();
+      return;
+    }
+    usarMotivo(m); return;
+  }
+  if(e.target.closest('#hoja-guardar')){
+    const v = document.getElementById('hoja-txt').value.trim();
+    document.getElementById('hoja-ops').hidden = false;
+    if(PEND && PEND.tipo === 'nota'){
+      const {btn} = PEND; cerrarHoja(); if(btn) marcar(btn, v);
+    } else {
+      usarMotivo(v || 'No se pudo entregar');
+    }
+  }
+});
+document.addEventListener('keydown', e=>{
+  if(e.key === 'Escape' && !document.getElementById('scrim').hidden) cerrarHoja();
+  if(e.key === 'Enter' && document.activeElement?.id === 'hoja-txt')
+    document.getElementById('hoja-guardar').click();
+});
 
 async function planB(btn, parada, forzar){
   const caja = document.getElementById('pb-' + parada);
@@ -968,7 +1178,7 @@ try{ if(localStorage.getItem('aviso_ruta')) document.getElementById('aviso').hid
    muestra el dinosaurio. */
 if('serviceWorker' in navigator){
   addEventListener('load', ()=> navigator.serviceWorker
-    .register('sw-ruta.js?v=2.7.0').catch(()=>{}));
+    .register('sw-ruta.js?v=2.8.0').catch(()=>{}));
 }
 
 /* Cuántos están mirando esta misma ruta ahora. En la calle sirve para saber

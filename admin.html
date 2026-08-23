@@ -11,7 +11,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
-<link rel="stylesheet" href="css/app.css?v=2.7.0">
+<link rel="stylesheet" href="css/app.css?v=2.8.0">
 <style>
   /* El panel es mobile-first: una columna, pestañas fijas abajo. En pantalla
      grande se centra en una franja de ancho de celular para no deformarse. */
@@ -141,6 +141,9 @@
   /* ---- dirección y teléfono de cada parada, con su copiar ---- */
   /* El botón se queda al lado aunque la dirección ocupe dos renglones:
      con wrap se caía debajo y la fila perdía la lectura. */
+  /* Ya fueron y no encontraron a nadie: mandarlos otra vez sin llamar es
+     gastar una parada de la jornada. */
+  .intentos-av{color:var(--pri)!important;font-weight:750}
   .dline{display:flex;align-items:flex-start;gap:8px;margin-top:2px;flex-wrap:nowrap}
   .dline .dtx{font-size:13.5px;font-weight:700;color:var(--txt);letter-spacing:.2px;
     text-decoration:none;overflow-wrap:anywhere;flex:0 1 auto;min-width:0;
@@ -788,9 +791,9 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="js/config.js?v=2.7.0"></script>
-<script src="js/version.js?v=2.7.0"></script>
-<script src="js/data.js?v=2.7.0"></script>
+<script src="js/config.js?v=2.8.0"></script>
+<script src="js/version.js?v=2.8.0"></script>
+<script src="js/data.js?v=2.8.0"></script>
 <script>
 /* ============================================================
    PANEL DE ADMINISTRACIÓN — Aquí Estamos
@@ -881,6 +884,7 @@ const deCen = c=>({ id:c.id, ficha:c.ficha||'', barrio:c.barrio||'', dir:c.direc
   nombre:[c.nombre,c.apellido].filter(Boolean).join(' '), cedula:c.cedula||'', tel:c.tel_e164||'',
   personas:c.personas||0, men5:c.menores5||0, may65:c.mayores65||0, cond:c.condiciones||[],
   ev:c.estado_vivienda||'', needs:c.necesidades||[], detalle:c.detalle||'', lat:c.lat?+c.lat:null, lng:c.lng?+c.lng:null,
+  intentos:c.intentos_fallidos||0, ultIntento:c.ultimo_intento||null, ultMotivo:c.ultimo_motivo||'',
   urg:c.urgencia||0, aprox:!!c.ubicacion_aprox, red:c.fuente_detalle||'', ciudad:c.ciudad||'', fuente:c.fuente||'app',
   archivada:!!c.archivada, motivo:c.motivo_descarte||'',
   ubicadoPor:c.ubicado_por||'', descPor:c.descartada_por||'',
@@ -1218,6 +1222,8 @@ function vCensoLista(aviso){
           ${ev?`<span class="sbadge" style="margin-left:4px;background:${ev[1]}22;color:${ev[1]}">${ev[0]}</span>`:''}</div>
         <div class="mt">${esc(c.barrio||'—')}${c.dir?` · ${esc(c.dir)}`:''} · ${hace(c.ts)}</div>
         <div class="mt">${esc((c.needs||[]).join(', ')||'sin necesidades')}</div>
+        ${c.intentos ? `<div class="mt intentos-av">${c.intentos} intento${
+          c.intentos>1?'s':''} sin éxito${c.ultMotivo?` · ${esc(c.ultMotivo)}`:''} — llamar antes</div>` : ''}
         ${c.ficha?`<div class="cd">${esc(c.ficha)}</div>`:''}
         ${c.urg?`<span class="sbadge ${c.urg===3?'b3':c.urg===2?'b2':'b1'}" style="margin-top:3px">${c.urg===3?'Urgente':c.urg===2?'Prioritaria':'Programable'}</span>`:''}
         ${(!c.lat||c.aprox)?`<button type="button" class="sbadge irubicar" data-ir-ubicar="${esc(c.id)}"
@@ -2701,6 +2707,7 @@ const DESP_REGLAS = [
   {k:'grandes',   n:'Hogares numerosos',           d:'Más personas, más peso en la fila'},
   {k:'vulnerable',n:'Hogares vulnerables',         d:'Embarazo, enfermedad grave, discapacidad, sin empleo'},
   {k:'hallable',  n:'Direcciones que se encuentran', d:'Baja en la fila a quien solo dejó el barrio, sin número'},
+  {k:'contactar', n:'Aparta las que ya visitaron sin éxito', d:'Dos intentos fallidos o más: primero hay que llamar'},
 ];
 
 /* ¿Se puede llegar a esta casa con la dirección que dejó?
@@ -2716,7 +2723,7 @@ function dirHallable(c){
 }
 
 let DP = { paso:1, tipo:'alimentos', unidades:60, equipos:3, tope:8,
-           incluirAprox:false, todas:false, conReportes:false, radio:5, reglas:new Set(['urgencia','vulnerable','olvidadas','hallable']), rutas:null };
+           incluirAprox:false, todas:false, conReportes:false, radio:5, reglas:new Set(['urgencia','vulnerable','olvidadas','hallable','contactar']), rutas:null };
 
 /* Candidatas: solo con punto exacto (a un punto aproximado no se puede
    despachar a nadie) y sin haber recibido lo mismo en la última semana. */
@@ -2784,6 +2791,11 @@ function dpPuntaje(c){
   // encuentra no es una entrega, es media hora perdida para todo el equipo.
   if(DP.reglas.has('hallable') && !dirHallable(c)){
     p -= 45; por.push('dirección sin número');
+  }
+  // Mandar un equipo por tercera vez a una casa donde nunca hay nadie es
+  // gastar una parada. Primero se llama; por eso baja en la fila.
+  if(DP.reglas.has('contactar') && (c.intentos||0) >= 2){
+    p -= 60; por.push(`${c.intentos} intentos sin éxito`);
   }
   if(DP.reglas.has('olvidadas')){
     const cerca = ENTREGAS.some(y=>y.lat && distM(c.lat,c.lng,y.lat,y.lng)<300);
