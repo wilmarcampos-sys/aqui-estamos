@@ -11,6 +11,8 @@
    teléfono; si el navegador no lo permite, se descarga.
    ============================================================ */
 
+const SIS_MUERTOS = '321', SIS_VIVIENDAS = '1.450';
+
 const CIF = {
   // se rellenan con datos vivos al cargar; estos son el respaldo
   viviendas: 203, personas: 694, urgentes: 62, menores: 151, vulnerables: 58,
@@ -40,124 +42,168 @@ function cifrasVivas(){
 }
 
 /* --- utilidades de dibujo --- */
-function txtCentro(x, y, t, ctx){ ctx.fillText(t, x - ctx.measureText(t).width/2, y); }
-function envolver(ctx, t, x, y, ancho, alto){
-  const pal = String(t).split(' '); let linea = '', yy = y;
+function envolver(ctx, t, x, y, ancho, alto, maxLineas){
+  const pal = String(t).split(' '); const lineas = [];
+  let linea = '';
   pal.forEach(p=>{
     const prueba = linea ? linea+' '+p : p;
-    if(ctx.measureText(prueba).width > ancho && linea){ ctx.fillText(linea, x, yy); yy += alto; linea = p; }
+    if(ctx.measureText(prueba).width > ancho && linea){ lineas.push(linea); linea = p; }
     else linea = prueba;
   });
-  if(linea) ctx.fillText(linea, x, yy);
-  return yy + alto;
+  if(linea) lineas.push(linea);
+  const usar = maxLineas ? lineas.slice(0, maxLineas) : lineas;
+  if(maxLineas && lineas.length > maxLineas) usar[usar.length-1] = usar[usar.length-1].replace(/[.,;]?$/,'…');
+  usar.forEach((l,i)=>ctx.fillText(l, x, y + i*alto));
+  return y + usar.length*alto;
+}
+function redondo(x, rx, ry, w, h, r){
+  x.beginPath();
+  x.moveTo(rx+r, ry); x.arcTo(rx+w, ry, rx+w, ry+h, r);
+  x.arcTo(rx+w, ry+h, rx, ry+h, r); x.arcTo(rx, ry+h, rx, ry, r);
+  x.arcTo(rx, ry, rx+w, ry, r); x.closePath();
 }
 
-/* Dibuja la tarjeta. `alto` decide el formato: 1350 feed, 1920 estado. */
+/* La foto se carga una vez y se reutiliza en cada imagen. */
+let FOTO = null;
+function cargarFoto(){
+  if(FOTO) return Promise.resolve(FOTO);
+  return new Promise(res=>{
+    const im = new Image();
+    im.onload = ()=>{ FOTO = im; res(im); };
+    im.onerror = ()=>res(null);
+    im.src = 'img/wck-1.jpg';
+  });
+}
+function dibujarCover(x, im, dx, dy, dw, dh){
+  const ri = im.width/im.height, rd = dw/dh;
+  let sw, sh, sx, sy;
+  if(ri > rd){ sh = im.height; sw = sh*rd; sx = (im.width-sw)/2; sy = 0; }
+  else { sw = im.width; sh = sw/rd; sx = 0; sy = (im.height-sh)*0.38; }
+  x.drawImage(im, sx, sy, sw, sh, dx, dy, dw, dh);
+}
+
+/* Dibuja la tarjeta. `alto`: 1350 publicación, 1920 estado. */
 function dibujarTarjeta(alto){
-  const W = 1080, H = alto, c = document.createElement('canvas');
+  const W = 1080, H = alto, M = 72;
+  const c = document.createElement('canvas');
   c.width = W; c.height = H;
   const x = c.getContext('2d');
-  const historia = H > 1500;   // en el formato alto cabe una historia
+  const largo = H > 1500;
 
-  // fondo
-  x.fillStyle = '#F4F1EC'; x.fillRect(0,0,W,H);
-  // franja superior: alta para que el titular quepa entero
-  const banda = 320;
-  x.fillStyle = '#C81E1E'; x.fillRect(0,0,W,banda);
-
+  x.fillStyle = '#F6F4F0'; x.fillRect(0,0,W,H);
   x.textBaseline = 'alphabetic';
+
+  /* ---- hero fotográfico ---- */
+  const heroH = largo ? 560 : 470;
+  if(FOTO) dibujarCover(x, FOTO, 0, 0, W, heroH);
+  else { x.fillStyle = '#0B1220'; x.fillRect(0,0,W,heroH); }
+  const g = x.createLinearGradient(0,0,0,heroH);
+  g.addColorStop(0,'rgba(8,14,24,.55)'); g.addColorStop(.42,'rgba(8,14,24,.28)');
+  g.addColorStop(.82,'rgba(8,14,24,.88)'); g.addColorStop(1,'rgba(8,14,24,.97)');
+  x.fillStyle = g; x.fillRect(0,0,W,heroH);
+
   x.fillStyle = '#fff';
-  x.font = '800 28px Inter, system-ui, sans-serif';
-  x.fillText('EJE CAFETERO · COLOMBIA', 70, 96);
-  x.font = '900 70px Inter, system-ui, sans-serif';
-  x.fillText('Terremoto del', 70, 190);
-  x.fillText('10 de agosto', 70, 262);
+  x.font = '900 66px Inter, system-ui, sans-serif';
+  x.fillText('Terremoto del', M, heroH-176);
+  x.fillStyle = '#FF6B60';
+  x.fillText('10 de agosto', M, heroH-104);
+  x.fillStyle = 'rgba(255,255,255,.72)';
+  x.font = '600 24px Inter, system-ui, sans-serif';
+  x.fillText('Pereira · Dosquebradas · La Virginia', M, heroH-52);
+  x.fillStyle = 'rgba(255,255,255,.5)';
+  x.font = '600 17px Inter, system-ui, sans-serif';
+  x.fillText('Foto: World Central Kitchen · CC BY 4.0', M, heroH-20);
 
-  let y = banda + 70;
+  let y = heroH + 74;
 
-  // cifras del sismo
-  x.fillStyle = '#16202E';
-  x.font = '900 120px Inter, system-ui, sans-serif';
-  x.fillText('7.4', 70, y+40);
-  x.fillStyle = '#6B7688';
-  x.font = '700 26px Inter, system-ui, sans-serif';
-  x.fillText('MAGNITUD', 70, y+80);
-  x.fillStyle = '#16202E';
-  x.font = '900 72px Inter, system-ui, sans-serif';
-  x.fillText('321', 330, y+40);
-  x.fillStyle = '#6B7688'; x.font = '700 26px Inter, system-ui, sans-serif';
-  x.fillText('FALLECIDOS', 330, y+80);
-  x.fillStyle = '#16202E'; x.font = '900 72px Inter, system-ui, sans-serif';
-  x.fillText('1.450', 620, y+40);
-  x.fillStyle = '#6B7688'; x.font = '700 26px Inter, system-ui, sans-serif';
-  x.fillText('VIVIENDAS AFECTADAS', 620, y+80);
-
-  y += 150;
-  x.strokeStyle = '#DFE3EA'; x.lineWidth = 2;
-  x.beginPath(); x.moveTo(70,y); x.lineTo(W-70,y); x.stroke();
+  /* ---- tres cifras del sismo ---- */
+  const cifras = [['7.4','MAGNITUD'], [SIS_MUERTOS,'FALLECIDOS'], [SIS_VIVIENDAS,'VIVIENDAS AFECTADAS']];
+  const colX = [M, M+300, M+620];
+  cifras.forEach(([n,l],i)=>{
+    x.fillStyle = '#141D29'; x.font = '900 62px Inter, system-ui, sans-serif';
+    x.fillText(n, colX[i], y);
+    x.fillStyle = '#68738A'; x.font = '800 20px Inter, system-ui, sans-serif';
+    x.fillText(l, colX[i], y+32);
+  });
+  y += 78;
+  x.strokeStyle = '#E2E5EA'; x.lineWidth = 2;
+  x.beginPath(); x.moveTo(M,y); x.lineTo(W-M,y); x.stroke();
   y += 62;
 
-  // lo que piden
-  x.fillStyle = '#16202E'; x.font = '900 44px Inter, system-ui, sans-serif';
-  x.fillText('Lo que piden hoy', 70, y);
-  x.fillStyle = '#6B7688'; x.font = '600 26px Inter, system-ui, sans-serif';
-  x.fillText(CIF.viviendas+' viviendas censadas · '+CIF.personas+' personas', 70, y+40);
-  y += 92;
+  /* ---- lo que piden ---- */
+  x.fillStyle = '#141D29'; x.font = '900 42px Inter, system-ui, sans-serif';
+  x.fillText('Lo que piden hoy', M, y);
+  x.fillStyle = '#68738A'; x.font = '600 24px Inter, system-ui, sans-serif';
+  x.fillText(CIF.viviendas+' viviendas censadas · '+CIF.personas+' personas', M, y+36);
+  y += 84;
 
-  const max = CIF.top[0] ? CIF.top[0][1] : 1;
-  CIF.top.forEach(([t,n])=>{
-    x.fillStyle = '#16202E'; x.font = '700 30px Inter, system-ui, sans-serif';
-    x.fillText(t, 70, y+30);
-    const bx = 430, bw = W-70-bx;
-    x.fillStyle = '#E6E3DE'; x.fillRect(bx, y+6, bw, 32);
-    x.fillStyle = '#C81E1E'; x.fillRect(bx, y+6, Math.max(24, bw*(n/max)), 32);
-    x.fillStyle = '#16202E'; x.font = '900 34px Inter, system-ui, sans-serif';
-    x.fillText(String(n), bx + bw + 10 - x.measureText(String(n)).width, y+36);
-    y += 58;
+  const cuantas = largo ? 6 : 4;
+  const lista = CIF.top.slice(0, cuantas);
+  const max = lista[0] ? lista[0][1] : 1;
+  const etW = 250, numW = 84, bx = M + etW + 18;
+  const bw = W - M - numW - 12 - bx;
+  lista.forEach(([t,n],i)=>{
+    x.fillStyle = '#141D29'; x.font = '700 27px Inter, system-ui, sans-serif';
+    x.fillText(t, M, y+27);
+    x.fillStyle = '#EAE7E2'; redondo(x, bx, y+6, bw, 28, 6); x.fill();
+    const gg = x.createLinearGradient(bx,0,bx+bw,0);
+    const tono = i<2 ? ['#B01717','#E8453C'] : i<4 ? ['#C98B22','#E8A33D'] : ['#7E889B','#A7B0BF'];
+    gg.addColorStop(0,tono[0]); gg.addColorStop(1,tono[1]);
+    x.fillStyle = gg; redondo(x, bx, y+6, Math.max(26, bw*(n/max)), 28, 6); x.fill();
+    x.fillStyle = '#141D29'; x.font = '900 31px Inter, system-ui, sans-serif';
+    const tw = x.measureText(String(n)).width;
+    x.fillText(String(n), W - M - tw, y+31);
+    y += 52;
   });
 
-  // una historia real, en el formato alto
-  if(historia && window.__HISTORIAS && window.__HISTORIAS.length){
-    const h = window.__HISTORIAS[Math.floor(Math.random()*window.__HISTORIAS.length)];
-    y += 34;
-    x.fillStyle = '#fff';
-    const cajaY = y, cajaH = 300;
-    x.fillRect(70, cajaY, W-140, cajaH);
-    x.fillStyle = '#C81E1E'; x.fillRect(70, cajaY, 8, cajaH);
-    x.fillStyle = '#6B7688'; x.font = '800 24px Inter, system-ui, sans-serif';
-    x.fillText('UNA DE ELLAS', 106, cajaY+50);
-    x.fillStyle = '#16202E'; x.font = '600 30px Inter, system-ui, sans-serif';
-    const fin = envolver(x, h.historia, 106, cajaY+100, W-250, 42);
-    x.fillStyle = '#C81E1E'; x.font = '800 26px Inter, system-ui, sans-serif';
-    x.fillText([h.barrio, h.ciudad].filter(Boolean).join(' · ') || 'Pereira', 106, Math.min(fin+16, cajaY+cajaH-30));
-    y = cajaY + cajaH + 20;
+  /* ---- una historia real, si cabe sin pisar el pie ---- */
+  const pieH0 = 190;
+  const h = (window.__HISTORIAS && window.__HISTORIAS.length)
+    ? window.__HISTORIAS[Math.floor(Math.random()*window.__HISTORIAS.length)] : null;
+  const filaRiesgo = 96;
+  let libre = (H - pieH0 - 34) - y;          // lo que queda antes del pie
+  const cajaIdeal = largo ? 250 : 210;
+  const cabeHistoria = h && libre >= cajaIdeal + filaRiesgo + 60;
+  if(cabeHistoria){
+    y += 30;
+    const cajaH = Math.min(cajaIdeal, libre - filaRiesgo - 40);
+    x.fillStyle = '#101A28'; redondo(x, M, y, W-M*2, cajaH, 18); x.fill();
+    x.fillStyle = '#E8A33D'; x.font = '800 20px Inter, system-ui, sans-serif';
+    x.fillText('UNA DE ELLAS', M+30, y+46);
+    x.fillStyle = '#EEF2F8'; x.font = '600 29px Inter, system-ui, sans-serif';
+    envolver(x, h.historia, M+30, y+92, W-M*2-60, 40, Math.max(2, Math.floor((cajaH-130)/40)));
+    x.fillStyle = '#93A3BD'; x.font = '700 21px Inter, system-ui, sans-serif';
+    const lugar = [...new Set([h.barrio,h.ciudad].filter(Boolean))].join(' · ') || 'Pereira';
+    x.fillText(lugar, M+30, y+cajaH-26);
+    y += cajaH + 34;
   }
 
-  // en el formato alto sobra sitio: se aprovecha para el dato que más pesa
-  if(historia){
-    const libre = (H - 150) - y;
-    if(libre > 170){
-      y += 20;
-      x.fillStyle = '#16202E';
-      x.font = '900 64px Inter, system-ui, sans-serif';
-      x.fillText(String(CIF.urgentes), 70, y+50);
-      x.fillText(String(CIF.menores), 400, y+50);
-      x.fillText(String(CIF.vulnerables), 730, y+50);
-      x.fillStyle = '#6B7688'; x.font = '700 24px Inter, system-ui, sans-serif';
-      x.fillText('CASOS URGENTES', 70, y+88);
-      x.fillText('MENORES DE 5', 400, y+88);
-      x.fillText('HOGARES VULNERABLES', 730, y+88);
-      y += 130;
-    }
-  }
+  /* ---- quiénes están en riesgo: centrado en el aire que sobre ---- */
+  libre = (H - pieH0) - y;
+  if(libre > filaRiesgo) y += Math.min(40, (libre - filaRiesgo)/2);
+  const rz = [[CIF.urgentes,'CASOS URGENTES','#C81E1E'],
+              [CIF.menores,'MENORES DE 5','#B8790F'],
+              [CIF.vulnerables,'HOGARES VULNERABLES','#6D4AA8']];
+  rz.forEach(([n,l,col],i)=>{
+    const cx = M + i*(W-M*2)/3;
+    x.fillStyle = col; x.font = '900 54px Inter, system-ui, sans-serif';
+    x.fillText(String(n), cx, y+46);
+    x.fillStyle = '#68738A'; x.font = '800 18px Inter, system-ui, sans-serif';
+    x.fillText(l, cx, y+76);
+  });
 
-  // pie con la marca
-  const pieY = H - 150;
-  x.fillStyle = '#16202E'; x.fillRect(0, pieY, W, 150);
-  x.fillStyle = '#fff'; x.font = '900 46px Inter, system-ui, sans-serif';
-  x.fillText('aquiestamos.co', 70, pieY+70);
-  x.fillStyle = '#E8A33D'; x.font = '700 28px Inter, system-ui, sans-serif';
-  x.fillText('Mira qué falta y dónde · Entrega directo a la familia', 70, pieY+112);
+  /* ---- pie: marca e instituciones ---- */
+  const pieH = 190, pieY = H - pieH;
+  x.fillStyle = '#101A28'; x.fillRect(0, pieY, W, pieH);
+  x.fillStyle = '#fff'; x.font = '900 44px Inter, system-ui, sans-serif';
+  x.fillText('aquiestamos.co', M, pieY+62);
+  x.fillStyle = '#E8A33D'; x.font = '700 24px Inter, system-ui, sans-serif';
+  x.fillText('Mira qué falta y dónde · Entrega directo a la familia', M, pieY+98);
+  x.strokeStyle = 'rgba(255,255,255,.16)'; x.lineWidth = 1;
+  x.beginPath(); x.moveTo(M, pieY+124); x.lineTo(W-M, pieY+124); x.stroke();
+  x.fillStyle = '#8FA0B8'; x.font = '600 19px Inter, system-ui, sans-serif';
+  x.fillText('Censo levantado por la red de iglesias AMCER y la Asociación CREA', M, pieY+154);
+  x.fillText('con la Fundación del Dr. Simi y la red de acopios alluda.online', M, pieY+180);
 
   return c;
 }
@@ -170,6 +216,7 @@ async function compartirImagen(formato){
   const msg = document.getElementById('sh-msg');
   if(msg) msg.textContent = 'Preparando la imagen…';
   cifrasVivas();
+  await cargarFoto();
   const alto = formato === 'ig' ? 1350 : 1920;
   const canvas = dibujarTarjeta(alto);
   const blob = await canvasABlob(canvas);
