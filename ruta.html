@@ -251,7 +251,7 @@ body{background:var(--pp);color:var(--tin);font:15px/1.5 Inter,system-ui,sans-se
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="js/config.js?v=2.4.1"></script>
+<script src="js/config.js?v=2.4.2"></script>
 <script>
 const esc = s => String(s??'').replace(/[<>&"]/g, m => ({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[m]));
 const NEC = {alimentos:'Mercado', aseo:'Aseo', arriendo:'Arriendo', agua:'Agua',
@@ -556,20 +556,13 @@ async function hacerPDF(btn){
     const necL = necs ? doc.splitTextToSize(necs, ancho - 26) : [];
     salto(12 + dirL.length*4.4 + necL.length*4 + (p.motivo?4.5:0));
 
-    // AcroForm se puede tocar en Acrobat y en visores de computador; en el
-    // celular casi ninguno lo soporta, así que igual queda el cuadro para
-    // marcar con lapicero. Se pone la casilla, no las dos cosas.
-    try{
-      const cb = new window.jspdf.AcroFormCheckBox();
-      cb.fieldName = 'p' + p.orden;
-      cb.Rect = [M, y - 3.6, 6, 6];
-      cb.appearanceState = 'Off';
-      cb.value = 'Off';
-      doc.addField(cb);
-    }catch(_){
-      doc.setDrawColor(60); doc.setLineWidth(0.4);
-      doc.rect(M, y - 3.6, 6, 6);
-    }
+    // Un cuadro dibujado, no un campo de formulario. La casilla de AcroForm
+    // pinta encima un relleno gris que tapaba el borde —no se veía dónde
+    // marcar— y de todas formas ningún visor de celular la deja tocar, que
+    // es donde el equipo la usa. Lo que sí se sincroniza es la casilla de
+    // la página; esta es para el lapicero.
+    doc.setDrawColor(30); doc.setLineWidth(0.55);
+    doc.rect(M, y - 3.9, 6.4, 6.4);
     doc.setFont('helvetica','bold'); doc.setFontSize(11); doc.setTextColor(20);
     doc.text(String(p.orden) + '.', M + 9, y);
     doc.text((p.nombre || 'Vivienda') + (p.personas ? `  (${p.personas}p)` : ''), M + 17, y);
@@ -679,7 +672,7 @@ try{ if(localStorage.getItem('aviso_ruta')) document.getElementById('aviso').hid
    muestra el dinosaurio. */
 if('serviceWorker' in navigator){
   addEventListener('load', ()=> navigator.serviceWorker
-    .register('sw-ruta.js?v=2.4.1').catch(()=>{}));
+    .register('sw-ruta.js?v=2.4.2').catch(()=>{}));
 }
 
 /* Cuántos están mirando esta misma ruta ahora. En la calle sirve para saber
