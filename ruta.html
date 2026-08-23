@@ -68,12 +68,27 @@ body{background:var(--pp);color:var(--tin);font:15px/1.5 Inter,system-ui,sans-se
 .comp button:active{transform:scale(.93)}
 .comp button svg{width:19px;height:19px}
 .comp button.ok{border-color:var(--ok);color:#7ED4A2}
-.banda{display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:12px;
-  margin-bottom:10px;font-size:13px;font-weight:650;line-height:1.45;
-  background:rgba(232,69,60,.12);border:1px solid rgba(232,69,60,.4);color:#FFB4AE}
-.banda.ok{background:rgba(63,154,104,.14);border-color:rgba(63,154,104,.42);color:#8FDCB0}
-.banda svg{width:20px;height:20px;flex:0 0 auto}
-.banda b{font-weight:900}
+/* Los avisos de estado no compiten con la ruta: flotan abajo, del ancho de
+   su texto, y se quitan solos cuando dejan de ser ciertos. En la calle la
+   pantalla es para las direcciones. */
+.pills{position:fixed;left:0;right:0;bottom:calc(14px + var(--safe,0px));z-index:60;
+  display:flex;flex-direction:column;align-items:center;gap:7px;pointer-events:none;
+  padding:0 12px}
+.pill{display:inline-flex;align-items:center;gap:8px;padding:9px 15px;border-radius:999px;
+  font-size:12.5px;font-weight:750;line-height:1;max-width:100%;
+  backdrop-filter:blur(10px);box-shadow:0 6px 18px rgba(0,0,0,.45);
+  animation:sube .3s cubic-bezier(.2,.7,.2,1)}
+@keyframes sube{from{opacity:0;transform:translateY(10px)}}
+@media (prefers-reduced-motion:reduce){ .pill{animation:none} }
+.pill[hidden]{display:none}
+.pill svg{width:15px;height:15px;flex:0 0 auto}
+.pill b{font-weight:900}
+.pill.roja{background:rgba(120,26,22,.92);border:1px solid rgba(232,69,60,.5);color:#FFC4BF}
+.pill.ambar{background:rgba(92,64,12,.92);border:1px solid rgba(232,163,61,.5);color:#F5D89B}
+.aviso{position:relative}
+.aviso .x{position:absolute;right:6px;top:4px;background:none;border:0;color:inherit;
+  opacity:.55;font-size:20px;line-height:1;cursor:pointer;padding:4px 8px;font-family:inherit}
+.aviso .x:hover{opacity:1}
 .aviso{display:flex;gap:10px;align-items:flex-start;margin-top:16px;padding:11px 13px;
   border-radius:11px;background:rgba(232,69,60,.12);border:1px solid rgba(232,69,60,.3);
   font-size:12.5px;line-height:1.5;color:#F3B9B5}
@@ -163,7 +178,17 @@ body{background:var(--pp);color:var(--tin);font:15px/1.5 Inter,system-ui,sans-se
 </head>
 <body>
 
-<div class="top"><div class="env">
+<div class="top"><div class="pills" id="pills" aria-live="polite">
+  <span class="pill roja" id="sinred" hidden>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M2 4l20 16M9.5 16a6 6 0 0 1 5 0M12 20h.01M5 12.5a11 11 0 0 1 4-2.6M17 6.5a16 16 0 0 1 5 2.3"/></svg>
+    Sin señal · se guarda en el teléfono
+  </span>
+  <span class="pill ambar" id="pend" hidden>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5.4l3.3 2"/></svg>
+    <b>0</b> esperando señal
+  </span>
+</div>
+<div class="env">
   <span class="marca">
     <svg viewBox="0 0 24 24" aria-hidden="true">
       <defs><clipPath id="rm"><path d="M12 1.6c-4.6 0-8.3 3.7-8.3 8.3 0 5.9 8.3 12.5 8.3 12.5s8.3-6.6 8.3-12.5c0-4.6-3.7-8.3-8.3-8.3z"/></clipPath></defs>
@@ -190,27 +215,24 @@ body{background:var(--pp);color:var(--tin);font:15px/1.5 Inter,system-ui,sans-se
       </button>
     </span>
   </div>
-  <div class="impr" id="impr">
-    <h1 id="impr-tit">Hoja de ruta</h1>
-    <p id="impr-sub"></p>
-    <p class="reglas">Marca cada casilla al entregar. Al volver a tener señal,
-      abre el enlace y márcalas también ahí, o pásale esta hoja a quien coordina.</p>
-  </div>
-  <div class="banda" id="sinred" hidden>
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M2 4l20 16M5 12.5a11 11 0 0 1 4-2.6M2 8.8A16 16 0 0 1 7 6M17 6.5a16 16 0 0 1 5 2.3M14.6 10.4a11 11 0 0 1 2.4 1.3M9.5 16a6 6 0 0 1 5 0M12 20h.01"/></svg>
-    <span>Sin señal. Estás viendo la ruta guardada; lo que marques se manda solo cuando vuelva.</span>
-  </div>
-  <div class="banda ok" id="pend" hidden>
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5.4l3.3 2"/></svg>
-    <span><b>0</b> entregas esperando señal para enviarse.</span>
-  </div>
-  <div class="aviso">
+  <div class="aviso" id="aviso">
+    <button type="button" class="x" id="aviso-x" aria-label="Entendido">&times;</button>
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4M12 17h.01"/><path d="M10.3 3.9 2.4 18a2 2 0 0 0 1.7 3h15.8a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>
     <span>Este enlace lleva nombres, direcciones y teléfonos de familias.
       Es solo para el equipo. <b>No lo reenvíes ni lo publiques.</b></span>
   </div>
 </div></div>
 
+<div class="pills" id="pills" aria-live="polite">
+  <span class="pill roja" id="sinred" hidden>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M2 4l20 16M9.5 16a6 6 0 0 1 5 0M12 20h.01M5 12.5a11 11 0 0 1 4-2.6M17 6.5a16 16 0 0 1 5 2.3"/></svg>
+    Sin señal · se guarda en el teléfono
+  </span>
+  <span class="pill ambar" id="pend" hidden>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5.4l3.3 2"/></svg>
+    <b>0</b> esperando señal
+  </span>
+</div>
 <div class="env">
   <div class="eqs" id="eqs" hidden></div>
   <div id="mapa" hidden></div>
@@ -219,7 +241,7 @@ body{background:var(--pp);color:var(--tin);font:15px/1.5 Inter,system-ui,sans-se
     Abrir la ruta en Google Maps</a>
   <button type="button" class="abrir sec" id="btn-pdf" hidden>
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 8V4.5h10V8"/><rect x="4" y="8" width="16" height="7.5" rx="1.8"/><path d="M7 14h10v5.5H7z"/></svg>
-    Guardar la hoja de ruta en PDF</button>
+    Descargar la hoja de ruta (PDF)</button>
   <p class="hint-pdf" id="hint-pdf" hidden>Imprímela o guárdala antes de salir:
     sirve aunque te quedes sin señal o sin batería.</p>
   <div id="lista"><p class="cargando">Cargando la ruta…</p></div>
@@ -229,7 +251,7 @@ body{background:var(--pp);color:var(--tin);font:15px/1.5 Inter,system-ui,sans-se
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="js/config.js?v=2.2.0"></script>
+<script src="js/config.js?v=2.3.0"></script>
 <script>
 const esc = s => String(s??'').replace(/[<>&"]/g, m => ({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[m]));
 const NEC = {alimentos:'Mercado', aseo:'Aseo', arriendo:'Arriendo', agua:'Agua',
@@ -476,6 +498,97 @@ async function marcar(btn){
 }
 const t2 = () => new URLSearchParams(location.search).get('t');
 
+/* ---- la hoja de ruta como archivo ----
+   Un diálogo de impresión no sirve en la calle: lo que sirve es un PDF que
+   se pueda mandar al grupo. La librería se carga solo al pedirlo, para no
+   pesar en cada apertura, y si no baja se cae al diálogo de imprimir. */
+function cargarJsPDF(){
+  if(window.jspdf) return Promise.resolve(true);
+  return new Promise(res=>{
+    const s = document.createElement('script');
+    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+    s.onload = ()=>res(!!window.jspdf);
+    s.onerror = ()=>res(false);
+    document.head.appendChild(s);
+  });
+}
+
+async function hacerPDF(btn){
+  const antes = btn.textContent;
+  btn.disabled = true; btn.textContent = 'Armando la hoja…';
+  const ok = await cargarJsPDF();
+  btn.disabled = false; btn.textContent = antes;
+  if(!ok){ alert('No se pudo armar el PDF sin señal. Usa el menú del navegador → Imprimir.'); return; }
+
+  const f0 = FILAS[0] || {};
+  const mias = FILAS.filter(x=>x.equipo===EQ);
+  const {jsPDF} = window.jspdf;
+  const doc = new jsPDF({unit:'mm', format:'a4'});
+  const M = 14, A = 210, ancho = A - M*2;
+  let y = 18;
+
+  const salto = alto => { if(y + alto > 282){ doc.addPage(); y = 18; } };
+
+  doc.setFont('helvetica','bold'); doc.setFontSize(16);
+  doc.text(f0.abierta ? `${f0.jornada || 'Jornada'} · Equipo ${EQ}` : `Equipo ${f0.mi_equipo}`, M, y);
+  y += 6;
+  doc.setFont('helvetica','normal'); doc.setFontSize(10); doc.setTextColor(90);
+  const d = f0.fecha ? new Date(f0.fecha+'T12:00:00') : null;
+  doc.text([f0.abierta ? null : f0.jornada,
+            d && !isNaN(d) ? `${DIA[d.getDay()]} ${d.getDate()} de ${MES[d.getMonth()]}` : null,
+            `${mias.length} paradas`].filter(Boolean).join('  ·  '), M, y);
+  y += 7;
+  doc.setDrawColor(150); doc.line(M, y, A-M, y); y += 5;
+  doc.setFontSize(8.5); doc.setTextColor(110);
+  doc.text('Marca cada casilla al entregar. Al recuperar señal, márcalas también en el enlace.', M, y);
+  y += 3;
+  doc.line(M, y, A-M, y); y += 8;
+
+  mias.forEach(p => {
+    const necs = (p.necesidades||[]).map(k=>NEC[k]||k).join(', ');
+    const dir  = [p.direccion, p.barrio].filter(Boolean).join(' · ') || 'Sin dirección registrada';
+    const dirL = doc.splitTextToSize(dir, ancho - 26);
+    const necL = necs ? doc.splitTextToSize(necs, ancho - 26) : [];
+    salto(12 + dirL.length*4.4 + necL.length*4 + (p.motivo?4.5:0));
+
+    doc.setDrawColor(60); doc.setLineWidth(0.4);
+    doc.rect(M, y - 3.6, 6, 6);                       // casilla para marcar a mano
+    doc.setFont('helvetica','bold'); doc.setFontSize(11); doc.setTextColor(20);
+    doc.text(String(p.orden) + '.', M + 9, y);
+    doc.text((p.nombre || 'Vivienda') + (p.personas ? `  (${p.personas}p)` : ''), M + 17, y);
+    y += 5;
+
+    doc.setFont('helvetica','normal'); doc.setFontSize(10); doc.setTextColor(45);
+    doc.text(dirL, M + 17, y); y += dirL.length * 4.4;
+
+    if(p.tel_e164){
+      doc.setFont('helvetica','bold'); doc.setFontSize(10.5); doc.setTextColor(20);
+      doc.text(telBonito(p.tel_e164), M + 17, y); y += 4.8;
+    }
+    if(necL.length){
+      doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(95);
+      doc.text(necL, M + 17, y); y += necL.length * 4;
+    }
+    if(p.motivo){
+      doc.setFont('helvetica','bold'); doc.setFontSize(8.5); doc.setTextColor(150, 90, 10);
+      doc.text(p.motivo.toUpperCase(), M + 17, y); y += 4.5;
+    }
+    y += 3.5;
+    doc.setDrawColor(215); doc.setLineWidth(0.2); doc.line(M, y, A-M, y); y += 6;
+  });
+
+  const hojas = doc.getNumberOfPages();
+  for(let i = 1; i <= hojas; i++){
+    doc.setPage(i);
+    doc.setFont('helvetica','normal'); doc.setFontSize(7.5); doc.setTextColor(140);
+    doc.text('Datos de familias censadas. Uso exclusivo del equipo de entrega.', M, 290);
+    doc.text(`${i} de ${hojas}`, A - M, 290, {align:'right'});
+  }
+
+  const nom = `ruta-equipo-${f0.abierta ? EQ : f0.mi_equipo}-${f0.fecha || 'jornada'}.pdf`;
+  doc.save(nom);
+}
+
 /* Compartir la ruta es pasársela a otro del mismo equipo —el que maneja, el
    que se bajó a tocar la puerta—, no publicarla. Por eso el mensaje repite
    el aviso: quien la reenvía debe saber lo que está mandando. */
@@ -492,19 +605,7 @@ document.addEventListener('click', e=>{
     open('https://wa.me/?text='+encodeURIComponent(textoCompartir()), '_blank');
     return;
   }
-  if(e.target.closest('#btn-pdf')){
-    const f0 = FILAS[0] || {};
-    const mias = FILAS.filter(x=>x.equipo===EQ);
-    document.getElementById('impr-tit').textContent =
-      (f0.abierta ? (f0.jornada||'Jornada') : `Equipo ${f0.mi_equipo}`) +
-      (f0.abierta ? ` · Equipo ${EQ}` : '');
-    document.getElementById('impr-sub').textContent =
-      [f0.jornada && f0.abierta ? null : f0.jornada,
-       document.getElementById('sub').textContent,
-       `${mias.length} paradas`].filter(Boolean).join(' · ');
-    print();
-    return;
-  }
+  if(e.target.closest('#btn-pdf')){ hacerPDF(e.target.closest('#btn-pdf')); return; }
   const cp = e.target.closest('#sh-cp');
   if(cp){
     navigator.clipboard?.writeText(location.href).then(()=>{
@@ -532,13 +633,15 @@ document.addEventListener('click', e=>{
 cargar();
 pintarEstadoRed();
 pintarPendientes();
+// quien ya lo leyó no necesita verlo cada vez que abre la ruta
+try{ if(localStorage.getItem('aviso_ruta')) document.getElementById('aviso').hidden = true; }catch(_){}
 
 /* Para que un refresco sin señal no borre la ruta de la pantalla. Es el caso
    que más miedo da en la calle: alguien recarga sin querer y el navegador
    muestra el dinosaurio. */
 if('serviceWorker' in navigator){
   addEventListener('load', ()=> navigator.serviceWorker
-    .register('sw-ruta.js?v=2.2.0').catch(()=>{}));
+    .register('sw-ruta.js?v=2.3.0').catch(()=>{}));
 }
 
 /* Cuántos están mirando esta misma ruta ahora. En la calle sirve para saber
