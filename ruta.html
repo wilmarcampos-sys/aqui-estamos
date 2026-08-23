@@ -251,7 +251,7 @@ body{background:var(--pp);color:var(--tin);font:15px/1.5 Inter,system-ui,sans-se
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="js/config.js?v=2.4.2"></script>
+<script src="js/config.js?v=2.5.0"></script>
 <script>
 const esc = s => String(s??'').replace(/[<>&"]/g, m => ({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[m]));
 const NEC = {alimentos:'Mercado', aseo:'Aseo', arriendo:'Arriendo', agua:'Agua',
@@ -503,6 +503,17 @@ async function marcar(btn){
 }
 const t2 = () => new URLSearchParams(location.search).get('t');
 
+/* Distancia en línea recta entre dos puntos, en km. Sirve para decirle al
+   equipo cuánto recorrido tiene por delante; no es la distancia por calle,
+   que siempre es mayor. */
+function dist(la1, lo1, la2, lo2){
+  const R = 6371, r = Math.PI/180;
+  const dLa = (la2-la1)*r, dLo = (lo2-lo1)*r;
+  const a = Math.sin(dLa/2)**2 +
+            Math.cos(la1*r)*Math.cos(la2*r)*Math.sin(dLo/2)**2;
+  return 2*R*Math.asin(Math.sqrt(a));
+}
+
 /* ---- la hoja de ruta como archivo ----
    Un diálogo de impresión no sirve en la calle: lo que sirve es un PDF que
    se pueda mandar al grupo. La librería se carga solo al pedirlo, para no
@@ -534,20 +545,58 @@ async function hacerPDF(btn){
 
   const salto = alto => { if(y + alto > 272){ doc.addPage(); y = 18; } };
 
-  doc.setFont('helvetica','bold'); doc.setFontSize(16);
-  doc.text(f0.abierta ? `${f0.jornada || 'Jornada'} · Equipo ${EQ}` : `Equipo ${f0.mi_equipo}`, M, y);
-  y += 6;
-  doc.setFont('helvetica','normal'); doc.setFontSize(10); doc.setTextColor(90);
+  /* ---- portada de la hoja ----
+     Quien recibe esta hoja por WhatsApp tiene que saber en tres segundos de
+     qué jornada es, qué equipo es el suyo y qué va a repartir. Va en banda
+     oscura para que se distinga de las paradas aunque se imprima en gris. */
   const d = f0.fecha ? new Date(f0.fecha+'T12:00:00') : null;
-  doc.text([f0.abierta ? null : f0.jornada,
-            d && !isNaN(d) ? `${DIA[d.getDay()]} ${d.getDate()} de ${MES[d.getMonth()]}` : null,
-            `${mias.length} paradas`].filter(Boolean).join('  ·  '), M, y);
-  y += 7;
-  doc.setDrawColor(150); doc.line(M, y, A-M, y); y += 5;
-  doc.setFontSize(8.5); doc.setTextColor(110);
+  const eq = f0.abierta ? EQ : f0.mi_equipo;
+  const personas = mias.reduce((a,x)=>a+(x.personas||0), 0);
+  let km = 0;
+  const conPunto = mias.filter(x=>x.lat && x.lng);
+  conPunto.forEach((x,i)=>{ if(i) km += dist(conPunto[i-1].lat, conPunto[i-1].lng, x.lat, x.lng); });
+
+  doc.setFillColor(13, 21, 32);
+  doc.rect(0, 0, A, 44, 'F');
+  doc.setFillColor(242, 183, 5);
+  doc.rect(0, 44, A, 1.6, 'F');
+
+  doc.setFont('helvetica','bold'); doc.setFontSize(8);
+  doc.setTextColor(242, 183, 5);
+  doc.text('AQUÍ ESTAMOS · HOJA DE RUTA', M, 12);
+
+  doc.setFontSize(19); doc.setTextColor(255, 255, 255);
+  doc.text(`Equipo ${eq}`, M, 23);
+  doc.setFont('helvetica','normal'); doc.setFontSize(11); doc.setTextColor(180, 195, 214);
+  doc.text([f0.jornada, d && !isNaN(d)
+    ? `${DIA[d.getDay()]} ${d.getDate()} de ${MES[d.getMonth()]}` : null]
+    .filter(Boolean).join('  ·  '), M, 30);
+
+  // la fila de datos: lo que hay que saber antes de arrancar
+  const datos = [
+    [String(mias.length), 'PARADAS'],
+    [String(personas), 'PERSONAS'],
+    [km ? `${km.toFixed(1)} km` : '—', 'RECORRIDO'],
+    [(NEC[f0.tipo] || f0.tipo || 'Ayuda'), 'QUÉ SE ENTREGA'],
+  ];
+  let dx = M;
+  datos.forEach(([n, et], i)=>{
+    doc.setFont('helvetica','bold'); doc.setFontSize(11.5); doc.setTextColor(255,255,255);
+    doc.text(n, dx, 39);
+    doc.setFont('helvetica','normal'); doc.setFontSize(6.5); doc.setTextColor(140, 158, 180);
+    doc.text(et, dx, 42.4);
+    dx += Math.max(doc.getTextWidth(et) + 9, 30);
+    if(i < datos.length - 1){
+      doc.setDrawColor(45, 60, 80); doc.setLineWidth(0.3);
+      doc.line(dx - 5, 34.5, dx - 5, 42.8);
+    }
+  });
+
+  y = 54;
+  doc.setFont('helvetica','normal'); doc.setFontSize(8.5); doc.setTextColor(110);
   doc.text('Marca cada casilla al entregar. Al recuperar señal, márcalas también en el enlace.', M, y);
   y += 3;
-  doc.line(M, y, A-M, y); y += 8;
+  doc.setDrawColor(150); doc.setLineWidth(0.2); doc.line(M, y, A-M, y); y += 9;
 
   mias.forEach(p => {
     const necs = (p.necesidades||[]).map(k=>NEC[k]||k).join(', ');
@@ -672,7 +721,7 @@ try{ if(localStorage.getItem('aviso_ruta')) document.getElementById('aviso').hid
    muestra el dinosaurio. */
 if('serviceWorker' in navigator){
   addEventListener('load', ()=> navigator.serviceWorker
-    .register('sw-ruta.js?v=2.4.2').catch(()=>{}));
+    .register('sw-ruta.js?v=2.5.0').catch(()=>{}));
 }
 
 /* Cuántos están mirando esta misma ruta ahora. En la calle sirve para saber

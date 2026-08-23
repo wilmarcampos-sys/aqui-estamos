@@ -9,13 +9,13 @@
    Estrategia: red primero y guardar copia. Si la red falla, se sirve la
    copia. Nunca al revés, para que quien sí tiene señal vea lo último.
    ============================================================ */
-const CACHE = 'ruta-v2';
+const CACHE = 'ruta-v3';
 const ESENCIALES = [
   './ruta.html',
   './css/app.css',
   './js/config.js',
-  'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css',
-  'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js',
+  'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css',
+  'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js',
   'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js',
   'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js',
 ];
