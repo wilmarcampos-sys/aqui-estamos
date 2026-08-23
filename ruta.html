@@ -136,6 +136,37 @@ body{background:var(--pp);color:var(--tin);font:15px/1.5 Inter,system-ui,sans-se
   padding-top:3px;text-decoration:none;color:var(--tin)}
 .dato .tx.tel{color:var(--acc);letter-spacing:.4px}
 .dato .tx.sin{color:var(--dim);font-weight:600;font-style:italic}
+
+/* Una parada que no se encuentra no es una entrega: es media hora perdida.
+   Más vale que el equipo lo sepa antes de bajarse del carro. */
+.llamar{display:flex;align-items:flex-start;gap:8px;margin:10px 0 0;padding:9px 11px;
+  border-radius:10px;background:rgba(232,163,61,.12);border:1px solid rgba(232,163,61,.32);
+  color:#F0C878;font-size:12.5px;line-height:1.45;font-weight:600}
+.llamar svg{width:16px;height:16px;min-width:16px;flex:0 0 16px;margin-top:1px}
+.llamar b{font-weight:850}
+
+/* Plan B: si no hay nadie en la casa, devolverse con el mercado es la peor
+   salida. Se ofrecen casas del censo que estén cerca y que no sean parada de
+   ningún otro equipo, para que dos no lleguen a la misma puerta. */
+.planb{display:flex;align-items:center;gap:8px;width:100%;margin-top:10px;
+  padding:11px 13px;border-radius:11px;background:var(--card);
+  border:1px dashed var(--fil);color:var(--dim);font:inherit;font-size:13px;
+  font-weight:700;cursor:pointer;text-align:left}
+.planb:hover{border-color:var(--acc);color:var(--acc)}
+.planb svg{width:16px;height:16px;min-width:16px;flex:0 0 16px}
+.pb-caja{margin-top:9px}
+.pb-caja[hidden]{display:none}
+.pb-tit{font-size:11px;font-weight:850;letter-spacing:.7px;text-transform:uppercase;
+  color:var(--dim);margin:2px 2px 8px}
+.pb-op{display:flex;align-items:flex-start;gap:11px;width:100%;text-align:left;
+  padding:12px;border-radius:11px;background:var(--card);border:1px solid var(--fil);
+  color:var(--txt);font:inherit;cursor:pointer;margin-bottom:7px}
+.pb-op:hover{border-color:var(--acc)}
+.pb-op .m{flex:0 0 auto;font-size:11.5px;font-weight:900;color:var(--acc);
+  background:var(--chip);border-radius:7px;padding:5px 8px;min-width:54px;text-align:center}
+.pb-op b{display:block;font-size:14px;font-weight:800;letter-spacing:-.2px}
+.pb-op small{display:block;font-size:12px;color:var(--dim);margin-top:2px;line-height:1.4}
+.pb-vacio{font-size:12.5px;color:var(--dim);padding:10px 2px;line-height:1.5}
 .cp{flex:0 0 auto;background:var(--sup);border:1px solid var(--fil);color:var(--dim);
   border-radius:8px;min-height:34px;padding:0 11px;font:inherit;font-size:11.5px;
   font-weight:800;cursor:pointer;display:inline-flex;align-items:center}
@@ -251,7 +282,7 @@ body{background:var(--pp);color:var(--tin);font:15px/1.5 Inter,system-ui,sans-se
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="js/config.js?v=2.5.0"></script>
+<script src="js/config.js?v=2.6.0"></script>
 <script>
 const esc = s => String(s??'').replace(/[<>&"]/g, m => ({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[m]));
 const NEC = {alimentos:'Mercado', aseo:'Aseo', arriendo:'Arriendo', agua:'Agua',
@@ -277,6 +308,15 @@ function waLink(v, msg){
    número —el censo lo levantaron AMCER y CREA—, y pregunta si hay alguien
    en la casa, que es lo que evita el viaje perdido. */
 const MSJ_VISITA = 'Buen día. Somos el equipo de Aquí Estamos, con la red de iglesias AMCER y la Asociación CREA, que hicieron el censo en su barrio. Vamos en camino con la ayuda. ¿Nos confirma si hay alguien en la casa?';
+
+/* "Cra 25 # 75b-63" se encuentra; "San Nicolás" no. Cuando la familia solo
+   dejó el barrio, el equipo llega al sector y ahí empieza a preguntar. Más
+   vale saberlo antes de bajarse del carro y llamar primero. */
+function dirHallable(d, barrio){
+  const t = String(d||'').trim();
+  if(!t || !/[0-9]/.test(t) || t.length < 9) return false;
+  return t.toLowerCase() !== String(barrio||'').trim().toLowerCase();
+}
 
 let FILAS = [], EQ = null, DESDE_COPIA = false;
 
@@ -442,6 +482,14 @@ function pintar(){
           ? `<span class="tx">${esc(p.direccion)}</span>
              <button type="button" class="cp" data-cp="${esc(p.direccion)}">Copiar</button>`
           : '<span class="tx sin">Sin dirección</span>'}</div>
+      ${p.entregada ? '' : `<button type="button" class="planb" data-planb="${esc(p.id)}">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s7-6.3 7-11a7 7 0 1 0-14 0c0 4.7 7 11 7 11z"/><circle cx="12" cy="10" r="2.6"/></svg>
+        No pude entregar aquí · buscar otra casa cerca</button>
+      <div class="pb-caja" id="pb-${esc(p.id)}" hidden></div>`}
+      ${dirHallable(p.direccion, p.barrio) ? '' : `<p class="llamar">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round"><path d="M12 8v5M12 16.5h.01"/><circle cx="12" cy="12" r="9"/></svg>
+        Esta dirección no tiene número. <b>Llama antes de ir</b> para que te
+        expliquen cómo llegar.</p>`}
       <div class="dato"><span class="et">Teléfono</span>
         ${p.tel_e164
           ? `<a class="tx tel" href="tel:${esc(p.tel_e164)}">${esc(telBonito(p.tel_e164))}</a>
@@ -502,6 +550,58 @@ async function marcar(btn){
   marcando = false;
 }
 const t2 = () => new URLSearchParams(location.search).get('t');
+
+async function planB(btn, parada){
+  const caja = document.getElementById('pb-' + parada);
+  if(!caja) return;
+  if(!caja.hidden){ caja.hidden = true; return; }
+  caja.hidden = false;
+  caja.innerHTML = '<p class="pb-vacio">Buscando casas cerca…</p>';
+  try{
+    const db = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
+    const {data, error} = await db.rpc('plan_b', {t: t2(), parada, radio_km: 1.5, cuantos: 4});
+    if(error) throw error;
+    if(!data || !data.length){
+      caja.innerHTML = '<p class="pb-vacio">No hay ninguna casa del censo cerca que ' +
+        'no esté ya en la ruta de otro equipo. Avísale a quien coordina.</p>';
+      return;
+    }
+    caja.innerHTML = '<p class="pb-tit">Casas cerca, ninguna de otro equipo</p>' +
+      data.map(x=>{
+        const necs = (x.necesidades||[]).map(k=>NEC[k]||k).slice(0,3).join(', ');
+        return `<button type="button" class="pb-op" data-pbop="${esc(x.censo_id)}"
+          data-pbpar="${esc(parada)}" data-pbnom="${esc(x.nombre||'esa casa')}">
+          <span class="m">${x.metros} m</span>
+          <span><b>${esc(x.nombre||'Vivienda')}${x.personas?` · ${x.personas}p`:''}</b>
+            <small>${esc(x.direccion || 'Sin dirección')}${x.barrio?` · ${esc(x.barrio)}`:''}</small>
+            ${necs?`<small>${esc(necs)}</small>`:''}</span></button>`;
+      }).join('');
+  }catch(e){
+    caja.innerHTML = '<p class="pb-vacio">No se pudo buscar sin señal. ' +
+      'Intenta cuando vuelva la conexión.</p>';
+  }
+}
+
+async function usarPlanB(btn, casa, parada, nombre){
+  if(!confirm(`¿Entregar en la casa de ${nombre} en vez de esta parada?\n\n` +
+    'Queda registrada como entrega del equipo y la parada original se marca ' +
+    'como no lograda.')) return;
+  btn.disabled = true; btn.style.opacity = '.6';
+  try{
+    const db = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
+    const {data, error} = await db.rpc('entregar_alterna',
+      {t: t2(), parada_original: parada, casa, motivo_fallo: 'no se pudo contactar'});
+    if(error) throw error;
+    if(!data || !data[0] || !data[0].ok){
+      alert('Esa casa ya la tiene otro equipo. Escoge otra.');
+      btn.disabled = false; btn.style.opacity = ''; return;
+    }
+    await cargar();
+  }catch(e){
+    alert('No se pudo registrar. Revisa la señal e intenta otra vez.');
+    btn.disabled = false; btn.style.opacity = '';
+  }
+}
 
 /* Distancia en línea recta entre dos puntos, en km. Sirve para decirle al
    equipo cuánto recorrido tiene por delante; no es la distancia por calle,
@@ -603,7 +703,8 @@ async function hacerPDF(btn){
     const dir  = [p.direccion, p.barrio].filter(Boolean).join(' · ') || 'Sin dirección registrada';
     const dirL = doc.splitTextToSize(dir, ancho - 26);
     const necL = necs ? doc.splitTextToSize(necs, ancho - 26) : [];
-    salto(12 + dirL.length*4.4 + necL.length*4 + (p.motivo?4.5:0));
+    salto(12 + dirL.length*4.4 + necL.length*4 + (p.motivo?4.5:0)
+              + (dirHallable(p.direccion, p.barrio)?0:4.5));
 
     // Un cuadro dibujado, no un campo de formulario. La casilla de AcroForm
     // pinta encima un relleno gris que tapaba el borde —no se veía dónde
@@ -644,6 +745,10 @@ async function hacerPDF(btn){
     if(p.motivo){
       doc.setFont('helvetica','bold'); doc.setFontSize(8.5); doc.setTextColor(150, 90, 10);
       doc.text(p.motivo.toUpperCase(), M + 17, y); y += 4.5;
+    }
+    if(!dirHallable(p.direccion, p.barrio)){
+      doc.setFont('helvetica','bold'); doc.setFontSize(8.5); doc.setTextColor(178, 108, 12);
+      doc.text('SIN NÚMERO — LLAMAR ANTES DE IR', M + 17, y); y += 4.5;
     }
     y += 3.5;
     doc.setDrawColor(215); doc.setLineWidth(0.2); doc.line(M, y, A-M, y); y += 6;
@@ -694,6 +799,11 @@ document.addEventListener('click', e=>{
     });
     return;
   }
+  const pb = e.target.closest('[data-planb]');
+  if(pb){ planB(pb, pb.getAttribute('data-planb')); return; }
+  const po = e.target.closest('[data-pbop]');
+  if(po){ usarPlanB(po, po.getAttribute('data-pbop'), po.getAttribute('data-pbpar'),
+                    po.getAttribute('data-pbnom')); return; }
   const m = e.target.closest('[data-marcar]');
   if(m){ marcar(m); return; }
   const b = e.target.closest('[data-cp]');
@@ -721,7 +831,7 @@ try{ if(localStorage.getItem('aviso_ruta')) document.getElementById('aviso').hid
    muestra el dinosaurio. */
 if('serviceWorker' in navigator){
   addEventListener('load', ()=> navigator.serviceWorker
-    .register('sw-ruta.js?v=2.5.0').catch(()=>{}));
+    .register('sw-ruta.js?v=2.6.0').catch(()=>{}));
 }
 
 /* Cuántos están mirando esta misma ruta ahora. En la calle sirve para saber
