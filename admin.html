@@ -8,7 +8,7 @@
 <link rel="icon" type="image/svg+xml" href="logo/marca.svg">
 <title>Aquí Estamos · Administración</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
-<link rel="stylesheet" href="css/app.css?v=1.71.2">
+<link rel="stylesheet" href="css/app.css?v=1.72.0">
 <style>
   /* El panel es mobile-first: una columna, pestañas fijas abajo. En pantalla
      grande se centra en una franja de ancho de celular para no deformarse. */
@@ -570,9 +570,9 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="js/config.js?v=1.71.2"></script>
-<script src="js/version.js?v=1.71.2"></script>
-<script src="js/data.js?v=1.71.2"></script>
+<script src="js/config.js?v=1.72.0"></script>
+<script src="js/version.js?v=1.72.0"></script>
+<script src="js/data.js?v=1.72.0"></script>
 <script>
 /* ============================================================
    PANEL DE ADMINISTRACIÓN — Aquí Estamos
@@ -1452,7 +1452,7 @@ function vReporte(){
         <input id="rep-q" value="${esc(REP.q)}" placeholder="Buscar nombre, cédula, celular, ficha, dirección…" autocomplete="off">
       </label>
       <button class="btn ${nFil?'pri':''}" id="rep-filtros">Filtros${nFil?` <span class="cta">${nFil}</span>`:''}</button>
-      <button class="btn" id="rep-csv" title="Exportar lo filtrado">Exportar</button>
+      ${ROL==='admin'?`<button class="btn" id="rep-csv" title="Exportar lo filtrado">Exportar</button>`:''}
       <button class="btn" id="rep-print" title="Imprimir">Imprimir</button>
       ${ROL==='admin'||ROL==='censo' ? `<button class="btn" id="rep-jornada">Armar jornada</button>`:''}
     </div>
@@ -1568,6 +1568,7 @@ function repModal(cuenta, nRes){
 
 /* exportar SOLO lo filtrado: el censo entero ya se exporta desde Más */
 function repCSV(){
+  if(ROL!=='admin') return toast('Exportar lo hace la coordinación general.');
   const lista = repOrdenar(repFiltrar());
   const q = v => '"'+String(v??'').replace(/"/g,'""')+'"';
   const cab = ['Ficha','Nombre','Barrio','Ciudad','Dirección','Personas','Menores 5','Mayores 65',
@@ -2805,6 +2806,11 @@ function vMas(){
       <div class="grow"><b>Datos privados</b><span>${AKEY()||DEMO?'Tu correo está autorizado: contactos y censo visibles':'Tu correo no está en la lista de administradores'}</span></div>
       <span style="color:${AKEY()||DEMO?'#22c55e':'#f5a524'};font-size:18px">${AKEY()||DEMO?'✓':'—'}</span>
     </div>
+    ${ROL!=='admin' ? `<div class="lbl">Datos</div>
+    <div class="mitem" style="cursor:default;opacity:.75">
+      <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10.5" width="16" height="10.5" rx="3"/><path d="M8 10.5V7a4 4 0 0 1 8 0v3.5"/></svg>
+      <div class="grow"><b>Exportar no está disponible</b><span>Sacar el censo del panel lo hace la coordinación general</span></div>
+    </div>` : `
     <div class="lbl">Datos</div>
     <button class="mitem" id="btn-export-censo">
       <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h9l5 5v13H6z"/><path d="M14 3v6h6M9 14h7M9 17.5h5"/></svg>
@@ -2817,7 +2823,7 @@ function vMas(){
     <button class="mitem" data-cifras>
       <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>
       <div class="grow"><b>Cifras para la Alcaldía</b><span>Resumen listo para copiar y pegar</span></div><span class="chev">›</span>
-    </button>
+    </button>`}
     <div class="lbl">Ayuda</div>
     <button class="mitem" data-ayuda="coordinacion">
       <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.1 9.5a3 3 0 0 1 5.8 1c0 2-2.9 3-2.9 3"/><path d="M12 17h.01"/></svg>
@@ -2903,6 +2909,7 @@ Personas estimadas por cubrir: ${personas.toLocaleString('es-CO')}`;
    EXPORTAR
    ============================================================ */
 async function exportar(){
+  if(ROL!=='admin') return toast('Exportar lo hace la coordinación general.');
   if(DEMO){ toast('En modo demo no hay base que exportar.'); return; }
   toast('Bajando…');
   try{
@@ -2924,6 +2931,7 @@ async function exportar(){
 }
 
 function exportarCenso(){
+  if(ROL!=='admin') return toast('Exportar el censo lo hace la coordinación general.');
   if(!CENSO.length){ toast(AKEY()||DEMO?'No hay viviendas en el censo.':'Tu correo no tiene permiso de administración.'); return; }
   const cab = ['ficha','nombre','cedula','telefono','barrio','direccion','sena','personas','menores5','mayores65','condiciones','estado_vivienda','necesidades','detalle','lat','lng','registrado'];
   const q = v => '"'+String(v??'').replace(/"/g,'""')+'"';
@@ -3179,7 +3187,10 @@ document.addEventListener('click', e=>{
 
   if(e.target.closest('[data-abrir-mapa]')){ location.href='/'; return; }
   const ay = e.target.closest('[data-ayuda]'); if(ay) return abrirAyuda(ay.dataset.ayuda);
-  if(e.target.closest('[data-cifras]')) return abrirCifras();
+  if(e.target.closest('[data-cifras]')){
+    if(ROL!=='admin') return toast('Las cifras las arma la coordinación general.');
+    return abrirCifras();
+  }
   if(e.target.closest('#btn-export')) return exportar();
   if(e.target.closest('#btn-export-censo')) return exportarCenso();
   const ped = e.target.closest('[data-pedido]');
