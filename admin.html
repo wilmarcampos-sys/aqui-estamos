@@ -11,7 +11,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
-<link rel="stylesheet" href="css/app.css?v=1.99.0">
+<link rel="stylesheet" href="css/app.css?v=2.0.0">
 <style>
   /* El panel es mobile-first: una columna, pestañas fijas abajo. En pantalla
      grande se centra en una franja de ancho de celular para no deformarse. */
@@ -777,9 +777,9 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="js/config.js?v=1.99.0"></script>
-<script src="js/version.js?v=1.99.0"></script>
-<script src="js/data.js?v=1.99.0"></script>
+<script src="js/config.js?v=2.0.0"></script>
+<script src="js/version.js?v=2.0.0"></script>
+<script src="js/data.js?v=2.0.0"></script>
 <script>
 /* ============================================================
    PANEL DE ADMINISTRACIÓN — Aquí Estamos
@@ -1521,6 +1521,18 @@ function vJornadas(){
         <span>Cada equipo puede ver la ruta de los demás
           <small>Desmárcalo y cada enlace muestra solo su propia ruta</small></span>
       </label>
+      ${j.rutas_abiertas?`
+      <div class="eqacc" style="margin-top:10px">
+        <button type="button" class="btn flat" data-ver-eq="0">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
+          Ver todas las rutas en vivo</button>
+        <button type="button" class="btn wa2" data-compartir-eq="0">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.5 2 2 6.5 2 12c0 1.8.5 3.4 1.3 4.9L2 22l5.3-1.4A10 10 0 1 0 12 2Zm0 18.2c-1.5 0-3-.4-4.3-1.2l-.3-.2-3.1.8.8-3-.2-.3A8.2 8.2 0 1 1 12 20.2Z"/></svg>
+          Enviar a todos</button>
+      </div>
+      <p class="muted" style="margin:7px 3px 0;font-size:12.5px">
+        Un solo enlace con las ${eq.length} rutas. Sirve para el grupo de
+        WhatsApp de la jornada.</p>`:''}
       <div class="lbl" style="margin-top:20px">Equipos</div>
       ${eq.map(n=>{
         const ps = j.paradas.filter(p=>p.equipo===n);
@@ -1721,10 +1733,16 @@ async function jCompartirEquipo(n, btn){
   btn.disabled = true;
   try{
     const url = await jEnlace(j, n);
-    const ps  = (j.paradas||[]).filter(p=>p.equipo===n);
-    const txt = `Equipo ${n} · ${j.titulo||('jornada del '+j.fecha)}\n`
-      + `${ps.length} paradas.\n\nAquí está tu ruta con direcciones y teléfonos:\n${url}\n\n`
-      + `No la reenvíes: lleva datos de las familias.`;
+    const ps  = (j.paradas||[]).filter(p=>n===0 || p.equipo===n);
+    const eqs = new Set((j.paradas||[]).map(p=>p.equipo)).size;
+    const txt = n===0
+      ? `${j.titulo||('Jornada del '+j.fecha)}\n${eqs} equipos · ${ps.length} paradas.\n\n`
+        + `Aquí están todas las rutas, con direcciones y teléfonos:\n${url}\n\n`
+        + `Cada equipo escoge el suyo arriba. No lo reenvíen fuera del grupo:\n`
+        + `lleva datos de las familias.`
+      : `Equipo ${n} · ${j.titulo||('jornada del '+j.fecha)}\n`
+        + `${ps.length} paradas.\n\nAquí está tu ruta con direcciones y teléfonos:\n${url}\n\n`
+        + `No la reenvíes: lleva datos de las familias.`;
     open('https://wa.me/?text='+encodeURIComponent(txt), '_blank');
   }catch(e){
     toast('No se pudo crear el enlace: '+(e.message||''));
@@ -3868,6 +3886,20 @@ async function arrancar(){
       if(editando()){ HAY_NUEVO = true; pintarAvisoNuevo(); return; }
       cargar();
     }).subscribe();
+
+  /* Respaldo del tiempo real: mientras se está mirando una jornada, se
+     vuelven a pedir las paradas cada medio minuto. Los equipos marcan desde
+     la calle, donde la conexión se cae y se vuelve a levantar; si un aviso
+     se pierde, el contador igual se pone al día solo. */
+  setInterval(async ()=>{
+    if(DEMO || document.hidden) return;
+    if(VISTA !== 'despachos' || !JVER) return;
+    if(editando()) return;
+    const antes = JSON.stringify(JORNADAS.map(j=>(j.paradas||[]).filter(p=>p.entregada).length));
+    await cargarJornadas();
+    const ahora = JSON.stringify(JORNADAS.map(j=>(j.paradas||[]).filter(p=>p.entregada).length));
+    if(antes !== ahora) vDespachos();
+  }, 20000);
 }
 if(!DEMO) db.auth.onAuthStateChange(()=>{ if($('#panel').hidden){ location.hash=''; arrancar(); } });
 arrancar();
