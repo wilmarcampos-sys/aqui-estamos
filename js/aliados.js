@@ -22,7 +22,7 @@ const ALIADO_INFO = [
   { rx:/comfamiliar/i, tel:'+57 606 313 5600', ent:'Comfamiliar Risaralda', web:'https://comfamiliar.com' },
   { rx:/c[aá]mara de comercio|sede tip/i, tel:'+57 606 322 8599', ent:'Cámara de Comercio de Dosquebradas', web:'https://www.camado.org.co' },
 ];
-let mostrarAcopios = true;
+let mostrarAcopios = false;
 let capaAcopios = (typeof map !== 'undefined' && map && !modoSVG) ? L.layerGroup().addTo(map) : null;
 
 async function cargarAcopios(){
