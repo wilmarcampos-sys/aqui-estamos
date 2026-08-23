@@ -11,7 +11,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
-<link rel="stylesheet" href="css/app.css?v=1.95.0">
+<link rel="stylesheet" href="css/app.css?v=1.96.0">
 <style>
   /* El panel es mobile-first: una columna, pestañas fijas abajo. En pantalla
      grande se centra en una franja de ancho de celular para no deformarse. */
@@ -769,9 +769,9 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="js/config.js?v=1.95.0"></script>
-<script src="js/version.js?v=1.95.0"></script>
-<script src="js/data.js?v=1.95.0"></script>
+<script src="js/config.js?v=1.96.0"></script>
+<script src="js/version.js?v=1.96.0"></script>
+<script src="js/data.js?v=1.96.0"></script>
 <script>
 /* ============================================================
    PANEL DE ADMINISTRACIÓN — Aquí Estamos
@@ -2863,9 +2863,14 @@ function vDespachos(){
                     : 'Sin límite: un equipo puede terminar cruzando la ciudad para alcanzar viviendas dispersas.'}</p>
 
         <div class="lbl" style="margin-top:16px">Máximo de paradas por equipo</div>
-        <div class="seg" id="dp-tope" style="margin-top:8px">
-          ${[5,6,8,10].map(n=>`<button data-dtope="${n}" class="${DP.tope===n?'on':''}">${n}</button>`).join('')}
+        <div class="stepr" id="dp-tp" style="margin-top:8px">
+          <button data-dt="-1">−</button>
+          <div class="val"><b>${DP.tope}</b><small>parada${DP.tope===1?'':'s'} por equipo</small></div>
+          <button data-dt="1">+</button>
         </div>
+        <p class="muted" style="margin:6px 3px 0;font-size:12.5px">
+          Es un máximo, no una cuota: si hay menos destinos que cupos, se
+          reparten parejo entre todos los equipos.</p>
         <div class="totalbox" style="margin-top:16px">
           <b>${entran}</b>
           <span>reciben en esta jornada<small>Lo que manda es el más pequeño de los tres</small></span>
@@ -3492,7 +3497,8 @@ document.addEventListener('click', e=>{
 // asistente de despachos
 document.addEventListener('click', e=>{
   const t=e.target.closest('#dp-tipo [data-dt]');   if(t){ DP.tipo=t.dataset.dt; vDespachos(); return; }
-  const q=e.target.closest('#dp-tope [data-dtope]');if(q){ DP.tope=+q.dataset.dtope; vDespachos(); return; }
+  const q=e.target.closest('#dp-tp [data-dt]');
+  if(q){ DP.tope=Math.max(1,Math.min(20,DP.tope + +q.dataset.dt)); vDespachos(); return; }
   const ra=e.target.closest('#dp-radio [data-dradio]'); if(ra){ DP.radio=+ra.dataset.dradio; vDespachos(); return; }
 
   if(e.target.id==='dp-fcenso'){ DP.fuenteCenso = e.target.checked; vDespachos(); return; }
