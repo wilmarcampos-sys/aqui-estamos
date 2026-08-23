@@ -37,11 +37,15 @@ body{background:var(--pp);color:var(--tin);font:15px/1.5 Inter,system-ui,sans-se
 .marca i{font-style:normal;color:var(--acc)}
 .top h1{margin:14px 0 0;font-size:26px;font-weight:900;letter-spacing:-1px;line-height:1.12}
 .top .sub{margin:5px 0 0;font-size:13.5px;color:var(--dim);text-transform:capitalize}
-.avance{display:flex;align-items:center;gap:14px;margin-top:16px}
+/* El número y los botones comparten renglón; la línea va sola abajo, a todo
+   el ancho, porque es la que se lee de lejos. */
+.avance{display:flex;align-items:center;gap:14px;margin-top:16px;flex-wrap:wrap}
 .avance b{font-size:30px;font-weight:900;letter-spacing:-1.2px;color:var(--acc);
   font-variant-numeric:tabular-nums;flex:0 0 auto}
+.avance b em{display:block;font-style:normal;font-size:9.5px;font-weight:800;
+  letter-spacing:.5px;color:var(--dim);margin-top:2px;text-transform:uppercase}
 .avance b s{text-decoration:none;font-size:18px;color:var(--dim)}
-.avance .pista{flex:1;height:6px;border-radius:3px;background:rgba(255,255,255,.12);overflow:hidden}
+.avance .pista{flex:1 0 100%;order:9;height:7px;margin-top:2px;border-radius:3px;background:rgba(255,255,255,.12);overflow:hidden}
 .avance .pista i{display:block;height:100%;background:var(--acc);border-radius:3px;
   transition:width .5s ease}
 .vivo{margin-left:auto;display:inline-flex;align-items:center;gap:7px;flex:0 0 auto;
@@ -148,6 +152,14 @@ body{background:var(--pp);color:var(--tin);font:15px/1.5 Inter,system-ui,sans-se
 /* Plan B: si no hay nadie en la casa, devolverse con el mercado es la peor
    salida. Se ofrecen casas del censo que estén cerca y que no sean parada de
    ningún otro equipo, para que dos no lleguen a la misma puerta. */
+/* Va pegado a la casilla: son las dos respuestas posibles al llegar a una
+   puerta —entregué, o no había nadie—. */
+.nohay{flex:0 0 auto;width:38px;height:38px;border-radius:11px;background:var(--card);
+  border:1px solid var(--fil);color:var(--dim);display:grid;place-items:center;
+  cursor:pointer;font:inherit;transition:border-color .2s,color .2s}
+.nohay:hover{border-color:var(--pri,#E8A33D);color:#E8A33D}
+.nohay:active{transform:scale(.94)}
+.nohay svg{width:17px;height:17px}
 .planb{display:flex;align-items:center;gap:8px;width:100%;margin-top:10px;
   padding:11px 13px;border-radius:11px;background:var(--card);
   border:1px dashed var(--fil);color:var(--dim);font:inherit;font-size:13px;
@@ -167,6 +179,40 @@ body{background:var(--pp);color:var(--tin);font:15px/1.5 Inter,system-ui,sans-se
 .pb-op b{display:block;font-size:14px;font-weight:800;letter-spacing:-.2px}
 .pb-op small{display:block;font-size:12px;color:var(--dim);margin-top:2px;line-height:1.4}
 .pb-vacio{font-size:12.5px;color:var(--dim);padding:10px 2px;line-height:1.5}
+/* Reemplazada: ni pendiente ni entregada. Cerrada, y se ve cerrada. */
+.par.cerr{opacity:.6}
+.cerrada{display:flex;align-items:flex-start;gap:8px;margin:10px 0 0;padding:9px 11px;
+  border-radius:10px;background:var(--chip);border:1px solid var(--fil);
+  color:var(--dim);font-size:12.5px;line-height:1.45;font-weight:650}
+.cerrada svg{width:15px;height:15px;min-width:15px;flex:0 0 15px;margin-top:1px}
+
+/* Progreso de todos los equipos en una sola línea */
+/* La línea va hasta el total de la jornada; las marcas dicen dónde termina
+   el trabajo de cada equipo. Los chips de abajo dan el detalle. */
+.pista{position:relative}
+.pista .marca{position:absolute;top:0;bottom:0;width:2px;background:var(--bg);
+  opacity:.85;transform:translateX(-1px)}
+.chips{display:flex;gap:4px;margin:10px 0 0}
+.chips[hidden]{display:none}
+.chips .tramo{flex:1;min-width:0;padding:5px 6px 0;border:1px solid var(--fil);
+  border-radius:8px;background:var(--card);cursor:pointer;font:inherit;
+  color:var(--dim);overflow:hidden;transition:border-color .2s,color .2s}
+.chips .tramo:hover{border-color:var(--acc)}
+.chips .tramo.yo{border-color:var(--acc);color:var(--txt)}
+.chips .tramo .tn{display:block;font-size:9px;font-weight:900;letter-spacing:.6px;
+  line-height:1}
+.chips .tramo .tc{display:block;font-size:13px;font-weight:900;line-height:1.15;
+  margin-top:2px;color:var(--txt);font-variant-numeric:tabular-nums}
+.chips .tramo .tc s{text-decoration:none;font-size:9.5px;font-weight:700;
+  color:var(--dim)}
+.chips .tramo .tp{display:block;height:4px;margin:5px -6px 0;background:var(--chip)}
+.chips .tramo .tp i{display:block;height:100%;background:var(--acc);
+  transition:width .5s cubic-bezier(.2,.7,.2,1)}
+.chips .tramo.full .tp i{background:#3F9A68}
+@media (max-width:430px){
+  .chips .tramo .tc{font-size:11.5px}
+  .chips .tramo{padding:4px 4px 0}
+}
 .cp{flex:0 0 auto;background:var(--sup);border:1px solid var(--fil);color:var(--dim);
   border-radius:8px;min-height:34px;padding:0 11px;font:inherit;font-size:11.5px;
   font-weight:800;cursor:pointer;display:inline-flex;align-items:center}
@@ -230,8 +276,9 @@ body{background:var(--pp);color:var(--tin);font:15px/1.5 Inter,system-ui,sans-se
   <h1 id="tit">Cargando la ruta…</h1>
   <p class="sub" id="sub"></p>
   <div class="avance" id="av" hidden>
-    <b><span id="hechas">0</span><s>/<span id="total">0</span></s></b>
-    <span class="pista"><i id="barra" style="width:0"></i></span>
+    <b><span id="hechas">0</span><s>/<span id="total">0</span></s>
+      <em id="av-lbl"></em></b>
+    <span class="pista" id="pista"><i id="barra" style="width:0"></i></span>
     <span class="vivo" id="vivo" hidden>
       <i></i><b id="vivo-n">1</b><span>en la ruta</span>
     </span>
@@ -246,6 +293,7 @@ body{background:var(--pp);color:var(--tin);font:15px/1.5 Inter,system-ui,sans-se
       </button>
     </span>
   </div>
+  <div class="chips" id="chips" hidden></div>
   <div class="aviso" id="aviso">
     <button type="button" class="x" id="aviso-x" aria-label="Entendido">&times;</button>
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4M12 17h.01"/><path d="M10.3 3.9 2.4 18a2 2 0 0 0 1.7 3h15.8a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>
@@ -282,7 +330,7 @@ body{background:var(--pp);color:var(--tin);font:15px/1.5 Inter,system-ui,sans-se
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="js/config.js?v=2.6.0"></script>
+<script src="js/config.js?v=2.7.0"></script>
 <script>
 const esc = s => String(s??'').replace(/[<>&"]/g, m => ({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[m]));
 const NEC = {alimentos:'Mercado', aseo:'Aseo', arriendo:'Arriendo', agua:'Agua',
@@ -441,13 +489,60 @@ function pintar(){
       n===f0.mi_equipo?' · el tuyo':''}</button>`).join('');
   }
 
-  const mias = FILAS.filter(x=>x.equipo===EQ);
-  if(!mias.length) return;
+  // Las cerradas salen de la cuenta: el equipo ya no tiene que volver ahí.
+  // Se ven todas, incluidas las cerradas —el equipo tiene que saber qué pasó
+  // con esa casa—, pero solo las vivas cuentan para el avance.
+  const todas = FILAS.filter(x=>x.equipo===EQ);
+  const mias  = todas.filter(x=>!x.fallida);
+  if(!todas.length) return;
   const hechas = mias.filter(x=>x.entregada).length;
   document.getElementById('av').hidden = false;
   document.getElementById('hechas').textContent = hechas;
   document.getElementById('total').textContent = mias.length;
-  document.getElementById('barra').style.width = Math.round(hechas/mias.length*100)+'%';
+  document.getElementById('av-lbl').textContent = '';
+
+  /* La barra de arriba es la de la jornada entera, partida por equipos: cada
+     tramo se llena con lo que lleva ese equipo. Dice dos cosas de un vistazo
+     —cómo va el mío y cómo va todo— y el que se quedó atrás se ve de una,
+     que es cuando todavía se puede ir a ayudarle. */
+  const pista = document.getElementById('pista');
+  if(eqs.length > 1){
+    const porEq = eqs.map(n=>{
+      const f = FILAS.filter(x=>x.equipo===n && !x.fallida);
+      return {n, total:f.length, hechas:f.filter(x=>x.entregada).length};
+    });
+    const gTot = porEq.reduce((a,x)=>a+x.total, 0);
+    const gHec = porEq.reduce((a,x)=>a+x.hechas, 0);
+    document.getElementById('hechas').textContent = gHec;
+    document.getElementById('total').textContent  = gTot;
+    document.getElementById('av-lbl').textContent = 'toda la jornada';
+    /* Una línea sola que va hasta las 50: es la que se lee de un vistazo.
+       Las marcas interiores dicen dónde termina el trabajo de cada equipo,
+       y los chips de abajo dan el detalle sin partir la línea. */
+    pista.classList.remove('multi');
+    pista.innerHTML = `<i style="width:${gTot?Math.round(gHec/gTot*100):0}%"></i>` +
+      porEq.slice(0,-1).map((_,i)=>{
+        const hasta = porEq.slice(0, i+1).reduce((a,x)=>a+x.total, 0);
+        return `<span class="marca" style="left:${hasta/gTot*100}%"></span>`;
+      }).join('');
+
+    const chips = document.getElementById('chips');
+    chips.hidden = false;
+    chips.innerHTML = porEq.map(x=>{
+      const pct = x.total ? Math.round(x.hechas/x.total*100) : 0;
+      return `<button type="button" class="tramo${x.n===EQ?' yo':''}${
+          pct===100?' full':''}" data-eq="${x.n}" style="flex:${x.total||1}"
+          title="Equipo ${x.n}: ${x.hechas} de ${x.total} entregadas"
+          aria-label="Equipo ${x.n}, ${x.hechas} de ${x.total}">
+        <span class="tn">E${x.n}</span>
+        <span class="tc">${x.hechas}<s>/${x.total}</s></span>
+        <span class="tp"><i style="width:${pct}%"></i></span></button>`;
+    }).join('');
+  } else {
+    pista.innerHTML = `<i style="width:${Math.round(hechas/mias.length*100)}%"></i>`;
+    const chips = document.getElementById('chips');
+    if(chips) chips.hidden = true;
+  }
 
   const conPunto = mias.filter(x=>x.lat && x.lng);
   const a = document.getElementById('abrir');
@@ -460,15 +555,20 @@ function pintar(){
   document.getElementById('btn-pdf').hidden  = !mias.length;
   document.getElementById('hint-pdf').hidden = !mias.length;
 
-  document.getElementById('lista').innerHTML = mias.map(p=>{
+  document.getElementById('lista').innerHTML = todas.map(p=>{
     const necs = (p.necesidades||[]).map(k=>
       `<span class="nec ${k===f0.tipo?'foco':''}">${esc(NEC[k]||k)}</span>`).join('');
-    return `<article class="par${p.entregada?' hecha':''}">
+    return `<article class="par${p.entregada?' hecha':''}${p.fallida?' cerr':''}">
       <div class="cab">
         <button type="button" class="n tick${p.entregada?' on':''}" data-marcar="${esc(p.id)}"
           aria-pressed="${p.entregada?'true':'false'}"
           title="${p.entregada?'Entregada — toca para desmarcar':'Marcar como entregada'}"
         >${p.entregada?'✓':p.orden}</button>
+        ${(p.entregada || p.fallida) ? '' : `<button type="button" class="nohay"
+          data-nohay="${esc(p.id)}" title="No estaban / no abrieron"
+          aria-label="Marcar que no estaban en la casa">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21V9l6-4 6 4M9 21v-6h4v6M2.5 2.5l19 19"/></svg>
+        </button>`}
         <div class="nm">${esc(p.nombre||'Vivienda')}
           <small>${p.personas?`${p.personas} persona${p.personas>1?'s':''}`:''}${
             p.barrio?` · ${esc(p.barrio)}`:''}</small></div>
@@ -482,11 +582,15 @@ function pintar(){
           ? `<span class="tx">${esc(p.direccion)}</span>
              <button type="button" class="cp" data-cp="${esc(p.direccion)}">Copiar</button>`
           : '<span class="tx sin">Sin dirección</span>'}</div>
-      ${p.entregada ? '' : `<button type="button" class="planb" data-planb="${esc(p.id)}">
+      ${p.fallida ? `<p class="cerrada">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+        Cerrada${p.nota?` · ${esc(p.nota)}`:''}${p.reemplazada_por
+          ?`. Se entregó en la parada ${p.reemplazada_por}.`:''}</p>` : ''}
+      ${(p.entregada || p.fallida) ? '' : `<button type="button" class="planb" data-planb="${esc(p.id)}">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s7-6.3 7-11a7 7 0 1 0-14 0c0 4.7 7 11 7 11z"/><circle cx="12" cy="10" r="2.6"/></svg>
         No pude entregar aquí · buscar otra casa cerca</button>
       <div class="pb-caja" id="pb-${esc(p.id)}" hidden></div>`}
-      ${dirHallable(p.direccion, p.barrio) ? '' : `<p class="llamar">
+      ${(p.fallida || dirHallable(p.direccion, p.barrio)) ? '' : `<p class="llamar">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round"><path d="M12 8v5M12 16.5h.01"/><circle cx="12" cy="12" r="9"/></svg>
         Esta dirección no tiene número. <b>Llama antes de ir</b> para que te
         expliquen cómo llegar.</p>`}
@@ -551,10 +655,26 @@ async function marcar(btn){
 }
 const t2 = () => new URLSearchParams(location.search).get('t');
 
-async function planB(btn, parada){
+/* "No estaban" no es lo mismo que "no entregué": deja constancia de que el
+   equipo sí fue, y abre el Plan B en el mismo gesto para que nadie se
+   devuelva con el mercado en el carro. */
+async function noHay(btn, parada){
+  const f = FILAS.find(x=>String(x.id)===String(parada)) || {};
+  const que = prompt('¿Qué pasó en la casa de ' + (f.nombre||'esta parada') + '?\n\n' +
+    'Escribe el motivo o deja el que está.', 'No estaban en la casa');
+  if(que === null) return;
+  const caja = document.getElementById('pb-' + parada);
+  if(caja){
+    caja.hidden = false;
+    caja.dataset.motivo = que || 'No estaban en la casa';
+  }
+  await planB(btn, parada, true);
+}
+
+async function planB(btn, parada, forzar){
   const caja = document.getElementById('pb-' + parada);
   if(!caja) return;
-  if(!caja.hidden){ caja.hidden = true; return; }
+  if(!forzar && !caja.hidden){ caja.hidden = true; return; }
   caja.hidden = false;
   caja.innerHTML = '<p class="pb-vacio">Buscando casas cerca…</p>';
   try{
@@ -583,14 +703,26 @@ async function planB(btn, parada){
 }
 
 async function usarPlanB(btn, casa, parada, nombre){
-  if(!confirm(`¿Entregar en la casa de ${nombre} en vez de esta parada?\n\n` +
-    'Queda registrada como entrega del equipo y la parada original se marca ' +
-    'como no lograda.')) return;
+  const fila = FILAS.find(x=>String(x.id)===String(parada)) || {};
+  const orig = fila.nombre || 'esta parada';
+  // Se cambia una casa por otra: quien decide tiene que ver las dos y saber
+  // que la de arriba queda cerrada, no aplazada.
+  const ok = confirm(
+    'CAMBIAR LA PARADA ' + (fila.orden || '') + '\n\n' +
+    'Sale:   ' + orig + '\n' +
+    'Entra:  ' + nombre + '\n\n' +
+    '· La entrega queda registrada en la casa de ' + nombre + '.\n' +
+    '· ' + orig + ' se cierra como no lograda y no vuelve a salir pendiente.\n' +
+    '· Esa casa queda tomada: ningún otro equipo la va a visitar.\n\n' +
+    '¿Confirmas el cambio?');
+  if(!ok) return;
   btn.disabled = true; btn.style.opacity = '.6';
   try{
     const db = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
+    const caja = document.getElementById('pb-' + parada);
+    const motivo = (caja && caja.dataset.motivo) || 'no se pudo contactar';
     const {data, error} = await db.rpc('entregar_alterna',
-      {t: t2(), parada_original: parada, casa, motivo_fallo: 'no se pudo contactar'});
+      {t: t2(), parada_original: parada, casa, motivo_fallo: motivo});
     if(error) throw error;
     if(!data || !data[0] || !data[0].ok){
       alert('Esa casa ya la tiene otro equipo. Escoge otra.');
@@ -799,6 +931,11 @@ document.addEventListener('click', e=>{
     });
     return;
   }
+  const be = e.target.closest('[data-eq]');
+  if(be){ EQ = +be.dataset.eq; pintar();
+    document.getElementById('barras').scrollIntoView({block:'nearest'}); return; }
+  const nh = e.target.closest('[data-nohay]');
+  if(nh){ noHay(nh, nh.getAttribute('data-nohay')); return; }
   const pb = e.target.closest('[data-planb]');
   if(pb){ planB(pb, pb.getAttribute('data-planb')); return; }
   const po = e.target.closest('[data-pbop]');
@@ -831,7 +968,7 @@ try{ if(localStorage.getItem('aviso_ruta')) document.getElementById('aviso').hid
    muestra el dinosaurio. */
 if('serviceWorker' in navigator){
   addEventListener('load', ()=> navigator.serviceWorker
-    .register('sw-ruta.js?v=2.6.0').catch(()=>{}));
+    .register('sw-ruta.js?v=2.7.0').catch(()=>{}));
 }
 
 /* Cuántos están mirando esta misma ruta ahora. En la calle sirve para saber
