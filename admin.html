@@ -8,7 +8,7 @@
 <link rel="icon" type="image/svg+xml" href="logo/marca.svg">
 <title>Aquí Estamos · Administración</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
-<link rel="stylesheet" href="css/app.css?v=1.58.2">
+<link rel="stylesheet" href="css/app.css?v=1.59.0">
 <style>
   /* El panel es mobile-first: una columna, pestañas fijas abajo. En pantalla
      grande se centra en una franja de ancho de celular para no deformarse. */
@@ -173,6 +173,17 @@
   .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
   .field{margin-bottom:12px}
   select.campo{appearance:none;-webkit-appearance:none;height:46px}
+
+  /* equipos plegables con su ruta dibujada */
+  .eqtog{display:flex;align-items:flex-start;gap:10px;background:none;border:0;padding:0;
+    font-family:inherit;color:var(--txt);cursor:pointer;text-align:left;min-height:44px}
+  .eqtog .car{color:var(--dim);font-size:13px;padding-top:3px}
+  .eqtog small{display:block;font-size:12.5px;color:var(--dim);font-weight:550;margin-top:3px}
+  .rutamapa{height:260px;border-radius:14px;overflow:hidden;border:1px solid var(--line);margin-top:12px}
+  .pinnum{width:26px;height:26px;border-radius:50%;background:#4F9CF9;color:#04122b;
+    display:grid;place-items:center;font-size:12px;font-weight:850;border:2px solid #fff;
+    box-shadow:0 2px 5px rgba(0,0,0,.35)}
+  .pinnum.ok{background:#2f9e5f;color:#fff}
 
   .navcola{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:12px}
   .navcola span{font-size:12.5px;font-weight:700;color:var(--dim)}
@@ -439,9 +450,9 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="js/config.js?v=1.58.2"></script>
-<script src="js/version.js?v=1.58.2"></script>
-<script src="js/data.js?v=1.58.2"></script>
+<script src="js/config.js?v=1.59.0"></script>
+<script src="js/version.js?v=1.59.0"></script>
+<script src="js/data.js?v=1.59.0"></script>
 <script>
 /* ============================================================
    PANEL DE ADMINISTRACIÓN — Aquí Estamos
@@ -1043,7 +1054,9 @@ async function cargarJornadas(){
 /* Jornadas guardadas: verlas, repartir las hojas y marcar lo entregado.
    Marcar una parada escribe en `entregas`, que es lo que evita que la misma
    casa vuelva a salir candidata mañana. */
-let JVER = null;   // jornada abierta
+let JVER = null;          // jornada abierta
+let JEQ  = new Set();     // equipos desplegados
+let JMAPS = {};           // mapas de ruta por equipo
 
 function vJornadas(){
   const v = $('#v-despachos');
@@ -1062,15 +1075,23 @@ function vJornadas(){
       </div>
       ${eq.map(n=>{
         const ps = j.paradas.filter(p=>p.equipo===n);
-        return `<div class="card" style="padding:14px;margin-top:12px">
+        const abierto = JEQ.has(n);
+        const km = ps.reduce((a,p,k)=>k? a+distM(ps[k-1].lat,ps[k-1].lng,p.lat,p.lng)/1000 : 0, 0);
+        return `<div class="card equipo" style="padding:14px;margin-top:12px">
           <div class="row" style="align-items:flex-start">
-            <div class="grow"><b style="font-size:16px">Equipo ${n}</b>
-              <p class="muted" style="margin:3px 0 0">${ps.filter(p=>p.entregada).length} de ${ps.length} entregadas ·
-                toca la casilla al entregar cada una</p></div>
+            <button type="button" class="eqtog grow" data-equipo="${n}" aria-expanded="${abierto}">
+              <span class="car">${abierto?'▾':'▸'}</span>
+              <span><b style="font-size:16px">Equipo ${n}</b>
+                <small>${ps.filter(p=>p.entregada).length} de ${ps.length} entregadas ·
+                  ${ps.reduce((a,p)=>a+(p.personas||0),0)} personas · ~${km.toFixed(1)} km</small></span>
+            </button>
             <a class="btn flat" style="flex:0 1 auto;width:auto;min-width:110px;text-decoration:none" target="_blank" rel="noopener"
                href="https://www.google.com/maps/dir/${ps.map(p=>p.lat+','+p.lng).join('/')}">Abrir ruta</a>
           </div>
-          <div style="margin-top:10px">
+          ${!abierto?'':`
+          <div class="rutamapa" id="jmap-${n}"></div>
+          <p class="muted" style="margin:8px 3px 10px;font-size:12.5px">Toca la casilla al entregar cada una.</p>
+          <div>
             ${ps.map(p=>`<div class="prow" style="border:0;padding:9px 0;${p.entregada?'opacity:.55':''}">
               <button type="button" class="tick2 ${p.entregada?'on':''}" data-entregar="${esc(p.id)}"
                 title="${p.entregada?'Entregada — toca para desmarcar':'Marcar como entregada'}"
@@ -1083,7 +1104,7 @@ function vJornadas(){
               </div>
               ${p.tel_e164?`<a class="waq" href="${waLink(p.tel_e164,'Hola, somos Aquí Estamos. Vamos en camino con su ayuda.')}" target="_blank" rel="noopener">${WA_SVG}</a>`:''}
             </div>`).join('')}
-          </div>
+          </div>`}
         </div>`;
       }).join('')}
       <div class="btnrow" style="margin-top:14px">
@@ -1091,6 +1112,7 @@ function vJornadas(){
         ${j.estado!=='cerrada'?`<button class="btn" id="j-cerrar" style="flex:1 1 200px">Cerrar la jornada</button>`:
           '<span class="sbadge bok" style="align-self:center">Jornada cerrada</span>'}
       </div>`;
+    jPintarMapas(j);
     return;
   }
 
@@ -1110,6 +1132,32 @@ function vJornadas(){
       </div>`;
     }).join('') : `<div class="vacio" style="margin-top:14px"><b>Sin jornadas guardadas</b>
       <p>Cuando armes un despacho y le pongas fecha, queda aquí para consultarlo y marcar lo entregado.</p></div>`}`;
+}
+
+/* Mapa de la ruta: la línea numerada dice de un vistazo si el recorrido tiene
+   sentido. Se dibuja solo al desplegar el equipo, no antes. */
+function jPintarMapas(j){
+  if(!window.L) return;
+  [...JEQ].forEach(n=>{
+    const el = document.getElementById('jmap-'+n); if(!el) return;
+    if(JMAPS[n]){ JMAPS[n].remove(); delete JMAPS[n]; }
+    const ps = j.paradas.filter(p=>p.equipo===n && p.lat && p.lng);
+    if(!ps.length) return;
+    const m = L.map(el, {zoomControl:true, attributionControl:false});
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
+      {maxZoom:19, subdomains:'abcd'}).addTo(m);
+    const pts = ps.map(p=>[p.lat,p.lng]);
+    L.polyline(pts, {color:'#4F9CF9', weight:4, opacity:.85}).addTo(m);
+    ps.forEach((p,k)=>{
+      L.marker([p.lat,p.lng], {icon: L.divIcon({className:'', iconSize:[26,26], iconAnchor:[13,13],
+        html:`<div class="pinnum ${p.entregada?'ok':''}">${k+1}</div>`})})
+       .addTo(m).bindPopup(`<b>${esc(p.nombre||'')}</b><br>${esc(p.barrio||'')}${p.direccion?' · '+esc(p.direccion):''}`);
+    });
+    m.fitBounds(L.latLngBounds(pts).pad(0.18));
+    JMAPS[n] = m;
+    if(window.ResizeObserver) new ResizeObserver(()=>m.invalidateSize()).observe(el);
+    setTimeout(()=>m.invalidateSize(), 80);
+  });
 }
 
 async function jEntregar(paradaId){
@@ -1501,7 +1549,7 @@ const DESP_REGLAS = [
 ];
 
 let DP = { paso:1, tipo:'alimentos', unidades:60, equipos:3, tope:8,
-           incluirAprox:false, todas:false, conReportes:false, reglas:new Set(['urgencia','olvidadas']), rutas:null };
+           incluirAprox:false, todas:false, conReportes:false, radio:5, reglas:new Set(['urgencia','olvidadas']), rutas:null };
 
 /* Candidatas: solo con punto exacto (a un punto aproximado no se puede
    despachar a nadie) y sin haber recibido lo mismo en la última semana. */
@@ -1567,61 +1615,58 @@ function distM(a1,o1,a2,o2){ const dy=(a2-a1)*110574, dx=(o2-o1)*111320*Math.cos
 /* Agrupar por cercanía (k-means sobre las coordenadas) y ordenar cada grupo
    por regla y luego por vecino más cercano, que es la ruta que menos camina. */
 function dpArmar(){
-  const cand = dpCandidatas().map(c=>({c, ...dpPuntaje(c)}))
-    .sort((a,b)=>b.p-a.p)
-    .slice(0, Math.min(DP.unidades, DP.equipos*DP.tope));
-  if(!cand.length) return [];
+  // Antes se elegían primero las N de más puntaje y DESPUÉS se miraba el mapa:
+  // como las de más urgencia están regadas por toda la ciudad, un equipo
+  // terminaba cruzando 55 km. Ahora manda la geografía —se arman las zonas con
+  // TODAS las candidatas— y el puntaje decide a quién se atiende dentro de
+  // cada zona.
+  const todas = dpCandidatas().map(c=>({c, ...dpPuntaje(c)}));
+  if(!todas.length) return [];
 
-  const K = Math.max(1, Math.min(DP.equipos, cand.length));
-
-  // ---- 1. semillas separadas entre sí (punto más lejano) ----
-  // Antes las semillas salían del listado ordenado por puntaje: dos podían
-  // caer en la misma cuadra y los grupos quedaban entreverados.
+  const K = Math.max(1, Math.min(DP.equipos, todas.length));
   const centroide = g => ({lat:g.reduce((a,x)=>a+x.c.lat,0)/g.length,
                            lng:g.reduce((a,x)=>a+x.c.lng,0)/g.length});
-  let cent = [centroide(cand)];
-  while(cent.length < K){
-    let lejos = cand[0], d0 = -1;
-    cand.forEach(x=>{
-      const d = Math.min(...cent.map(k=>distM(x.c.lat,x.c.lng,k.lat,k.lng)));
-      if(d > d0){ d0 = d; lejos = x; }
-    });
-    cent.push({lat:lejos.c.lat, lng:lejos.c.lng});
-  }
 
-  // ---- 2. asignación con cupo, por distancia global ----
-  // La clave: recorrer TODOS los pares (parada, equipo) del más cercano al
-  // más lejano. Asignar en orden de puntaje hacía que las últimas familias
-  // terminaran en el equipo del otro extremo de la ciudad.
-  const cupo = Math.min(DP.tope, Math.ceil(cand.length / K));
+  // Zonas por densidad, no por k-means: sembrar en el punto más lejano hacía
+  // que un corregimiento con una sola casa se llevara un equipo entero.
+  // Aquí cada equipo se planta donde hay más viviendas juntas y se lleva las
+  // más cercanas a esa semilla; lo disperso queda al final, que es donde debe.
+  const lim = DP.radio ? DP.radio*1000 : Infinity;
+  const libres = todas.slice();
+  let quedan = DP.unidades;
   const sobran = [];
-  let grupos = [];
-  for(let it=0; it<14; it++){
-    grupos = Array.from({length:K}, ()=>[]);
-    const pares = [];
-    cand.forEach((x,xi)=>cent.forEach((k,ki)=>
-      pares.push({xi, ki, d:distM(x.c.lat,x.c.lng,k.lat,k.lng)})));
-    pares.sort((a,b)=>a.d-b.d);
-    const puesto = new Set();
-    pares.forEach(pr=>{
-      if(puesto.has(pr.xi) || grupos[pr.ki].length >= cupo) return;
-      grupos[pr.ki].push(cand[pr.xi]); puesto.add(pr.xi);
-    });
-    sobran.length = 0;
-    cand.forEach((x,xi)=>{ if(!puesto.has(xi)) sobran.push(x); });
-    const nuevos = grupos.map((g,i)=> g.length ? centroide(g) : cent[i]);
-    const movio = nuevos.some((n,i)=>distM(n.lat,n.lng,cent[i].lat,cent[i].lng) > 30);
-    cent = nuevos;
-    if(!movio) break;   // ya se estabilizó: seguir iterando no cambia nada
-  }
+  const grupos = [];
 
-  // ---- 3. orden dentro de la ruta: vecino más cercano + 2-opt ----
-  // El 2-opt deshace los cruces que deja el vecino más cercano, que es de
-  // donde salían los zigzags entre barrios.
+  for(let t=0; t<K && libres.length && quedan>0; t++){
+    const cupo = Math.min(DP.tope, quedan);
+    // semilla: la vivienda con más vecinas dentro del radio (a igualdad, la de
+    // más puntaje). Es el centro natural del próximo recorrido.
+    let semilla = libres[0], mejor = -1;
+    libres.forEach(x=>{
+      const cerca = libres.reduce((n,y)=>n + (distM(x.c.lat,x.c.lng,y.c.lat,y.c.lng) <= lim ? 1 : 0), 0);
+      const puntaje = Math.min(cerca, cupo)*1000 + x.p;
+      if(puntaje > mejor){ mejor = puntaje; semilla = x; }
+    });
+    // se lleva las más cercanas a la semilla, dentro del radio
+    const cerca = libres
+      .map(x=>({x, d:distM(semilla.c.lat,semilla.c.lng,x.c.lat,x.c.lng)}))
+      .filter(o=>o.d <= lim)
+      .sort((a,b)=>a.d-b.d)
+      .slice(0, Math.max(cupo*3, cupo));      // vecindario amplio…
+    // …y dentro del vecindario manda la prioridad
+    const toma = cerca.map(o=>o.x).sort((a,b)=>b.p-a.p).slice(0, cupo);
+    if(!toma.length) break;
+    toma.forEach(x=>{ const i=libres.indexOf(x); if(i>=0) libres.splice(i,1); });
+    quedan -= toma.length;
+    grupos.push(toma);
+  }
+  sobran.push(...libres);
+
+  // orden dentro de la ruta: arrancar por un extremo, vecino más cercano y
+  // 2-opt para deshacer los cruces
   const largo = r => { let m=0; for(let j=1;j<r.length;j++)
     m += distM(r[j-1].c.lat,r[j-1].c.lng,r[j].c.lat,r[j].c.lng); return m; };
   const rutas = grupos.filter(g=>g.length).map((g,i)=>{
-    // arrancar por un extremo del grupo (la parada más lejana del centroide)
     const k = centroide(g);
     const orden = g.slice().sort((a,b)=>
       distM(b.c.lat,b.c.lng,k.lat,k.lng) - distM(a.c.lat,a.c.lng,k.lat,k.lng));
@@ -1761,6 +1806,15 @@ function vDespachos(){
         <div class="stepr" id="dp-eq" style="margin-top:8px">
           <button data-de="-1">−</button><div class="val"><b id="dp-eqn">${DP.equipos}</b><small>equipos</small></div><button data-de="1">+</button>
         </div>
+        <div class="lbl" style="margin-top:16px">Qué tan compacta debe ser la zona de cada equipo</div>
+        <div class="seg" id="dp-radio" style="margin-top:8px">
+          ${[['2','Muy compacta'],['5','Normal'],['10','Amplia'],['0','Sin límite']].map(([v,n])=>
+            `<button data-dradio="${v}" class="${String(DP.radio)===v?'on':''}">${n}</button>`).join('')}
+        </div>
+        <p class="muted" style="margin:6px 3px 0;font-size:12.5px">
+          ${DP.radio? `Ninguna parada quedará a más de ${DP.radio} km del centro de su zona. Las viviendas dispersas quedan para una salida aparte.`
+                    : 'Sin límite: un equipo puede terminar cruzando la ciudad para alcanzar viviendas dispersas.'}</p>
+
         <div class="lbl" style="margin-top:16px">Máximo de paradas por equipo</div>
         <div class="seg" id="dp-tope" style="margin-top:8px">
           ${[5,6,8,10].map(n=>`<button data-dtope="${n}" class="${DP.tope===n?'on':''}">${n}</button>`).join('')}
@@ -1844,7 +1898,9 @@ function vDespachos(){
       </div>`).join('')}
     ${sobran.length?`<div class="card" style="padding:14px">
       <b>Para la próxima jornada</b>
-      <p class="muted" style="margin:4px 0 8px">${sobran.length} viviendas quedaron fuera por el tope de paradas.</p>
+      <p class="muted" style="margin:4px 0 8px">${sobran.length} viviendas quedaron fuera${DP.radio
+        ? `: o no cabían en el cupo, o están a más de ${DP.radio} km del centro de toda zona (dispersas o rurales). Súbelo a “Amplia” o arma una salida aparte para ellas.`
+        : ' por el tope de paradas.'}</p>
       ${sobran.slice(0,20).map(x=>`<div class="mt">· ${esc(x.c.nombre||'Vivienda')} — ${esc(x.c.barrio||'')}</div>`).join('')}
     </div>`:''}`;
 }
@@ -2274,6 +2330,7 @@ document.addEventListener('click', e=>{
 document.addEventListener('click', e=>{
   const t=e.target.closest('#dp-tipo [data-dt]');   if(t){ DP.tipo=t.dataset.dt; vDespachos(); return; }
   const q=e.target.closest('#dp-tope [data-dtope]');if(q){ DP.tope=+q.dataset.dtope; vDespachos(); return; }
+  const ra=e.target.closest('#dp-radio [data-dradio]'); if(ra){ DP.radio=+ra.dataset.dradio; vDespachos(); return; }
 
   if(e.target.id==='dp-fcenso'){ DP.fuenteCenso = e.target.checked; vDespachos(); return; }
   if(e.target.id==='dp-freps'){ DP.conReportes = e.target.checked; vDespachos(); return; }
@@ -2292,6 +2349,11 @@ document.addEventListener('click', e=>{
   if(e.target.closest('#j-nueva')){ DP.paso=1; DP.rutas=null; vDespachos(); return; }
   if(e.target.closest('#j-volver')){ JVER=null; vJornadas(); return; }
   if(e.target.closest('#j-cerrar')){ jCerrar(); return; }
+  const et = e.target.closest('[data-equipo]');
+  if(et){ const n=+et.dataset.equipo;
+    JEQ.has(n) ? JEQ.delete(n) : JEQ.add(n);
+    if(JMAPS[n]){ JMAPS[n].remove(); delete JMAPS[n]; }
+    vJornadas(); return; }
   if(e.target.closest('#j-imprimir')){ window.print(); return; }
   const en = e.target.closest('[data-entregar]');
   if(en){ jEntregar(en.dataset.entregar); return; }
