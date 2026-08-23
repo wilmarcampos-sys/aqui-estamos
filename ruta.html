@@ -184,6 +184,14 @@ body{background:var(--pp);color:var(--tin);font:15px/1.5 Inter,system-ui,sans-se
 .hoja-op:hover{border-color:var(--acc)}
 .hoja-op:active{transform:scale(.99)}
 .hoja-op.otro{color:var(--dim);font-weight:650;border-style:dashed}
+.hoja-op.pri{background:var(--acc);border-color:var(--acc);color:#0D1520;font-weight:850}
+.hoja-op.casa{display:flex;align-items:flex-start;gap:11px;font-weight:600}
+.hoja-op.casa .ch-m{flex:0 0 auto;font-size:11.5px;font-weight:900;color:var(--acc);
+  background:var(--chip);border-radius:7px;padding:5px 8px;min-width:56px;text-align:center}
+.hoja-op.casa .ch-t{min-width:0}
+.hoja-op.casa b{display:block;font-size:14px;font-weight:800;letter-spacing:-.2px}
+.hoja-op.casa small{display:block;font-size:12px;color:var(--dim);margin-top:2px;
+  line-height:1.4;font-weight:600}
 .hoja-otro{display:flex;gap:8px;margin-top:4px}
 .hoja-otro[hidden]{display:none}
 .hoja-otro input{flex:1;min-width:0;height:50px;border-radius:12px;padding:0 14px;
@@ -391,7 +399,7 @@ body{background:var(--pp);color:var(--tin);font:15px/1.5 Inter,system-ui,sans-se
 </div>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="js/config.js?v=2.8.2"></script>
+<script src="js/config.js?v=2.9.0"></script>
 <script>
 const esc = s => String(s??'').replace(/[<>&"]/g, m => ({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[m]));
 const NEC = {alimentos:'Mercado', aseo:'Aseo', arriendo:'Arriendo', agua:'Agua',
@@ -672,8 +680,7 @@ function pintar(){
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
         Cerrada${p.nota?` · ${esc(p.nota)}`:''}${p.reemplazada_por
           ?`. Se entregó en la parada ${p.reemplazada_por}.`:''}</p>` : ''}
-      ${(p.entregada || p.fallida) ? '' :
-        `<div class="pb-caja" id="pb-${esc(p.id)}" hidden></div>`}
+
       ${(p.fallida || dirHallable(p.direccion, p.barrio)) ? '' : `<p class="llamar">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round"><path d="M12 8v5M12 16.5h.01"/><circle cx="12" cy="12" r="9"/></svg>
         Esta dirección no tiene número. <b>Llama antes de ir</b> para que te
@@ -798,12 +805,69 @@ function cerrarHoja(){
   PEND = null;
 }
 
-async function usarMotivo(motivo){
+/* Segundo paso: el equipo decide si carga otra casa o sigue su ruta. Antes
+   la lista se abría sola y eso obligaba a adivinar qué iba a pasar. */
+function pasoReemplazo(motivo){
   if(!PEND) return;
-  const {btn, parada} = PEND;
-  const caja = document.getElementById('pb-' + parada);
-  if(caja) caja.dataset.motivo = motivo;
-  cerrarHoja();
+  const f = FILAS.find(x=>String(x.id)===String(PEND.parada)) || {};
+  PEND.motivo = motivo;
+  document.getElementById('hoja-tit').textContent = 'Anotado';
+  document.getElementById('hoja-sub').textContent =
+    motivo + ' en la casa de ' + (f.nombre || 'esta parada') +
+    '. ¿Quieres entregar en otra casa cerca?';
+  document.getElementById('hoja-ops').hidden = false;
+  document.getElementById('hoja-ops').innerHTML =
+    `<button type="button" class="hoja-op pri" data-paso2="buscar">
+       Sí, buscar otra casa cerca</button>
+     <button type="button" class="hoja-op" data-paso2="seguir">
+       No, seguir con mi ruta</button>`;
+  document.getElementById('hoja-otro').hidden = true;
+}
+
+/* Tercer paso, sin salir de la hoja: las casas cerca. La que escojan entra
+   al final de la ruta de ese equipo, con el número que sigue. */
+async function pasoCasas(){
+  if(!PEND) return;
+  const {parada} = PEND;
+  document.getElementById('hoja-tit').textContent = 'Casas cerca';
+  document.getElementById('hoja-sub').textContent = 'Buscando…';
+  document.getElementById('hoja-ops').innerHTML =
+    '<p class="pb-vacio">Buscando casas cerca…</p>';
+  try{
+    const db = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
+    const {data, error} = await db.rpc('plan_b',
+      {t: t2(), parada, radio_km: 1.5, cuantos: 5});
+    if(error) throw error;
+    if(!data || !data.length){
+      document.getElementById('hoja-sub').textContent = '';
+      document.getElementById('hoja-ops').innerHTML =
+        '<p class="pb-vacio">No hay ninguna casa del censo cerca que no esté ya ' +
+        'en la ruta de otro equipo. Avísale a quien coordina.</p>';
+      return;
+    }
+    const sig = Math.max(...FILAS.filter(x=>x.equipo===EQ).map(x=>x.orden)) + 1;
+    document.getElementById('hoja-sub').textContent =
+      'Ninguna es parada de otro equipo. La que escojas entra como parada ' + sig + '.';
+    document.getElementById('hoja-ops').innerHTML = data.map(x=>{
+      const necs = (x.necesidades||[]).map(k=>NEC[k]||k).slice(0,3).join(', ');
+      return `<button type="button" class="hoja-op casa" data-casa="${esc(x.censo_id)}"
+        data-casanom="${esc(x.nombre||'esa casa')}">
+        <span class="ch-m">${x.metros} m</span>
+        <span class="ch-t"><b>${esc(x.nombre||'Vivienda')}${
+          x.personas?` · ${x.personas}p`:''}</b>
+          <small>${esc(x.direccion || 'Sin dirección')}${
+            x.barrio?` · ${esc(x.barrio)}`:''}</small>
+          ${necs?`<small>${esc(necs)}</small>`:''}</span></button>`;
+    }).join('');
+  }catch(e){
+    document.getElementById('hoja-sub').textContent = '';
+    document.getElementById('hoja-ops').innerHTML =
+      '<p class="pb-vacio">No se pudo buscar sin señal. El intento ya quedó ' +
+      'anotado; sigue con tu ruta.</p>';
+  }
+}
+
+async function grabarIntento(parada, motivo){
 
   /* El intento se graba ya, sin esperar a que escojan reemplazo. Un equipo
      que fue y no encontro a nadie hizo trabajo real: si no queda registro,
@@ -814,13 +878,17 @@ async function usarMotivo(motivo){
     const {error} = await db.rpc('registrar_intento',
       {t: t2(), p_parada: parada, p_motivo: motivo});
     if(error) throw error;
+    const abierta = !document.getElementById('scrim').hidden;
+    const guardado = PEND;
     await cargar();
+    if(abierta && guardado){ PEND = guardado;
+      document.getElementById('scrim').hidden = false;
+      document.body.style.overflow = 'hidden'; }
   }catch(e){
     encolarIntento(t2(), parada, motivo);
     const f = FILAS.find(x=>String(x.id)===String(parada));
     if(f){ f.intentos = (f.intentos||0)+1; f.nota = motivo; pintar(); }
   }
-  await planB(btn, parada, true);
 }
 
 /* Sin señal el intento tambien se guarda: se manda con el resto de la cola. */
@@ -836,6 +904,20 @@ function encolarIntento(t, parada, motivo){
 
 document.addEventListener('click', e=>{
   if(e.target.closest('#hoja-cerrar') || e.target.id === 'scrim'){ cerrarHoja(); return; }
+  const p2 = e.target.closest('[data-paso2]');
+  if(p2){
+    const buscar = p2.dataset.paso2 === 'buscar';
+    const guardado = PEND;
+    grabarIntento(guardado.parada, guardado.motivo);   // el intento se graba ya
+    if(buscar){ pasoCasas(); } else { cerrarHoja(); }
+    return;
+  }
+  const ca = e.target.closest('[data-casa]');
+  if(ca){
+    const {parada} = PEND || {};
+    usarPlanB(ca, ca.dataset.casa, parada, ca.dataset.casanom);
+    return;
+  }
   const nt = e.target.closest('[data-nota]');
   if(nt){
     const v = nt.getAttribute('data-nota');
@@ -859,7 +941,7 @@ document.addEventListener('click', e=>{
       document.getElementById('hoja-txt').focus();
       return;
     }
-    usarMotivo(m); return;
+    pasoReemplazo(m); return;
   }
   if(e.target.closest('#hoja-guardar')){
     const v = document.getElementById('hoja-txt').value.trim();
@@ -867,7 +949,7 @@ document.addEventListener('click', e=>{
     if(PEND && PEND.tipo === 'nota'){
       const {btn} = PEND; cerrarHoja(); if(btn) marcar(btn, v);
     } else {
-      usarMotivo(v || 'No se pudo entregar');
+      pasoReemplazo(v || 'No se pudo entregar');
     }
   }
 });
@@ -912,6 +994,7 @@ async function planB(btn, parada, forzar){
 }
 
 async function usarPlanB(btn, casa, parada, nombre){
+  if(!parada) return;
   const fila = FILAS.find(x=>String(x.id)===String(parada)) || {};
   const orig = fila.nombre || 'esta parada';
   // Se cambia una casa por otra: quien decide tiene que ver las dos y saber
@@ -937,6 +1020,7 @@ async function usarPlanB(btn, casa, parada, nombre){
       alert('Esa casa ya la tiene otro equipo. Escoge otra.');
       btn.disabled = false; btn.style.opacity = ''; return;
     }
+    cerrarHoja();
     await cargar();
   }catch(e){
     alert('No se pudo registrar. Revisa la señal e intenta otra vez.');
@@ -1179,7 +1263,7 @@ try{ if(localStorage.getItem('aviso_ruta')) document.getElementById('aviso').hid
    muestra el dinosaurio. */
 if('serviceWorker' in navigator){
   addEventListener('load', ()=> navigator.serviceWorker
-    .register('sw-ruta.js?v=2.8.2').catch(()=>{}));
+    .register('sw-ruta.js?v=2.9.0').catch(()=>{}));
 }
 
 /* Cuántos están mirando esta misma ruta ahora. En la calle sirve para saber
