@@ -11,7 +11,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
-<link rel="stylesheet" href="css/app.css?v=2.0.2">
+<link rel="stylesheet" href="css/app.css?v=2.1.0">
 <style>
   /* El panel es mobile-first: una columna, pestañas fijas abajo. En pantalla
      grande se centra en una franja de ancho de celular para no deformarse. */
@@ -788,9 +788,9 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="js/config.js?v=2.0.2"></script>
-<script src="js/version.js?v=2.0.2"></script>
-<script src="js/data.js?v=2.0.2"></script>
+<script src="js/config.js?v=2.1.0"></script>
+<script src="js/version.js?v=2.1.0"></script>
+<script src="js/data.js?v=2.1.0"></script>
 <script>
 /* ============================================================
    PANEL DE ADMINISTRACIÓN — Aquí Estamos
@@ -1765,11 +1765,25 @@ async function jCompartirEquipo(n, btn){
 
 async function jRutasAbiertas(v){
   const j = JORNADAS.find(x=>String(x.id)===String(JVER)); if(!j) return;
+  // Si ya se mandó el enlace del grupo, desmarcar lo deja sin servicio:
+  // conviene saberlo antes y no cuando los equipos escriban preguntando.
+  if(!v && !DEMO){
+    const {data:g} = await db.from('rutas_publicas').select('id')
+      .eq('jornada_id', j.id).eq('equipo', 0).maybeSingle();
+    if(g && !confirm('Ya mandaste el enlace del grupo con todas las rutas.\n\n'
+      + 'Si lo cierras, ese enlace deja de servir y cada equipo necesita el suyo.\n\n'
+      + '¿Cerrarlo de todas formas?')){
+      document.getElementById('j-abiertas').checked = true; return;
+    }
+  }
   j.rutas_abiertas = v;
+  // Repintar: sin esto los botones del grupo se quedaban en pantalla y
+  // activos después de cerrar el enlace.
+  vDespachos();
   if(DEMO) return;
   const {error} = await db.from('jornadas').update({rutas_abiertas:v}).eq('id', j.id);
-  toast(error ? 'No se pudo guardar' : (v ? 'Los equipos ven todas las rutas'
-                                          : 'Cada equipo ve solo la suya'));
+  if(error){ j.rutas_abiertas = !v; vDespachos(); toast('No se pudo guardar'); return; }
+  toast(v ? 'Los equipos ven todas las rutas' : 'Cada equipo ve solo la suya');
 }
 
 /* Borrar una jornada sí borra de verdad (no es dato de una familia, es una

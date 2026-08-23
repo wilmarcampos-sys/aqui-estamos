@@ -44,7 +44,23 @@ body{background:var(--pp);color:var(--tin);font:15px/1.5 Inter,system-ui,sans-se
 .avance .pista{flex:1;height:6px;border-radius:3px;background:rgba(255,255,255,.12);overflow:hidden}
 .avance .pista i{display:block;height:100%;background:var(--acc);border-radius:3px;
   transition:width .5s ease}
-.comp{margin-left:auto;display:flex;gap:8px;flex:0 0 auto}
+.vivo{margin-left:auto;display:inline-flex;align-items:center;gap:7px;flex:0 0 auto;
+  background:rgba(63,154,104,.16);border:1px solid rgba(63,154,104,.4);
+  border-radius:999px;padding:7px 13px}
+.vivo i{width:7px;height:7px;border-radius:50%;background:#4ED08A;flex:0 0 auto;
+  animation:late 2.2s ease-in-out infinite}
+@keyframes late{50%{opacity:.3}}
+@media (prefers-reduced-motion:reduce){ .vivo i{animation:none} }
+.vivo b{font-size:14px;font-weight:900;color:#7ED4A2;font-variant-numeric:tabular-nums}
+.vivo span{font-size:12px;font-weight:700;color:#7ED4A2}
+.comp{display:flex;gap:8px;flex:0 0 auto}
+.vivo + .comp{margin-left:0}
+.avance .comp:first-of-type{margin-left:auto}
+@media (max-width:520px){
+  .avance{flex-wrap:wrap}
+  .vivo{margin-left:auto}
+  .comp{margin-left:0}
+}
 .comp button{width:42px;height:42px;border-radius:12px;background:var(--card);
   border:1px solid var(--fil);color:var(--dim);display:grid;place-items:center;
   cursor:pointer;font:inherit;transition:border-color .2s,color .2s,transform .15s}
@@ -126,6 +142,9 @@ body{background:var(--pp);color:var(--tin);font:15px/1.5 Inter,system-ui,sans-se
   <div class="avance" id="av" hidden>
     <b><span id="hechas">0</span><s>/<span id="total">0</span></s></b>
     <span class="pista"><i id="barra" style="width:0"></i></span>
+    <span class="vivo" id="vivo" hidden>
+      <i></i><b id="vivo-n">1</b><span>en la ruta</span>
+    </span>
     <span class="comp">
       <button type="button" id="sh-wa" title="Pasársela a alguien del equipo"
         aria-label="Compartir por WhatsApp">
@@ -157,7 +176,7 @@ body{background:var(--pp);color:var(--tin);font:15px/1.5 Inter,system-ui,sans-se
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="js/config.js?v=2.0.2"></script>
+<script src="js/config.js?v=2.1.0"></script>
 <script>
 const esc = s => String(s??'').replace(/[<>&"]/g, m => ({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[m]));
 const NEC = {alimentos:'Mercado', aseo:'Aseo', arriendo:'Arriendo', agua:'Agua',
@@ -188,8 +207,20 @@ async function cargar(){
     const db = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
     const {data, error} = await db.rpc('ruta_publica', {t});
     if(error) throw error;
-    if(!data || !data.length) return fallo('Esta ruta ya no está',
-      'El enlace no existe o la jornada se borró. Pídele uno nuevo a quien coordina.');
+    if(!data || !data.length){
+      // Sin paradas hay dos causas muy distintas, y decirle "no existe" a
+      // quien tiene un enlace bueno lo manda a buscar donde no es.
+      const {data:info} = await db.rpc('ruta_info', {t});
+      const i = info && info[0];
+      if(i && i.equipo === 0 && !i.abierta)
+        return fallo('Las rutas ya no están compartidas',
+          'Quien coordina cerró el enlace del grupo. Pídele el enlace de tu equipo.');
+      if(i)
+        return fallo('Esta jornada no tiene paradas',
+          'La ruta se borró o se armó de nuevo. Pídele el enlace actualizado a quien coordina.');
+      return fallo('Este enlace no sirve',
+        'Puede estar incompleto o la jornada se borró. Pídele uno nuevo a quien coordina.');
+    }
     FILAS = data;
     // el enlace general (equipo 0) no es de nadie: abre en el primer equipo
     const hay = new Set(data.map(x=>x.equipo));
@@ -360,6 +391,32 @@ document.addEventListener('click', e=>{
 });
 
 cargar();
+
+/* Cuántos están mirando esta misma ruta ahora. En la calle sirve para saber
+   si el resto del equipo ya abrió el enlace, y si la coordinación está
+   pendiente. Es un canal por ruta: nadie ve a los de otra jornada. */
+(function(){
+  const t = new URLSearchParams(location.search).get('t');
+  if(!t) return;
+  const yo = 'v' + Math.random().toString(36).slice(2) + Date.now().toString(36);
+  const db = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
+  const canal = db.channel('ruta-'+t, {config:{presence:{key:yo}}});
+  canal.on('presence', {event:'sync'}, ()=>{
+    const n = Object.keys(canal.presenceState()).length;
+    const c = document.getElementById('vivo'), b = document.getElementById('vivo-n');
+    if(!c || !b) return;
+    c.hidden = false;
+    b.textContent = n > 99 ? '99+' : n;
+    c.querySelector('span').textContent = n === 1 ? 'solo tú' : 'en la ruta';
+    c.title = n === 1 ? 'Eres el único con esta ruta abierta ahora mismo'
+                      : n + ' personas con esta ruta abierta ahora mismo';
+  }).subscribe(async e=>{
+    if(e === 'SUBSCRIBED') await canal.track({desde: new Date().toISOString()});
+  });
+  document.addEventListener('visibilitychange', ()=>{
+    if(!document.hidden) canal.track({desde: new Date().toISOString()});
+  });
+})();
 
 /* Se vuelve a pedir la ruta cada veinte segundos, y de una cuando la persona
    vuelve a mirar el teléfono: en la calle la pantalla pasa apagada casi todo
