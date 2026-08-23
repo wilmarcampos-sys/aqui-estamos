@@ -8,7 +8,7 @@
 <link rel="icon" type="image/svg+xml" href="logo/marca.svg">
 <title>Aquí Estamos · Administración</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
-<link rel="stylesheet" href="css/app.css?v=1.63.0">
+<link rel="stylesheet" href="css/app.css?v=1.64.0">
 <style>
   /* El panel es mobile-first: una columna, pestañas fijas abajo. En pantalla
      grande se centra en una franja de ancho de celular para no deformarse. */
@@ -191,6 +191,11 @@
   .lugar b{display:block;font-size:13.5px;font-weight:700}
   .lugar small{display:block;font-size:12px;color:var(--dim);margin-top:2px}
   .lugar:hover{border-color:var(--acc)}
+
+  .btn.soft2{background:rgba(124,58,237,.16);color:#c4b5fd;font-size:14px;height:auto;padding:12px 14px;
+    line-height:1.35;box-shadow:none}
+  .btn.soft2 small{display:block;font-size:12px;font-weight:600;opacity:.85;margin-top:2px}
+  :root[data-eff="light"] .btn.soft2{background:rgba(124,58,237,.12);color:#5B21B6}
 
   .ciudadchip{display:inline-flex;align-items:center;gap:5px;padding:4px 11px;border-radius:999px;
     background:rgba(124,58,237,.16);color:#a78bfa;font-size:12.5px;font-weight:750;white-space:nowrap}
@@ -462,9 +467,9 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="js/config.js?v=1.63.0"></script>
-<script src="js/version.js?v=1.63.0"></script>
-<script src="js/data.js?v=1.63.0"></script>
+<script src="js/config.js?v=1.64.0"></script>
+<script src="js/version.js?v=1.64.0"></script>
+<script src="js/data.js?v=1.64.0"></script>
 <script>
 /* ============================================================
    PANEL DE ADMINISTRACIÓN — Aquí Estamos
@@ -1295,6 +1300,39 @@ function comunaDeBarrio(barrio){
   return (ZONAS||[]).find(z=>b.includes(norma(z.n))) || null;
 }
 
+/* Mejor punto disponible para un barrio: primero el promedio de las viviendas
+   ya ubicadas en ese mismo barrio (lo más fiel), después la comuna. */
+function puntoDeBarrio(c){
+  if(!c.barrio) {
+    const z0 = comunaDeBarrio(c.barrio);
+    return z0 ? {n:z0.n, lat:z0.lat, lng:z0.lng, tipo:'comuna'} : null;
+  }
+  const k = norma(c.barrio);
+  const pares = CENSO.filter(x=>x.lat && !x.aprox && norma(x.barrio)===k);
+  if(pares.length) return {n:c.barrio, tipo:'barrio',
+    lat: pares.reduce((a,x)=>a+x.lat,0)/pares.length,
+    lng: pares.reduce((a,x)=>a+x.lng,0)/pares.length};
+  const z = comunaDeBarrio(c.barrio);
+  return z ? {n:'la comuna '+z.n, lat:z.lat, lng:z.lng, tipo:'comuna'} : null;
+}
+
+async function ubBarrioMinimo(c){
+  const p = puntoDeBarrio(c); if(!p) return;
+  const antes = {lat:c.lat, lng:c.lng, aprox:c.aprox};
+  if(!DEMO){
+    const {error} = await db.from('censo').update({lat:p.lat, lng:p.lng, ubicacion_aprox:true,
+      ubicado_por:'panel:'+(YO.email||'')+' · '+p.tipo}).eq('id', c.id);
+    if(error){ toast('No se pudo guardar.'); return; }
+  }
+  c.lat=p.lat; c.lng=p.lng; c.aprox=true;
+  toastDeshacer(`Ubicada en ${p.n} — aproximada, sigue en la cola de parciales`, async ()=>{
+    if(!DEMO) await db.from('censo').update({lat:antes.lat, lng:antes.lng,
+      ubicacion_aprox:antes.aprox}).eq('id', c.id);
+    Object.assign(c, antes); vUbicar(); render();
+  });
+  vUbicar(); render();
+}
+
 function barriosConocidos(){
   const g = {};
   CENSO.forEach(c=>{
@@ -1431,6 +1469,9 @@ function vUbicar(){
         <div id="ub-lugares"></div>
         <div id="ub-cerca"></div>
         <p class="muted" id="ubmsg" role="status" aria-live="polite" style="margin:10px 3px 0;font-size:12.5px">O toca el mapa donde queda la vivienda.</p>
+
+        ${(!c.lat && puntoDeBarrio(c)) ? `<button class="btn soft2" id="ub-barrio-min" style="width:100%;margin-top:14px">
+          Ubicar en ${esc(puntoDeBarrio(c).n)} <small>— punto aproximado, mientras se consigue el exacto</small></button>` : ''}
 
         <div class="btnrow" style="margin-top:16px">
           <button class="btn" id="ub-guardar" style="flex:1 1 200px;width:auto;min-width:0" disabled>${c.lat&&c.aprox?'Reemplazar el punto':'Guardar el punto'}</button>
@@ -2561,6 +2602,7 @@ document.addEventListener('click', e=>{
   if(e.target.closest('#ub-saltar'))  { if(c) ubAplazar(c); return; }
   if(e.target.closest('#ub-volver')) { UB.suelta=null; vUbicar(); return; }
   if(e.target.closest('#ub-buscarlugar')) { if(c) ubLugar(c); return; }
+  if(e.target.closest('#ub-barrio-min')) { if(c) ubBarrioMinimo(c); return; }
   const ud = e.target.closest('[data-usar-dir]');
   if(ud){
     const campo = document.getElementById('ub-dir');
