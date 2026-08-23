@@ -8,7 +8,7 @@
 <link rel="icon" type="image/svg+xml" href="logo/marca.svg">
 <title>Aquí Estamos · Administración</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
-<link rel="stylesheet" href="css/app.css?v=1.61.0">
+<link rel="stylesheet" href="css/app.css?v=1.62.0">
 <style>
   /* El panel es mobile-first: una columna, pestañas fijas abajo. En pantalla
      grande se centra en una franja de ancho de celular para no deformarse. */
@@ -186,6 +186,12 @@
   .pinnum.ok{background:#2f9e5f;color:#fff}
 
   /* la ciudad es la primera pista para ubicar: va como distintivo, no en un párrafo */
+  .lugar{display:block;width:100%;text-align:left;margin-top:6px;padding:10px 12px;border-radius:12px;
+    background:var(--surf);border:1px solid var(--line);cursor:pointer;font-family:inherit;color:var(--txt)}
+  .lugar b{display:block;font-size:13.5px;font-weight:700}
+  .lugar small{display:block;font-size:12px;color:var(--dim);margin-top:2px}
+  .lugar:hover{border-color:var(--acc)}
+
   .ciudadchip{display:inline-flex;align-items:center;gap:5px;padding:4px 11px;border-radius:999px;
     background:rgba(124,58,237,.16);color:#a78bfa;font-size:12.5px;font-weight:750;white-space:nowrap}
   .ciudadchip svg{width:13px;height:13px}
@@ -456,9 +462,9 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="js/config.js?v=1.61.0"></script>
-<script src="js/version.js?v=1.61.0"></script>
-<script src="js/data.js?v=1.61.0"></script>
+<script src="js/config.js?v=1.62.0"></script>
+<script src="js/version.js?v=1.62.0"></script>
+<script src="js/data.js?v=1.62.0"></script>
 <script>
 /* ============================================================
    PANEL DE ADMINISTRACIÓN — Aquí Estamos
@@ -1390,6 +1396,13 @@ function vUbicar(){
             placeholder="Pega el enlace de WhatsApp o Maps">
           <button class="btn flat" id="ub-pegar" style="flex:0 1 auto;min-width:100px">Usar</button>
         </div>
+        <div class="btnrow" style="margin-top:8px">
+          <input class="campo" id="ub-lugar" style="flex:1 1 200px;min-width:0"
+            placeholder="Un negocio o lugar cercano: “La Sensación”, iglesia, colegio…">
+          <button class="btn flat" id="ub-buscarlugar" style="flex:0 1 auto;min-width:100px">Ir</button>
+        </div>
+        <div id="ub-lugares"></div>
+        <div id="ub-cerca"></div>
         <p class="muted" id="ubmsg" role="status" aria-live="polite" style="margin:10px 3px 0;font-size:12.5px">O toca el mapa donde queda la vivienda.</p>
 
         <div class="btnrow" style="margin-top:16px">
@@ -1462,6 +1475,7 @@ function ubFijar(la, lo, habilita=true){
     UB.mk.on('dragend', e=>{ const p=e.target.getLatLng(); ubFijar(p.lat,p.lng); }); }
   const b=document.getElementById('ub-guardar');
   if(b && habilita) b.disabled=false;
+  if(habilita) ubCercanas(UB.lat, UB.lng);
 }
 
 /* Geocodificación: la dirección escrita se busca en Nominatim, acotada a
@@ -1484,6 +1498,75 @@ function ubPegar(){
     msg.textContent='Esa ubicación queda fuera de Pereira y alrededores. Revísala antes de guardarla.'; return; }
   UB.map.setView([la,lo], 17); ubFijar(la,lo);
   msg.textContent='Punto puesto donde indica el enlace. Verifícalo en el mapa.';
+}
+
+/* Referencia por lugar conocido: la dirección puede no existir en el mapa,
+   pero la tienda de la esquina sí. Se buscan lugares con nombre alrededor de
+   la ciudad de la ficha y se lleva el mapa allí; el pin lo pone la persona. */
+/* Al poner el pin, buscar qué direcciones hay registradas alrededor. No
+   inventa la dirección: muestra las placas vecinas con su distancia, para que
+   la persona reconozca la cuadra o la copie si es la misma casa. */
+let _cercaT = null;
+function ubCercanas(la, lo){
+  clearTimeout(_cercaT);
+  _cercaT = setTimeout(async ()=>{
+    const w = document.getElementById('ub-cerca'); if(!w) return;
+    w.innerHTML = '<p class="muted" style="margin:8px 3px 0;font-size:12px">Buscando direcciones vecinas…</p>';
+    const q = `[out:json][timeout:25];(node["addr:housenumber"](around:150,${la},${lo});`
+            + `way["addr:housenumber"](around:150,${la},${lo}););out center 12;`;
+    // Overpass devuelve un XML de error cuando está saturado: un reintento
+    // corto resuelve la mayoría de esos casos.
+    let j = null;
+    for(let intento=0; intento<2 && !j; intento++){
+      try{
+        const r = await fetch('https://overpass-api.de/api/interpreter',
+          {method:'POST', body:'data='+encodeURIComponent(q),
+           headers:{'Content-Type':'application/x-www-form-urlencoded'}});
+        const txt = await r.text();
+        if(txt.trim().startsWith('{')) j = JSON.parse(txt);
+        else if(intento===0) await new Promise(z=>setTimeout(z,1200));
+      }catch(_){ if(intento===0) await new Promise(z=>setTimeout(z,1200)); }
+    }
+    if(!j){ w.innerHTML = '<p class="muted" style="margin:8px 3px 0;font-size:12px">El mapa de direcciones no respondió. El punto igual se puede guardar.</p>'; return; }
+    try{
+      const hits = (j.elements||[]).map(e=>{
+        const t=e.tags||{}, y=e.lat ?? (e.center||{}).lat, x=e.lon ?? (e.center||{}).lon;
+        if(y==null) return null;
+        const txt = [t['addr:street'], t['addr:housenumber']].filter(Boolean).join(' #').replace('##','#');
+        return txt ? {txt, n:t.name||'', m:Math.round(distM(la,lo,y,x))} : null;
+      }).filter(Boolean).sort((a,b)=>a.m-b.m).slice(0,3);
+      w.innerHTML = hits.length
+        ? `<div class="lbl" style="margin-top:12px">Direcciones registradas cerca del pin</div>`
+          + hits.map(h=>`<button type="button" class="lugar" data-usar-dir="${esc(h.txt)}">
+              <b>${esc(h.txt)}</b><small>${h.n?esc(h.n)+' · ':''}a ${h.m} m del pin — tócala para copiarla a la dirección</small></button>`).join('')
+        : `<p class="muted" style="margin:8px 3px 0;font-size:12px">No hay direcciones registradas cerca de este punto en el mapa.</p>`;
+    }catch(e){ w.innerHTML=''; }
+  }, 700);   // esperar a que la persona termine de arrastrar
+}
+
+async function ubLugar(c){
+  const q = ((document.getElementById('ub-lugar')||{}).value||'').trim();
+  const w = document.getElementById('ub-lugares'); if(!q || !w) return;
+  const b = document.getElementById('ub-buscarlugar'); b.disabled=true; b.textContent='…';
+  w.innerHTML = '<p class="muted" style="margin:8px 3px;font-size:12.5px">Buscando lugares…</p>';
+  const cc = centroCiudad(c.ciudad);
+  try{
+    const u = 'https://photon.komoot.io/api/?limit=6&lang=es&lat='+cc[0]+'&lon='+cc[1]
+            + '&q=' + encodeURIComponent(q + ' ' + (c.ciudad||'Pereira'));
+    const j = await (await fetch(u)).json();
+    const hits = (j.features||[]).map(f=>({
+      lat:f.geometry.coordinates[1], lng:f.geometry.coordinates[0],
+      n:f.properties.name||'', d:[f.properties.street, f.properties.district, f.properties.city]
+        .filter(Boolean).join(' · ')
+    })).filter(x=>x.lat>4.60 && x.lat<5.10 && x.lng>-76.10 && x.lng<-75.40);
+    w.innerHTML = hits.length
+      ? hits.map(h=>`<button type="button" class="lugar" data-ir-lugar="${h.lat},${h.lng}">
+          <b>${esc(h.n)}</b><small>${esc(h.d||'sin dirección registrada')}</small></button>`).join('')
+      : '<p class="muted" style="margin:8px 3px;font-size:12.5px">No se encontró ese lugar. Prueba con otro nombre cercano.</p>';
+  }catch(e){
+    w.innerHTML = '<p class="muted" style="margin:8px 3px;font-size:12.5px">No se pudo consultar. Revisa la conexión.</p>';
+  }
+  b.disabled=false; b.textContent='Ir';
 }
 
 async function ubGeocodificar(c){
@@ -2443,6 +2526,30 @@ document.addEventListener('click', e=>{
   if(e.target.closest('#ub-wa'))      { if(c) ubPedida(c); return; }   // deja rastro; el enlace abre igual
   if(e.target.closest('#ub-saltar'))  { if(c) ubAplazar(c); return; }
   if(e.target.closest('#ub-volver')) { UB.suelta=null; vUbicar(); return; }
+  if(e.target.closest('#ub-buscarlugar')) { if(c) ubLugar(c); return; }
+  const ud = e.target.closest('[data-usar-dir]');
+  if(ud){
+    const campo = document.getElementById('ub-dir');
+    if(campo){
+      const actual = campo.value.trim();
+      campo.value = actual ? actual + ' (cerca de ' + ud.dataset.usarDir + ')' : ud.dataset.usarDir;
+      campo.focus();
+    }
+    return;
+  }
+  const il = e.target.closest('[data-ir-lugar]');
+  if(il){
+    const [la,lo] = il.dataset.irLugar.split(',').map(Number);
+    if(UB.map){
+      UB.map.setView([la,lo], 18);
+      if(UB.ref) UB.ref.remove();
+      UB.ref = L.circleMarker([la,lo], {radius:9, color:'#F2B705', weight:3, fillOpacity:.25})
+        .addTo(UB.map).bindTooltip(il.querySelector('b').textContent, {permanent:true, direction:'top'});
+    }
+    const m = document.getElementById('ubmsg');
+    if(m) m.textContent = 'Referencia marcada en amarillo. Ahora toca la vivienda en el mapa.';
+    return;
+  }
   if(e.target.closest('#ub-sig')) { UB.i=(UB.i+1)%Math.max(1,cola.length); vUbicar(); return; }
   if(e.target.closest('#ub-ant')) { UB.i=(UB.i-1+cola.length)%Math.max(1,cola.length); vUbicar(); return; }
 });
