@@ -193,28 +193,26 @@ function dibujarTarjeta(alto){
   if(h && libre >= cajaMin + filaRiesgo){
     y += 30;
     const cajaH = Math.min(largo ? 330 : 200, libre - filaRiesgo - 16);
-    x.save();
-    redondo(x, M, y, W-M*2, cajaH, 20); x.clip();
-    if(FOTOS_C[1]) dibujarCover(x, FOTOS_C[1], M, y, W-M*2, cajaH);
-    else { x.fillStyle = '#101A28'; x.fillRect(M,y,W-M*2,cajaH); }
-    const gh = x.createLinearGradient(M,0,W-M,0);
+    // banda a sangre, no una caja dentro de la tarjeta
+    if(FOTOS_C[1]) dibujarCover(x, FOTOS_C[1], 0, y, W, cajaH);
+    else { x.fillStyle = '#101A28'; x.fillRect(0,y,W,cajaH); }
+    const gh = x.createLinearGradient(0,0,W,0);
     gh.addColorStop(0,'rgba(10,17,28,.96)'); gh.addColorStop(.62,'rgba(10,17,28,.86)');
     gh.addColorStop(1,'rgba(10,17,28,.55)');
-    x.fillStyle = gh; x.fillRect(M,y,W-M*2,cajaH);
-    x.restore();
+    x.fillStyle = gh; x.fillRect(0,y,W,cajaH);
 
     // la caja del formato corto es más baja: tipografía y renglones más juntos
     const cuerpo = largo ? 30 : 26, salto = largo ? 42 : 36;
     const alto1 = largo ? 44 : 38, altoTx = largo ? 92 : 76, pie = largo ? 26 : 22;
     x.fillStyle = '#E8A33D'; x.font = '800 '+(largo?19:17)+'px Inter, system-ui, sans-serif';
-    x.fillText('UNA DE ELLAS', M+32, y+alto1);
+    x.fillText('UNA DE ELLAS', M, y+alto1);
     x.fillStyle = '#fff'; x.font = '600 '+cuerpo+'px Inter, system-ui, sans-serif';
     const espacio = cajaH - altoTx - pie - 22;
     const lineas = Math.max(2, Math.floor(espacio/salto));
-    envolver(x, h.historia, M+32, y+altoTx, W-M*2-70, salto, lineas);
+    envolver(x, h.historia, M, y+altoTx, W-M*2, salto, lineas);
     x.fillStyle = '#9FB0C6'; x.font = '700 '+(largo?20:18)+'px Inter, system-ui, sans-serif';
     const lugar = [...new Set([h.barrio,h.ciudad].filter(Boolean))].join(' · ') || 'Pereira';
-    x.fillText(lugar, M+32, y+cajaH-pie);
+    x.fillText(lugar, M, y+cajaH-pie);
     y += cajaH + 30;
   }
 

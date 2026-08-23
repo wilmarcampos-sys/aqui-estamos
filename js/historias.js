@@ -55,6 +55,9 @@ function pintarHistorias(){
   puntos.innerHTML = hs.map((_,i)=>`<button type="button" data-hp="${i}" aria-label="Historia ${i+1}"></button>`).join('');
   irHistoria(0);
   reiniciarTimer();
+  // las tipografías llegan después y cambian el alto medido
+  [120, 500, 1400].forEach(t=>setTimeout(ajustarAlto, t));
+  if(document.fonts && document.fonts.ready) document.fonts.ready.then(ajustarAlto);
 }
 
 function irHistoria(i){
@@ -63,7 +66,19 @@ function irHistoria(i){
   const pista = document.getElementById('carru-pista');
   if(pista) pista.style.transform = `translateX(-${hIdx*100}%)`;
   document.querySelectorAll('[data-hp]').forEach((b,j)=>b.classList.toggle('on', j===hIdx));
+  ajustarAlto();
 }
+
+/* La pista mide lo del relato más largo y deja un hueco muerto en los cortos.
+   Se ajusta al que está a la vista. */
+function ajustarAlto(){
+  const pista = document.getElementById('carru-pista'); if(!pista) return;
+  const c = pista.children[hIdx]; if(!c) return;
+  c.style.alignSelf = 'flex-start';
+  pista.style.transition = pista.style.transition || 'transform .5s var(--ease), height .35s var(--ease)';
+  pista.style.height = c.offsetHeight + 'px';
+}
+addEventListener('resize', ()=>setTimeout(ajustarAlto, 60), {passive:true});
 
 /* Avanza solo, pero se detiene si la persona está leyendo o interactuando:
    un carrusel que cambia mientras alguien lee es una molestia, no una ayuda. */

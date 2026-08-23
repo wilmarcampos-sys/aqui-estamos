@@ -1126,21 +1126,23 @@ input.pin{letter-spacing:9px;font-size:20px;text-align:center;font-weight:700}
   will-change:transform;transform:translate3d(0,0,0)}
 .px-velo{position:absolute;inset:0;
   background:linear-gradient(180deg,rgba(8,14,24,.35) 0%,rgba(8,14,24,.62) 55%,rgba(8,14,24,.92) 100%)}
-.px-texto{position:absolute;inset:auto 0 0 0;padding:0 18px 18px}
+.px-texto{position:absolute;inset:auto 0 0 0;padding:0 18px 40px}
 .px-texto h2{margin:0;color:#fff;font-size:27px;line-height:1.05;font-weight:850;letter-spacing:-.7px}
 .px-texto p{margin:8px 0 0;color:#CBD5E6;font-size:13px;line-height:1.5;max-width:420px}
 @media (prefers-reduced-motion: reduce){ .px-foto{transform:none!important} }
 @media (min-width:700px){
   .heropx{height:320px}
-  .px-texto{padding:0 26px 24px}
+  .px-texto{padding:0 26px 44px}
   .px-texto h2{font-size:36px}
   .px-texto p{font-size:14.5px}
 }
 
 /* ---- pestaña Emergencia: fotografía real con crédito ---- */
 .emerg{padding-top:12px}
-.px-cred{position:absolute;right:10px;bottom:10px;background:rgba(8,14,24,.55);color:#D7DEEA;
-  font-size:10.5px;font-weight:600;padding:4px 9px;border-radius:999px;letter-spacing:.2px}
+.px-cred{position:absolute;left:18px;bottom:12px;color:rgba(255,255,255,.6);
+  font-size:10.5px;font-weight:600;letter-spacing:.2px;
+  text-shadow:0 1px 6px rgba(0,0,0,.7)}
+@media (min-width:700px){ .px-cred{left:26px;bottom:16px} }
 .bloque.confoto{position:relative;overflow:hidden;isolation:isolate}
 .bloque.confoto .fondo-foto{position:absolute;inset:0;background-size:cover;
   background-position:center 35%;opacity:.13;filter:saturate(.65)}
@@ -1271,3 +1273,64 @@ input.pin{letter-spacing:9px;font-size:20px;text-align:center;font-weight:700}
 .h-marca.chico svg{width:19px;height:19px}
 .h-marca.chico b{font-size:13px}
 .h-marca.chico b em{font-size:10px}
+
+/* ============================================================
+   REPORTE SIN MARCOS
+   ============================================================
+   Antes cada bloque era una tarjeta dentro de otra tarjeta. Aquí el papel
+   es uno solo: las secciones se separan con un filete y con aire, y las
+   fotos van a sangre. Nada de cajas dentro de cajas.
+   ============================================================ */
+.rwrap .bloque{background:none;border:0;border-radius:0;padding:0;box-shadow:none;margin:0}
+
+/* las fotos llegan al borde de la pantalla */
+.rwrap{padding-left:0;padding-right:0}
+.rwrap > *:not(.historias):not(.bloque){padding-left:16px;padding-right:16px}
+.rwrap .bloque > .reporte,
+.rwrap .bloque > .compartir-cta{margin-left:16px;margin-right:16px}
+.historias, .heropx{border-radius:0;margin-left:0;margin-right:0}
+.heropx{height:300px}
+@media (min-width:700px){
+  .rwrap{padding-left:0;padding-right:0}
+  .historias, .heropx{border-radius:18px}
+  .heropx{height:340px}
+}
+
+/* botón de compartir sobre la foto, en la esquina libre */
+.h-share{position:absolute!important;top:14px;left:16px;z-index:3;
+  width:40px;height:40px;border-radius:999px;display:grid;place-items:center;
+  background:rgba(8,14,24,.42);border:1px solid rgba(255,255,255,.2);
+  backdrop-filter:blur(8px);color:#fff;cursor:pointer;padding:0;
+  transition:background .2s var(--ease),transform .2s var(--ease)}
+.h-share svg{width:19px;height:19px}
+.h-share:hover{background:rgba(8,14,24,.7);transform:translateY(-1px)}
+.h-share:active{transform:scale(.94)}
+
+/* la magnitud deja de ser tarjeta: es la cifra que abre el reporte */
+.rep-bloque{display:block;margin-bottom:26px;background:none}
+.rep-mag{background:none;color:inherit;border-radius:0;padding:0 0 18px;
+  border-bottom:1px solid var(--line);margin-bottom:18px}
+.rep-mag::after{display:none}
+.rep-mag b{color:#C81E1E;font-size:64px;letter-spacing:-2.5px}
+:root[data-eff="dark"] .rep-mag b{color:#F87171}
+.rep-mag span{color:var(--dim);opacity:1}
+.rep-mag small{border-top:0;padding-top:0;margin-top:8px;color:var(--dim)}
+
+/* rejillas con filete, sin caja ni fondo propio */
+.rep-ficha, .rep-cifras, .rep-riesgo, .rep-orgs{
+  background:none;border:0;border-radius:0;overflow:visible;
+  gap:0;column-gap:22px}
+.rep-ficha > div, .rep-cifras > div, .rep-riesgo > div, .rep-orgs article{
+  background:none;padding:15px 0;border-top:1px solid var(--line)}
+.rep-barras{background:none;border:0;border-radius:0;padding:0}
+.rep-barra .pista{background:var(--chip)}
+
+.rep-orgs{margin-top:22px}
+.rep-orgs article{padding:16px 0}
+/* el titular del hero arranca debajo del botón de compartir */
+.historias .h-tit{padding-top:44px}
+@media (min-width:700px){ .historias .h-tit{padding-top:8px} .h-share{top:16px;left:18px} }
+/* la pista se ajusta al relato visible, no al más largo */
+.carru-pista{align-items:flex-start}
+.carru-pista > .hcard{align-self:flex-start}
+.rep-orgs{padding:0}

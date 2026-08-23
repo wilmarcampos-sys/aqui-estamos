@@ -133,7 +133,7 @@ function abrirCompartir(a){
   if(a){ const b = sc.querySelector('.opc'); if(b) b.focus(); }
 }
 document.addEventListener('click', e=>{
-  if(e.target.closest('#ab-compartir')) return abrirCompartir(true);
+  if(e.target.closest('#ab-compartir') || e.target.closest('[data-compartir]')) return abrirCompartir(true);
   if(e.target.closest('#cerrar-compartir') || e.target.id==='scrim-c') return abrirCompartir(false);
 });
 document.addEventListener('keydown', e=>{
