@@ -251,7 +251,7 @@ body{background:var(--pp);color:var(--tin);font:15px/1.5 Inter,system-ui,sans-se
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="js/config.js?v=2.4.0"></script>
+<script src="js/config.js?v=2.4.1"></script>
 <script>
 const esc = s => String(s??'').replace(/[<>&"]/g, m => ({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[m]));
 const NEC = {alimentos:'Mercado', aseo:'Aseo', arriendo:'Arriendo', agua:'Agua',
@@ -272,6 +272,11 @@ function waLink(v, msg){
   const d = String(v||'').replace(/\D/g,'');
   return 'https://wa.me/' + (d.length===10 ? '57'+d : d) + '?text=' + encodeURIComponent(msg);
 }
+
+/* Lo primero que lee la familia. Dice quién escribe y por qué tiene su
+   número —el censo lo levantaron AMCER y CREA—, y pregunta si hay alguien
+   en la casa, que es lo que evita el viaje perdido. */
+const MSJ_VISITA = 'Buen día. Somos el equipo de Aquí Estamos, con la red de iglesias AMCER y la Asociación CREA, que hicieron el censo en su barrio. Vamos en camino con la ayuda. ¿Nos confirma si hay alguien en la casa?';
 
 let FILAS = [], EQ = null, DESDE_COPIA = false;
 
@@ -559,6 +564,7 @@ async function hacerPDF(btn){
       cb.fieldName = 'p' + p.orden;
       cb.Rect = [M, y - 3.6, 6, 6];
       cb.appearanceState = 'Off';
+      cb.value = 'Off';
       doc.addField(cb);
     }catch(_){
       doc.setDrawColor(60); doc.setLineWidth(0.4);
@@ -586,8 +592,7 @@ async function hacerPDF(btn){
       const eti = 'WhatsApp';
       doc.text(eti, M + 17 + anchoTel + 5, y);
       doc.link(M + 17 + anchoTel + 5, y - 3, doc.getTextWidth(eti), 4.2,
-        {url: waLink(p.tel_e164,
-          'Hola, somos Aquí Estamos. Vamos en camino con su ayuda.')});
+        {url: waLink(p.tel_e164, MSJ_VISITA)});
       y += 4.8;
     }
     if(necL.length){
@@ -674,7 +679,7 @@ try{ if(localStorage.getItem('aviso_ruta')) document.getElementById('aviso').hid
    muestra el dinosaurio. */
 if('serviceWorker' in navigator){
   addEventListener('load', ()=> navigator.serviceWorker
-    .register('sw-ruta.js?v=2.4.0').catch(()=>{}));
+    .register('sw-ruta.js?v=2.4.1').catch(()=>{}));
 }
 
 /* Cuántos están mirando esta misma ruta ahora. En la calle sirve para saber
