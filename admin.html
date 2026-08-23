@@ -8,7 +8,7 @@
 <link rel="icon" type="image/svg+xml" href="logo/marca.svg">
 <title>Aquí Estamos · Administración</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
-<link rel="stylesheet" href="css/app.css?v=1.70.0">
+<link rel="stylesheet" href="css/app.css?v=1.71.0">
 <style>
   /* El panel es mobile-first: una columna, pestañas fijas abajo. En pantalla
      grande se centra en una franja de ancho de celular para no deformarse. */
@@ -159,6 +159,98 @@
   }
 
   /* moverse por la cola sin tener que aplazar la ficha */
+  /* ---- REPORTE ---- */
+  .repbar{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-bottom:12px}
+  .repbar .busca{flex:1 1 240px;min-width:180px;position:relative}
+  .repbar .busca input{width:100%;height:40px;border-radius:11px;padding:0 14px 0 38px;
+    background:var(--inp);border:1.4px solid var(--line2);color:var(--txt);font:inherit;font-size:14px}
+  .repbar .busca input:focus{outline:none;border-color:var(--acc);box-shadow:0 0 0 3px rgba(79,156,249,.16)}
+  .repbar .busca svg{position:absolute;left:12px;top:11px;width:17px;height:17px;color:var(--dim)}
+  .repbar .btn{height:40px;width:auto;padding:0 14px;font-size:13.5px;white-space:nowrap}
+  .repbar .btn .cta{background:#04122B;color:var(--acc);border-radius:999px;padding:1px 7px;
+    font-size:11.5px;font-weight:850;margin-left:6px}
+  .repbar .btn.pri{background:var(--acc);color:#04122B;border-color:var(--acc)}
+
+  .tira{display:flex;gap:8px;overflow-x:auto;margin-bottom:12px;padding-bottom:2px;scrollbar-width:none}
+  .tira::-webkit-scrollbar{display:none}
+  .cifra{flex:0 0 auto;border:1.5px solid var(--line);background:var(--card);border-radius:13px;
+    padding:9px 14px;cursor:pointer;font:inherit;color:var(--txt);display:flex;align-items:baseline;
+    gap:8px;white-space:nowrap;min-height:44px}
+  .cifra b{font-size:19px;font-weight:850;font-variant-numeric:tabular-nums}
+  .cifra span{font-size:12.5px;color:var(--dim);font-weight:600}
+  .cifra.on{border-color:var(--acc);background:rgba(79,156,249,.12)}
+  .cifra.rojo b{color:#F87171} .cifra.vio b{color:#A78BFA} .cifra.ambar b{color:#FBBF24}
+
+  .activos{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin:0 2px 12px;font-size:13px}
+  .activos .res{font-weight:750} .activos .res b{font-size:16px}
+  .activos .lim{color:var(--dim);margin-right:4px}
+  .fa{display:inline-flex;align-items:center;gap:5px;background:var(--chip);border:1px solid var(--line2);
+    border-radius:999px;padding:4px 5px 4px 11px;font-size:12.5px;font-weight:650}
+  .fa.rojo{background:rgba(248,113,113,.14);border-color:rgba(248,113,113,.4);color:#F87171}
+  .fa.vio{background:rgba(167,139,250,.14);border-color:rgba(167,139,250,.4);color:#A78BFA}
+  .fa button{background:none;border:0;color:inherit;cursor:pointer;font-size:16px;line-height:1;
+    padding:2px 5px;opacity:.7}
+  .fa button:hover{opacity:1}
+  .quitar{background:none;border:0;color:var(--acc);font:inherit;font-size:12.5px;font-weight:700;
+    cursor:pointer;text-decoration:underline;padding:6px 4px}
+
+  .tablabox{background:var(--card);border:1px solid var(--line);border-radius:16px;overflow:hidden}
+  .tablabox .scroll{overflow-x:auto}
+  table.reptab{width:100%;border-collapse:collapse;font-size:13.5px;min-width:900px}
+  .reptab th{position:sticky;top:0;background:var(--surf);text-align:left;font-size:11px;
+    letter-spacing:.4px;text-transform:uppercase;color:var(--dim);font-weight:800;padding:11px 14px;
+    white-space:nowrap;cursor:pointer;border-bottom:1px solid var(--line);z-index:5}
+  .reptab th.act{color:var(--acc)}
+  .reptab th .ord{opacity:.4;margin-left:4px;font-size:10px}
+  .reptab th.act .ord{opacity:1}
+  .reptab td{padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top}
+  .reptab tbody tr{cursor:pointer}
+  .reptab tbody tr:hover td{background:rgba(255,255,255,.025)}
+  .reptab .nom{font-weight:700;letter-spacing:-.15px}
+  .reptab .sub{font-size:11.8px;color:var(--dim);margin-top:2px}
+  .reptab .fic{font-family:ui-monospace,Menlo,monospace;font-size:11.5px;color:var(--acc)}
+  .reptab .num{font-variant-numeric:tabular-nums;text-align:right;font-weight:700}
+  .reptab .mas{color:var(--dim);font-size:11px;font-weight:700;margin-left:2px}
+  .tag{display:inline-block;padding:2px 8px;border-radius:999px;font-size:10.5px;font-weight:800;
+    margin:1px 3px 1px 0;white-space:nowrap}
+  .t-urg{background:rgba(248,113,113,.16);color:#F87171}
+  .t-pri{background:rgba(251,191,36,.16);color:#FBBF24}
+  .t-pro{background:rgba(147,163,189,.16);color:var(--dim)}
+  .t-cond{background:rgba(167,139,250,.16);color:#A78BFA}
+  .t-nec{background:rgba(79,156,249,.12);color:#9CC6FB}
+  .t-ok{background:rgba(95,190,138,.16);color:#5FBE8A}
+  .t-par{background:rgba(167,139,250,.13);color:#A78BFA}
+  .t-sin{background:rgba(248,113,113,.13);color:#F87171}
+  .pie{display:flex;align-items:center;gap:12px;padding:11px 16px;background:var(--surf);
+    border-top:1px solid var(--line);font-size:12.5px;color:var(--dim);flex-wrap:wrap}
+
+  /* ventana de filtros */
+  .scrim{position:fixed;inset:0;background:rgba(4,9,20,.72);z-index:120;backdrop-filter:blur(3px);
+    display:flex;align-items:flex-start;justify-content:center;padding:5vh 16px}
+  .scrim .modal{width:min(680px,100%);max-height:88vh;display:flex;flex-direction:column;
+    background:var(--card);border:1px solid var(--line2);border-radius:20px;overflow:hidden;
+    box-shadow:0 26px 70px rgba(0,0,0,.6)}
+  .modal .mhead{display:flex;align-items:center;gap:12px;padding:16px 20px;border-bottom:1px solid var(--line)}
+  .modal .mhead h2{margin:0;font-size:17px;font-weight:820}
+  .modal .mhead .x{margin-left:auto;background:none;border:0;color:var(--dim);font-size:22px;
+    cursor:pointer;line-height:1;padding:4px 10px}
+  .modal .mbody{padding:6px 20px 18px;overflow-y:auto}
+  .modal .grupo{padding:15px 0;border-bottom:1px solid var(--line)}
+  .modal .grupo:last-child{border-bottom:0}
+  .modal .grupo h3{margin:0 0 10px;font-size:11.5px;letter-spacing:.5px;text-transform:uppercase;
+    color:var(--dim);font-weight:800}
+  .modal .chips{display:flex;gap:7px;flex-wrap:wrap}
+  .modal .chip{border:1.4px solid var(--line2);background:transparent;color:var(--dim);font:inherit;
+    font-size:13px;font-weight:650;padding:8px 13px;border-radius:999px;cursor:pointer;min-height:38px}
+  .modal .chip.on{background:var(--acc);border-color:var(--acc);color:#04122B}
+  .modal .chip.on.rojo{background:#F87171;border-color:#F87171;color:#2B0606}
+  .modal .chip.on.vio{background:#A78BFA;border-color:#A78BFA;color:#20103F}
+  .modal .chip .n{opacity:.7;margin-left:5px;font-variant-numeric:tabular-nums}
+  .modal .mfoot{display:flex;align-items:center;gap:10px;padding:14px 20px;border-top:1px solid var(--line);
+    background:var(--surf)}
+  .modal .mfoot .btn{height:44px;width:auto;padding:0 16px}
+  .modal .mfoot .btn.pri{flex:1;background:var(--acc);color:#04122B;border-color:var(--acc)}
+
   /* aviso de datos nuevos cuando no se puede repintar sin romper el trabajo */
   .avisonuevo{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:950;
     display:flex;align-items:center;gap:12px;padding:12px 16px;border-radius:14px;
@@ -423,6 +515,7 @@
       <section class="view" id="v-pedidos"></section>
       <section class="view" id="v-personas"></section>
       <section class="view" id="v-zonas"></section>
+      <section class="view" id="v-reporte"></section>
       <section class="view" id="v-ubicar"></section>
       <section class="view" id="v-despachos"></section>
       <section class="view" id="v-mas"></section>
@@ -445,6 +538,10 @@
       <button data-v="zonas">
         <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3 3 6v15l6-3 6 3 6-3V3l-6 3-6-3Z"/><path d="M9 3v15M15 6v15"/></svg>
         <span class="lab">Zonas</span><span class="badge" id="bg-zonas"></span>
+      </button>
+      <button data-v="reporte">
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19V5a2 2 0 0 1 2-2h9l5 5v11a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2Z"/><path d="M14 3v6h6M8 13h8M8 17h5"/></svg>
+        <span class="lab">Reporte</span><span class="badge" id="bg-reporte"></span>
       </button>
       <button data-v="ubicar">
         <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="2.6"/></svg>
@@ -473,9 +570,9 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="js/config.js?v=1.70.0"></script>
-<script src="js/version.js?v=1.70.0"></script>
-<script src="js/data.js?v=1.70.0"></script>
+<script src="js/config.js?v=1.71.0"></script>
+<script src="js/version.js?v=1.71.0"></script>
+<script src="js/data.js?v=1.71.0"></script>
 <script>
 /* ============================================================
    PANEL DE ADMINISTRACIÓN — Aquí Estamos
@@ -1252,6 +1349,240 @@ async function jCerrar(){
   toast('Jornada cerrada.');
 }
 
+
+/* ============================================================
+   REPORTE DEL CENSO
+   ============================================================
+   Buscar y filtrar para encontrar lo crítico sin tener que armarlo a mano.
+   El buscador vive en la barra; los filtros en una ventana que se cierra al
+   aplicar, para que la lista quede a la vista. Disponible para los dos roles.
+   ============================================================ */
+let REP = { q:'', urg:new Set(), cond:new Set(), nec:new Set(), est:new Set(),
+            barrio:'', red:'', col:'urgencia', dir:-1, ver:40, modal:false };
+
+const REP_COND = [['grave','Enfermedad grave'],['embarazo','Embarazo o lactancia'],
+  ['discapacidad','Discapacidad'],['sensorial','Auditiva o visual'],['cronica','Crónica'],
+  ['sin_empleo','Sin empleo'],['menores','Menores de 5'],['mayores','Mayores de 65']];
+const REP_EST = [['exacta','Dirección exacta'],['parcial','Ubicación parcial'],
+  ['sin','Sin ubicar'],['nunca','Nunca ha recibido'],['viejo','Recibió hace +7 días']];
+
+const repVivas = () => CENSO.filter(c=>!c.archivada);
+function repUltima(c){
+  if(!c.lat) return null;
+  const e = ENTREGAS.filter(y=>y.lat && distM(c.lat,c.lng,+y.lat,+y.lng)<300)
+                    .sort((a,b)=>b.ts-a.ts)[0];
+  return e ? e.ts : null;
+}
+function repEstado(c){
+  return !c.lat ? 'sin' : (c.aprox ? 'parcial' : 'exacta');
+}
+function repVulnerable(c){
+  return (c.cond||[]).some(k=>['grave','embarazo','discapacidad','sensorial'].includes(k));
+}
+function repCriticos(){
+  return repVivas().filter(c=>c.urg===3 && repVulnerable(c) && !repUltima(c));
+}
+
+function repFiltrar(){
+  const q = norma(REP.q);
+  return repVivas().filter(c=>{
+    if(q && ![c.nombre,c.cedula,c.tel,c.ficha,c.barrio,c.dir,c.red]
+        .some(x=>norma(x).includes(q))) return false;
+    if(REP.urg.size && !REP.urg.has(String(c.urg||0))) return false;
+    if(REP.barrio && norma(c.barrio)!==norma(REP.barrio)) return false;
+    if(REP.red && norma(c.red)!==norma(REP.red)) return false;
+    if(REP.nec.size && ![...REP.nec].every(k=>(c.needs||[]).includes(k))) return false;
+    if(REP.cond.size){
+      const ok = [...REP.cond].every(k=>
+        k==='__vuln'  ? repVulnerable(c)
+        : k==='menores' ? (c.men5>0) : k==='mayores' ? (c.may65>0) : (c.cond||[]).includes(k));
+      if(!ok) return false;
+    }
+    if(REP.est.size){
+      const e = repEstado(c), u = repUltima(c);
+      const ok = [...REP.est].every(k=>
+        k==='nunca' ? !u : k==='viejo' ? (u && now()-u > 7*24*H) : e===k);
+      if(!ok) return false;
+    }
+    return true;
+  });
+}
+
+function repOrdenar(lista){
+  const val = c => ({
+    familia: norma(c.nombre), barrio: norma(c.barrio), personas: c.personas||0,
+    urgencia: (c.urg||0)*10 + (repVulnerable(c)?5:0) + ((c.cond||[]).length),
+    cond: (c.cond||[]).length, nec: (c.needs||[]).length,
+    ubic: {exacta:3, parcial:2, sin:1}[repEstado(c)],
+    entrega: repUltima(c) || 0,
+  })[REP.col];
+  return lista.slice().sort((a,b)=>{
+    const x=val(a), y=val(b);
+    if(x===y) return norma(a.nombre).localeCompare(norma(b.nombre));
+    return (x>y?1:-1) * REP.dir;
+  });
+}
+
+function vReporte(){
+  const todas = repVivas(), lista = repOrdenar(repFiltrar());
+  const pers  = lista.reduce((s2,c)=>s2+(c.personas||0),0);
+  const crit  = repCriticos();
+  const nFil  = REP.urg.size+REP.cond.size+REP.nec.size+REP.est.size
+              + (REP.barrio?1:0)+(REP.red?1:0);
+  const cuenta = f => todas.filter(f).length;
+
+  const th = (k,t,extra='') => `<th class="${REP.col===k?'act':''} ${extra}" data-rord="${k}">${t}
+    <span class="ord">${REP.col===k ? (REP.dir<0?'▾':'▴') : '↕'}</span></th>`;
+
+  const fichas = [];
+  if(REP.urg.size) [...REP.urg].forEach(u=>fichas.push(['urg',u,
+    u==='3'?'Urgente':u==='2'?'Prioritaria':'Programable', 'rojo']));
+  if(REP.cond.size) [...REP.cond].forEach(k=>fichas.push(['cond',k,
+    k==='__vuln' ? 'Hogar vulnerable' : (REP_COND.find(x=>x[0]===k)||[])[1]||k, 'vio']));
+  if(REP.nec.size) [...REP.nec].forEach(k=>fichas.push(['nec',k, NECS_ED_N(k), '']));
+  if(REP.est.size) [...REP.est].forEach(k=>fichas.push(['est',k,
+    (REP_EST.find(x=>x[0]===k)||[])[1]||k, '']));
+  if(REP.barrio) fichas.push(['barrio','', REP.barrio, '']);
+  if(REP.red) fichas.push(['red','', REP.red, '']);
+
+  $('#v-reporte').innerHTML = `
+    <div class="repbar">
+      <label class="busca">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        <input id="rep-q" value="${esc(REP.q)}" placeholder="Buscar nombre, cédula, celular, ficha, dirección…" autocomplete="off">
+      </label>
+      <button class="btn ${nFil?'pri':''}" id="rep-filtros">Filtros${nFil?` <span class="cta">${nFil}</span>`:''}</button>
+      <button class="btn" id="rep-csv" title="Exportar lo filtrado">Exportar</button>
+      <button class="btn" id="rep-print" title="Imprimir">Imprimir</button>
+      ${ROL==='admin'||ROL==='censo' ? `<button class="btn" id="rep-jornada">Armar jornada</button>`:''}
+    </div>
+
+    <div class="tira">
+      <button class="cifra ${!nFil&&!REP.q?'on':''}" data-rkpi="todo"><b>${todas.length}</b><span>viviendas</span></button>
+      <button class="cifra rojo" data-rkpi="urg3"><b>${cuenta(c=>c.urg===3)}</b><span>urgentes</span></button>
+      <button class="cifra vio" data-rkpi="vuln"><b>${cuenta(repVulnerable)}</b><span>vulnerables</span></button>
+      <button class="cifra" data-rkpi="men"><b>${cuenta(c=>c.men5>0)}</b><span>con menores de 5</span></button>
+      <button class="cifra ambar" data-rkpi="empleo"><b>${cuenta(c=>(c.cond||[]).includes('sin_empleo'))}</b><span>sin empleo</span></button>
+      <button class="cifra" data-rkpi="sinub"><b>${cuenta(c=>!c.lat)}</b><span>sin ubicar</span></button>
+      <button class="cifra" data-rkpi="atend"><b>${cuenta(c=>{const u=repUltima(c); return u && now()-u<7*24*H;})}</b><span>atendidas esta semana</span></button>
+    </div>
+
+    ${crit.length?`<div class="critica">
+      <div><div class="ti">${crit.length} hogar${crit.length===1?'':'es'} crítico${crit.length===1?'':'s'}</div>
+      <div class="cx">Urgentes, con embarazo, enfermedad grave o discapacidad, y sin haber recibido nada.</div></div>
+      <button class="btn" id="rep-criticos">Ver solo estos</button>
+    </div>`:''}
+
+    <div class="activos">
+      <span class="res"><b>${lista.length}</b> vivienda${lista.length===1?'':'s'} · <b>${pers}</b> personas</span>
+      <span class="lim">de ${todas.length}</span>
+      ${fichas.map(([g,k,t,cl])=>`<span class="fa ${cl}">${esc(t)}
+        <button data-rquita="${g}:${k}" aria-label="Quitar">×</button></span>`).join('')}
+      ${(nFil||REP.q)?`<button class="quitar" id="rep-limpiar">Quitar todo</button>`:''}
+    </div>
+
+    <div class="tablabox"><div class="scroll">
+      <table class="reptab">
+        <thead><tr>
+          ${th('familia','Familia')}${th('barrio','Barrio')}${th('personas','Pers.','num')}
+          ${th('urgencia','Urgencia')}${th('cond','Condiciones')}${th('nec','Necesita')}
+          ${th('ubic','Ubicación')}${th('entrega','Últ. entrega')}
+        </tr></thead>
+        <tbody>
+          ${lista.slice(0,REP.ver).map(c=>{
+            const u = repUltima(c), e = repEstado(c);
+            const cond = (c.cond||[]).map(k=>COND_TXT[k]||k);
+            if(c.men5>0) cond.push(`${c.men5} menor${c.men5>1?'es':''} de 5`);
+            const nec = (c.needs||[]).map(k=>NECS_ED_N(k));
+            return `<tr data-vivienda="${esc(c.id)}">
+              <td><div class="nom">${esc(c.nombre||'Vivienda')}</div>
+                  <div class="sub"><span class="fic">${esc(c.ficha||'')}</span>${c.red?' · '+esc(c.red):''}</div></td>
+              <td>${esc(c.barrio||'—')}<div class="sub">${esc(c.ciudad||'Pereira')}</div></td>
+              <td class="num">${c.personas||0}</td>
+              <td>${c.urg?`<span class="tag ${c.urg===3?'t-urg':c.urg===2?'t-pri':'t-pro'}">${c.urg===3?'Urgente':c.urg===2?'Prioritaria':'Programable'}</span>`:'<span class="sub">—</span>'}</td>
+              <td>${cond.slice(0,2).map(t=>`<span class="tag t-cond">${esc(t)}</span>`).join('')}${cond.length>2?`<span class="mas">+${cond.length-2}</span>`:''}</td>
+              <td>${nec.slice(0,2).map(t=>`<span class="tag t-nec">${esc(t)}</span>`).join('')}${nec.length>2?`<span class="mas">+${nec.length-2}</span>`:''}</td>
+              <td><span class="tag ${e==='exacta'?'t-ok':e==='parcial'?'t-par':'t-sin'}">${e==='exacta'?'Exacta':e==='parcial'?'Parcial':'Sin ubicar'}</span></td>
+              <td class="sub">${u?hace(u):'nunca'}</td>
+            </tr>`;
+          }).join('') || `<tr><td colspan="8"><div class="vacio"><b>Sin resultados</b>
+              <p>Ninguna vivienda coincide con estos filtros.</p></div></td></tr>`}
+        </tbody>
+      </table>
+    </div>
+    ${lista.length>REP.ver?`<div class="pie"><span>Mostrando ${REP.ver} de ${lista.length}</span>
+      <button class="btn" id="rep-mas" style="margin-left:auto">Ver 40 más</button></div>`:
+      lista.length?`<div class="pie"><span>${lista.length} vivienda${lista.length===1?'':'s'}</span></div>`:''}
+    </div>
+
+    ${REP.modal?repModal(cuenta, lista.length):''}
+  `;
+}
+
+const NECS_ED_N = k => (NECS_ED.find(x=>x[0]===k)||[])[1] || k;
+
+function repModal(cuenta, nRes){
+  const chip = (g,k,t,n,cl='') =>
+    `<button class="chip ${REP[g].has(k)?'on '+cl:''}" data-rchip="${g}:${k}">${esc(t)} <span class="n">${n}</span></button>`;
+  const barrios = [...new Set(repVivas().map(c=>c.barrio).filter(Boolean))].sort();
+  const redes   = [...new Set(repVivas().map(c=>c.red).filter(Boolean))].sort();
+  return `<div class="scrim" id="rep-scrim"><div class="modal">
+    <div class="mhead"><h2>Filtros</h2>
+      <button class="quitar" id="rep-limpiar2">Quitar todo</button>
+      <button class="x" id="rep-cerrar" aria-label="Cerrar">×</button></div>
+    <div class="mbody">
+      <div class="grupo"><h3>Urgencia</h3><div class="chips">
+        ${chip('urg','3','Urgente',cuenta(c=>c.urg===3),'rojo')}
+        ${chip('urg','2','Prioritaria',cuenta(c=>c.urg===2))}
+        ${chip('urg','1','Programable',cuenta(c=>c.urg===1))}
+      </div></div>
+      <div class="grupo"><h3>Condición del hogar</h3><div class="chips">
+        ${REP_COND.map(([k,t])=>chip('cond',k,t,
+          cuenta(c=> k==='menores'?c.men5>0 : k==='mayores'?c.may65>0 : (c.cond||[]).includes(k)),'vio')).join('')}
+      </div></div>
+      <div class="grupo"><h3>Necesidad</h3><div class="chips">
+        ${NECS_ED.map(([k,t])=>chip('nec',k,t,cuenta(c=>(c.needs||[]).includes(k)))).join('')}
+      </div></div>
+      <div class="grupo"><h3>Estado</h3><div class="chips">
+        ${REP_EST.map(([k,t])=>chip('est',k,t, cuenta(c=>{
+          const u=repUltima(c);
+          return k==='nunca'? !u : k==='viejo'? (u && now()-u>7*24*H) : repEstado(c)===k;
+        }))).join('')}
+      </div></div>
+      <div class="grupo"><h3>Barrio</h3>
+        <select class="campo" id="rep-barrio"><option value="">Todos los barrios</option>
+        ${barrios.map(b=>`<option ${REP.barrio===b?'selected':''}>${esc(b)}</option>`).join('')}</select></div>
+      ${redes.length?`<div class="grupo"><h3>Iglesia o red</h3>
+        <select class="campo" id="rep-red"><option value="">Todas las redes</option>
+        ${redes.map(b=>`<option ${REP.red===b?'selected':''}>${esc(b)}</option>`).join('')}</select></div>`:''}
+    </div>
+    <div class="mfoot">
+      <button class="btn" id="rep-cancelar">Cancelar</button>
+      <button class="btn pri" id="rep-aplicar">Ver ${nRes} vivienda${nRes===1?'':'s'}</button>
+    </div>
+  </div></div>`;
+}
+
+/* exportar SOLO lo filtrado: el censo entero ya se exporta desde Más */
+function repCSV(){
+  const lista = repOrdenar(repFiltrar());
+  const q = v => '"'+String(v??'').replace(/"/g,'""')+'"';
+  const cab = ['Ficha','Nombre','Barrio','Ciudad','Dirección','Personas','Menores 5','Mayores 65',
+    'Urgencia','Condiciones','Necesidades','Ubicación','Última entrega','Teléfono','Red'];
+  const filas = lista.map(c=>[c.ficha, c.nombre, c.barrio, c.ciudad, c.dir, c.personas, c.men5, c.may65,
+    c.urg===3?'Urgente':c.urg===2?'Prioritaria':c.urg===1?'Programable':'',
+    (c.cond||[]).map(k=>COND_TXT[k]||k).join('; '),
+    (c.needs||[]).map(NECS_ED_N).join('; '),
+    repEstado(c)==='exacta'?'Exacta':repEstado(c)==='parcial'?'Parcial':'Sin ubicar',
+    repUltima(c)?new Date(repUltima(c)).toISOString().slice(0,10):'nunca',
+    c.tel, c.red].map(q).join(','));
+  const blob = new Blob(['﻿'+cab.join(',')+'\n'+filas.join('\n')],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download='reporte-censo-'+new Date().toISOString().slice(0,10)+'.csv'; a.click();
+  URL.revokeObjectURL(a.href);
+  toast(lista.length+' viviendas exportadas.');
+}
+
 /* ============================================================
    UBICAR — cola de direcciones, una por una
    ============================================================
@@ -1927,6 +2258,7 @@ function dpCandidatas(){
     vistos.add(k); return true;
   };
   return base.concat(dpReportes()).filter(c=>{
+    if(DP.seleccion && DP.seleccion.size && !DP.seleccion.has(String(c.id))) return false;
     if(c.archivada) return false;
     if(!c.lat || !c.lng) return false;
     if(c.aprox && !DP.incluirAprox) return false;
@@ -2095,6 +2427,10 @@ function vDespachos(){
         </div>
         <div class="lbl" style="margin-top:16px">¿Cuántas ayudas tienen listas?</div>
         <input class="input" id="dp-unid" inputmode="numeric" value="${DP.unidades}" style="margin-top:6px">
+        ${DP.seleccion && DP.seleccion.size ? `<div class="alert" style="border-left-color:var(--acc);margin-top:14px">
+          <div class="ti">Trabajando sobre ${DP.seleccion.size} viviendas traídas del reporte</div>
+          <div class="cx">Solo se reparte entre esas. <button type="button" class="lnk" id="dp-todo-censo">Usar todo el censo</button></div>
+        </div>`:''}
         <div class="lbl" style="margin-top:18px">¿De dónde salen los destinos?</div>
         <div class="capasel" style="margin-top:8px">
           <label><input type="checkbox" id="dp-fcenso" ${DP.fuenteCenso===false?'':'checked'}>
@@ -2603,6 +2939,7 @@ function exportarCenso(){
 const TITULOS = { inicio:['Hoy', ()=>new Date(now()).toLocaleDateString('es-CO',{weekday:'long',day:'numeric',month:'long'})],
   pedidos:['Pedidos','folio, contacto y censo'],
   personas:['Personas','autorizar y consultar'], zonas:['Zonas','mapa y quién cubre qué'],
+  reporte:['Reporte','buscar y filtrar el censo'],
   ubicar:['Ubicar','poner en el mapa las viviendas del censo'],
   despachos:['Despachos','armar las rutas de entrega'],
   mas:['Más','cuenta, datos y ayuda'] };
@@ -2618,6 +2955,7 @@ function render(){
   if(VISTA==='pedidos') vPedidos();
   if(VISTA==='personas') vPersonas();
   if(VISTA==='zonas') vZonas();
+  if(VISTA==='reporte') vReporte();
   if(VISTA==='ubicar') vUbicar();
   if(VISTA==='despachos'){ if(!DP.rutas && JORNADAS.length && DP.paso===1) DP.paso=5; vDespachos(); }
   if(VISTA==='mas') vMas();
@@ -2629,6 +2967,7 @@ function render(){
   setBadge('pedidos', REPORTES.filter(r=>r.u===3 && !repAtendido(r)).length);
   setBadge('zonas', necesita);
   setBadge('inicio', 0);
+  setBadge('reporte', repCriticos().length);
   setBadge('ubicar', CENSO.filter(c=>!c.lat).length);
   setBadge('despachos', 0);
   setBadge('mas', 0);
@@ -2644,6 +2983,8 @@ function ir(v, seg){ VISTA=v; if(seg) SEG=seg; cerrarSheet(); render();
 // Buscador del censo: re-pintar en cada tecla borraría el foco, así que se
 // vuelve a montar la vista y se devuelve el cursor donde estaba.
 document.addEventListener('change', e=>{
+  if(e.target.id==='rep-barrio'){ REP.barrio=e.target.value; vReporte(); return; }
+  if(e.target.id==='rep-red'){ REP.red=e.target.value; vReporte(); return; }
   if(e.target.id==='ub-comuna' || e.target.id==='ub-barrio'){
     const v = e.target.value; if(!v || !UB.map) return;
     const [la,lo] = v.split(',').map(Number);
@@ -2659,6 +3000,13 @@ document.addEventListener('change', e=>{
 });
 
 document.addEventListener('input', e=>{
+  if(e.target.id==='rep-q'){
+    REP.q = e.target.value; REP.ver = 40;
+    const pos = e.target.selectionStart; vReporte();
+    const n = document.getElementById('rep-q');
+    if(n){ n.focus(); try{ n.setSelectionRange(pos,pos); }catch(_){} }
+    return;
+  }
   if(e.target.id==='ubusca'){
     UB.q = e.target.value; UB.i = 0;
     const pos = e.target.selectionStart; vUbicar();
@@ -2673,6 +3021,55 @@ document.addEventListener('input', e=>{
   vPedidos(); agruparFilas();
   const n = document.getElementById('cbusca');
   if(n){ n.focus(); try{ n.setSelectionRange(pos,pos); }catch(_){} }
+});
+
+// acciones del reporte
+document.addEventListener('click', e=>{
+  const kpi = e.target.closest('[data-rkpi]');
+  if(kpi){
+    const k=kpi.dataset.rkpi;
+    if(k==='todo'){ REP.urg.clear(); REP.cond.clear(); REP.nec.clear(); REP.est.clear();
+      REP.barrio=''; REP.red=''; REP.q=''; }
+    if(k==='urg3'){ REP.urg.has('3')?REP.urg.delete('3'):REP.urg.add('3'); }
+    if(k==='vuln'){ ['grave','embarazo','discapacidad','sensorial'].forEach(x=>REP.cond.delete(x));
+      REP.vulnTodo = !REP.vulnTodo;
+      if(REP.vulnTodo) REP.cond.add('__vuln'); else REP.cond.delete('__vuln'); }
+    if(k==='men'){ REP.cond.has('menores')?REP.cond.delete('menores'):REP.cond.add('menores'); }
+    if(k==='empleo'){ REP.cond.has('sin_empleo')?REP.cond.delete('sin_empleo'):REP.cond.add('sin_empleo'); }
+    if(k==='sinub'){ REP.est.has('sin')?REP.est.delete('sin'):REP.est.add('sin'); }
+    if(k==='atend'){ REP.est.has('viejo')&&REP.est.delete('viejo');
+      REP.est.has('nunca')?REP.est.delete('nunca'):REP.est.add('nunca'); }
+    REP.ver=40; vReporte(); return;
+  }
+  if(e.target.closest('#rep-filtros')){ REP.modal=true; vReporte(); return; }
+  if(e.target.closest('#rep-cerrar') || e.target.closest('#rep-cancelar')
+     || e.target.id==='rep-scrim'){ REP.modal=false; vReporte(); return; }
+  if(e.target.closest('#rep-aplicar')){ REP.modal=false; REP.ver=40; vReporte(); return; }
+  const ch = e.target.closest('[data-rchip]');
+  if(ch){ const [g,k]=ch.dataset.rchip.split(':');
+    REP[g].has(k)?REP[g].delete(k):REP[g].add(k); vReporte(); return; }
+  const qt = e.target.closest('[data-rquita]');
+  if(qt){ const [g,k]=qt.dataset.rquita.split(':');
+    if(g==='barrio') REP.barrio=''; else if(g==='red') REP.red=''; else REP[g].delete(k);
+    vReporte(); return; }
+  if(e.target.closest('#rep-limpiar') || e.target.closest('#rep-limpiar2')){
+    REP.urg.clear(); REP.cond.clear(); REP.nec.clear(); REP.est.clear();
+    REP.barrio=''; REP.red=''; REP.q=''; REP.ver=40; vReporte(); return; }
+  if(e.target.closest('#rep-criticos')){
+    REP.urg=new Set(['3']); REP.cond=new Set(['__vuln']); REP.est=new Set(['nunca']);
+    REP.nec.clear(); REP.barrio=''; REP.red=''; REP.q=''; REP.ver=40; vReporte(); return; }
+  const ord = e.target.closest('[data-rord]');
+  if(ord){ const k=ord.dataset.rord;
+    if(REP.col===k) REP.dir=-REP.dir; else { REP.col=k; REP.dir=-1; }
+    vReporte(); return; }
+  if(e.target.closest('#rep-mas')){ REP.ver+=40; vReporte(); return; }
+  if(e.target.closest('#rep-csv')){ repCSV(); return; }
+  if(e.target.closest('#rep-print')){ window.print(); return; }
+  if(e.target.closest('#rep-jornada')){
+    DP.seleccion = new Set(repFiltrar().map(c=>String(c.id)));
+    DP.paso=1; DP.rutas=null; ir('despachos');
+    toast(DP.seleccion.size+' viviendas llevadas al asistente.'); return;
+  }
 });
 
 // acciones de la cola de ubicación
@@ -2741,6 +3138,7 @@ document.addEventListener('click', e=>{
   if(e.target.closest('#dp-armar')){ DP.rutas=dpArmar(); DP.paso=4; vDespachos(); agruparFilas(); return; }
   if(e.target.closest('#dp-rehacer')){ DP.paso=3; vDespachos(); return; }
   if(e.target.closest('#dp-guardar')){ dpGuardar(); return; }
+  if(e.target.closest('#dp-todo-censo')){ DP.seleccion=null; vDespachos(); return; }
   if(e.target.closest('#j-nueva')){ DP.paso=1; DP.rutas=null; vDespachos(); return; }
   if(e.target.closest('#j-volver')){ JVER=null; vJornadas(); return; }
   if(e.target.closest('#j-cerrar')){ jCerrar(); return; }
