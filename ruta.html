@@ -234,6 +234,10 @@ body{background:var(--pp);color:var(--tin);font:15px/1.5 Inter,system-ui,sans-se
   color:#F0C878;font-size:12.5px;line-height:1.45;font-weight:600}
 .intento svg{width:15px;height:15px;min-width:15px;flex:0 0 15px;margin-top:1px}
 .intento b{font-weight:850}
+.deshacer{flex:0 0 auto;align-self:center;background:none;border:1px solid rgba(232,163,61,.4);
+  color:inherit;border-radius:8px;padding:5px 10px;font:inherit;font-size:11px;
+  font-weight:800;cursor:pointer}
+.deshacer:hover{background:rgba(232,163,61,.16)}
 .notaent{display:flex;align-items:flex-start;gap:8px;margin:10px 0 0;padding:9px 11px;
   border-radius:10px;background:rgba(63,154,104,.12);border:1px solid rgba(63,154,104,.3);
   color:#8FDCB0;font-size:12.5px;line-height:1.45;font-weight:600}
@@ -399,7 +403,7 @@ body{background:var(--pp);color:var(--tin);font:15px/1.5 Inter,system-ui,sans-se
 </div>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="js/config.js?v=2.9.0"></script>
+<script src="js/config.js?v=2.9.1"></script>
 <script>
 const esc = s => String(s??'').replace(/[<>&"]/g, m => ({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[m]));
 const NEC = {alimentos:'Mercado', aseo:'Aseo', arriendo:'Arriendo', agua:'Agua',
@@ -675,7 +679,9 @@ function pintar(){
         <span>${p.intentos === 1 ? 'Ya fueron una vez' : `Ya fueron ${p.intentos} veces`}${
           p.nota?` · ${esc(p.nota)}`:''}.${p.intentos_ficha > p.intentos
             ? ` En total ${p.intentos_ficha} intentos a esta casa.` : ''}
-          <b>Llama antes de volver.</b></span></p>` : ''}
+          <b>Llama antes de volver.</b></span>
+        <button type="button" class="deshacer" data-deshacer="${esc(p.id)}"
+          title="Quitar el último intento">Deshacer</button></p>` : ''}
       ${p.fallida ? `<p class="cerrada">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
         Cerrada${p.nota?` · ${esc(p.nota)}`:''}${p.reemplazada_por
@@ -683,8 +689,8 @@ function pintar(){
 
       ${(p.fallida || dirHallable(p.direccion, p.barrio)) ? '' : `<p class="llamar">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round"><path d="M12 8v5M12 16.5h.01"/><circle cx="12" cy="12" r="9"/></svg>
-        Esta dirección no tiene número. <b>Llama antes de ir</b> para que te
-        expliquen cómo llegar.</p>`}
+        <span>Esta dirección no tiene número. <b>Llama antes de ir</b>
+        para que te expliquen cómo llegar.</span></p>`}
       <div class="dato"><span class="et">Teléfono</span>
         ${p.tel_e164
           ? `<a class="tx tel" href="tel:${esc(p.tel_e164)}">${esc(telBonito(p.tel_e164))}</a>
@@ -864,6 +870,21 @@ async function pasoCasas(){
     document.getElementById('hoja-ops').innerHTML =
       '<p class="pb-vacio">No se pudo buscar sin señal. El intento ya quedó ' +
       'anotado; sigue con tu ruta.</p>';
+  }
+}
+
+/* Marcar sin querer pasa: el boton esta al lado del que confirma la entrega.
+   Se puede quitar sin tener que llamar a la coordinacion. */
+async function deshacerIntento(btn, parada){
+  btn.disabled = true;
+  try{
+    const db = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
+    const {error} = await db.rpc('deshacer_intento', {t: t2(), p_parada: parada});
+    if(error) throw error;
+    await cargar();
+  }catch(e){
+    btn.disabled = false;
+    alert('No se pudo deshacer sin señal. Inténtalo cuando vuelva.');
   }
 }
 
@@ -1227,6 +1248,8 @@ document.addEventListener('click', e=>{
   const be = e.target.closest('[data-eq]');
   if(be){ EQ = +be.dataset.eq; pintar();
     document.getElementById('barras').scrollIntoView({block:'nearest'}); return; }
+  const dh = e.target.closest('[data-deshacer]');
+  if(dh){ deshacerIntento(dh, dh.getAttribute('data-deshacer')); return; }
   const px = e.target.closest('[data-pbcerrar]');
   if(px){ document.getElementById('pb-' + px.dataset.pbcerrar).hidden = true; return; }
   const nh = e.target.closest('[data-nohay]');
@@ -1263,7 +1286,7 @@ try{ if(localStorage.getItem('aviso_ruta')) document.getElementById('aviso').hid
    muestra el dinosaurio. */
 if('serviceWorker' in navigator){
   addEventListener('load', ()=> navigator.serviceWorker
-    .register('sw-ruta.js?v=2.9.0').catch(()=>{}));
+    .register('sw-ruta.js?v=2.9.1').catch(()=>{}));
 }
 
 /* Cuántos están mirando esta misma ruta ahora. En la calle sirve para saber
