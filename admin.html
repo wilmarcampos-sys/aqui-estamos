@@ -11,7 +11,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
-<link rel="stylesheet" href="css/app.css?v=1.92.0">
+<link rel="stylesheet" href="css/app.css?v=1.93.0">
 <style>
   /* El panel es mobile-first: una columna, pestañas fijas abajo. En pantalla
      grande se centra en una franja de ancho de celular para no deformarse. */
@@ -40,6 +40,47 @@
 
 
 
+
+  /* ---- portada de la jornada abierta ----
+     Antes era una alerta: el mismo componente que anuncia un problema.
+     Una jornada programada no es una alerta, es la ficha del operativo. */
+  .volver-j{background:none;border:0;color:var(--dim);font-family:inherit;font-size:13.5px;
+    font-weight:750;cursor:pointer;padding:8px 4px;min-height:40px}
+  .volver-j:hover{color:var(--txt)}
+  .jhero{border:1px solid var(--line);border-radius:16px;overflow:hidden;
+    background:linear-gradient(140deg,#1B2A3D,#141F2E 62%,#101A26);margin-top:4px}
+  .jhero.cerrada{background:var(--card);opacity:.9}
+  .jh-top{display:flex;align-items:flex-start;gap:18px;padding:20px 22px 16px}
+  .jh-chapa{display:inline-block;font-size:10px;font-weight:900;letter-spacing:1.4px;
+    padding:5px 10px;border-radius:6px;background:color-mix(in srgb, var(--acc) 20%, transparent);
+    color:var(--acc)}
+  .jhero.cerrada .jh-chapa{background:var(--chip);color:var(--dim)}
+  .jh-tit{flex:1;min-width:0}
+  .jh-tit h3{margin:11px 0 0;font-size:25px;font-weight:900;letter-spacing:-.9px;line-height:1.1}
+  .jh-tit p{margin:5px 0 0;font-size:13.5px;color:var(--dim);text-transform:capitalize}
+  .jh-marca{flex:0 0 auto;text-align:right}
+  .jh-marca b{display:block;font-size:34px;font-weight:900;line-height:1;letter-spacing:-1.4px;
+    color:var(--acc);font-variant-numeric:tabular-nums}
+  .jh-marca b s{text-decoration:none;font-size:19px;color:var(--dim);font-weight:800}
+  .jh-marca span{display:block;font-size:10px;font-weight:850;letter-spacing:1.2px;
+    color:var(--dim);margin-top:6px}
+  .jh-barra{height:5px;background:rgba(255,255,255,.09);margin:0 22px}
+  .jh-barra i{display:block;height:100%;border-radius:3px;background:var(--acc);
+    transition:width .6s cubic-bezier(.2,.7,.2,1);min-width:0}
+  .jh-datos{display:grid;grid-template-columns:repeat(2,1fr);gap:1px;
+    background:var(--line);margin-top:18px}
+  .jh-datos > div{background:#111B27;padding:13px 22px}
+  .jhero.cerrada .jh-datos > div{background:var(--bg2)}
+  .jh-datos b{display:block;font-size:16px;font-weight:850;letter-spacing:-.3px;line-height:1.2}
+  .jh-datos span{display:block;font-size:10px;font-weight:850;letter-spacing:1.1px;
+    color:var(--dim);margin-top:4px}
+  @media (min-width:760px){
+    .jh-datos{grid-template-columns:repeat(5,1fr)}
+    .jh-datos > div{padding:14px 16px}
+    .jh-datos > div:first-child{padding-left:22px}
+    .jh-tit h3{font-size:29px}
+    .jh-marca b{font-size:40px}
+  }
   /* ---- una parada de la ruta ----
      En el teléfono se apila; en pantalla ancha se reparte en columnas para
      que no quede medio metro de vacío entre el nombre y el botón. Cada
@@ -717,9 +758,9 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="js/config.js?v=1.92.0"></script>
-<script src="js/version.js?v=1.92.0"></script>
-<script src="js/data.js?v=1.92.0"></script>
+<script src="js/config.js?v=1.93.0"></script>
+<script src="js/version.js?v=1.93.0"></script>
+<script src="js/data.js?v=1.93.0"></script>
 <script>
 /* ============================================================
    PANEL DE ADMINISTRACIÓN — Aquí Estamos
@@ -1433,13 +1474,30 @@ function vJornadas(){
     const eq = [...new Set((j.paradas||[]).map(p=>p.equipo))].sort((a,b)=>a-b);
     const hechas = (j.paradas||[]).filter(p=>p.entregada).length;
     v.innerHTML = `
-      <div class="btnrow"><button class="btn flat" id="j-volver" style="flex:0 1 auto;min-width:140px">‹ Todas las jornadas</button></div>
-      <div class="alert" style="border-left-color:var(--acc);margin-top:12px">
-        <div class="ti">${esc(j.titulo||('Jornada del '+j.fecha))}</div>
-        <div class="cx">${esc((DESP_TIPOS.find(t=>t.k===j.tipo)||{}).n||j.tipo)} ·
-          ${j.paradas.length} paradas · ${eq.length} equipo${eq.length===1?'':'s'} ·
-          <b>${hechas} entregadas</b> de ${j.paradas.length}</div>
+      <button class="volver-j" id="j-volver">‹ Todas las jornadas</button>
+      <div class="jhero${j.estado==='cerrada'?' cerrada':''}">
+        <div class="jh-top">
+          <div class="jh-tit">
+            <span class="jh-chapa">${j.estado==='cerrada'?'JORNADA CERRADA':'JORNADA PROGRAMADA'}</span>
+            <h3>${esc(j.titulo||('Jornada del '+j.fecha))}</h3>
+            <p>${esc(fechaLarga(j.fecha))}</p>
+          </div>
+          <div class="jh-marca">
+            <b>${hechas}<s>/${j.paradas.length}</s></b>
+            <span>ENTREGADAS</span>
+          </div>
+        </div>
+        <div class="jh-barra"><i style="width:${j.paradas.length?Math.round(hechas/j.paradas.length*100):0}%"></i></div>
+        <div class="jh-datos">
+          <div><b>${esc((DESP_TIPOS.find(t=>t.k===j.tipo)||{}).n||j.tipo)}</b><span>QUÉ SE ENTREGA</span></div>
+          <div><b>${j.paradas.length}</b><span>PARADAS</span></div>
+          <div><b>${eq.length}</b><span>EQUIPO${eq.length===1?'':'S'}</span></div>
+          <div><b>${j.paradas.reduce((a,p)=>a+(p.personas||0),0)}</b><span>PERSONAS</span></div>
+          <div><b>~${j.paradas.length?(eq.reduce((a,n)=>{const ps=j.paradas.filter(p=>p.equipo===n);
+            return a + ps.reduce((b,p,k)=>k? b+distM(ps[k-1].lat,ps[k-1].lng,p.lat,p.lng)/1000 : 0, 0);},0)).toFixed(1):'0'} km</b><span>RECORRIDO TOTAL</span></div>
+        </div>
       </div>
+      <div class="lbl" style="margin-top:22px">Equipos</div>
       ${eq.map(n=>{
         const ps = j.paradas.filter(p=>p.equipo===n);
         const abierto = JEQ.has(n);
@@ -1531,6 +1589,16 @@ function vJornadas(){
 /* La parada guarda el folio, no las necesidades: se leen de la ficha del
    censo para que reflejen lo último que se corrigió, no lo que había el
    día que se armó la ruta. */
+const MESES_L = ['enero','febrero','marzo','abril','mayo','junio','julio',
+  'agosto','septiembre','octubre','noviembre','diciembre'];
+const DIAS_L = ['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
+function fechaLarga(f){
+  if(!f) return '';
+  const d = new Date(f + 'T12:00:00');
+  if(isNaN(d)) return f;
+  return `${DIAS_L[d.getDay()]} ${d.getDate()} de ${MESES_L[d.getMonth()]}`;
+}
+
 function necsDeParada(p){
   const c = CENSO.find(x => (p.censo_id && String(x.id)===String(p.censo_id))
                          || (p.folio && x.ficha===p.folio));
