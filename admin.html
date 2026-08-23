@@ -11,7 +11,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
-<link rel="stylesheet" href="css/app.css?v=1.88.0">
+<link rel="stylesheet" href="css/app.css?v=1.89.0">
 <style>
   /* El panel es mobile-first: una columna, pestañas fijas abajo. En pantalla
      grande se centra en una franja de ancho de celular para no deformarse. */
@@ -38,6 +38,20 @@
 
 
 
+
+  /* ---- dirección y teléfono de cada parada, con su copiar ---- */
+  /* El botón se queda al lado aunque la dirección ocupe dos renglones:
+     con wrap se caía debajo y la fila perdía la lectura. */
+  .dline{display:flex;align-items:flex-start;gap:8px;margin-top:5px;flex-wrap:nowrap}
+  .dline .dtx{font-size:13.5px;font-weight:700;color:var(--txt);letter-spacing:.2px;
+    text-decoration:none;overflow-wrap:anywhere;flex:1 1 auto;min-width:0;
+    line-height:1.4;padding-top:6px}
+  .dline .dtx.tel{color:var(--acc);letter-spacing:.4px}
+  .dcopy{flex:0 0 auto;background:var(--chip);border:1px solid var(--line);color:var(--dim);
+    border-radius:8px;padding:0 11px;min-height:34px;font-family:inherit;font-size:11.5px;
+    font-weight:800;cursor:pointer;display:inline-flex;align-items:center}
+  .dcopy:active{opacity:.7}
+  .dcopy.ok{background:rgba(63,154,104,.18);border-color:#3F9A68;color:#7ED4A2}
   /* ---- clave con ojo para revisarla ---- */
   .claveln{position:relative;margin-top:10px}
   .claveln input{width:100%;padding-right:46px}
@@ -633,9 +647,9 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="js/config.js?v=1.88.0"></script>
-<script src="js/version.js?v=1.88.0"></script>
-<script src="js/data.js?v=1.88.0"></script>
+<script src="js/config.js?v=1.89.0"></script>
+<script src="js/version.js?v=1.89.0"></script>
+<script src="js/data.js?v=1.89.0"></script>
 <script>
 /* ============================================================
    PANEL DE ADMINISTRACIÓN — Aquí Estamos
@@ -1382,7 +1396,15 @@ function vJornadas(){
                 aria-label="${p.entregada?'Entregada a '+esc(p.nombre||'')+'. Toca para desmarcar':'Marcar como entregada a '+esc(p.nombre||'')}">${p.entregada?'✓':''}</button>
               <div class="info">
                 <div class="nm">${p.orden}. ${esc(p.nombre||'Vivienda')}${p.personas?` · ${p.personas}p`:''}</div>
-                <div class="mt">${esc(p.barrio||'')}${p.direccion?` · ${esc(p.direccion)}`:''}</div>
+                ${p.barrio?`<div class="mt">${esc(p.barrio)}</div>`:''}
+                ${p.direccion?`<div class="dline">
+                  <span class="dtx">${esc(p.direccion)}</span>
+                  <button type="button" class="dcopy" data-copiar="${esc(p.direccion)}">Copiar</button>
+                </div>`:''}
+                ${p.tel_e164?`<div class="dline">
+                  <a class="dtx tel" href="tel:${esc(p.tel_e164)}">${esc(telBonito(p.tel_e164))}</a>
+                  <button type="button" class="dcopy" data-copiar="${esc(telBonito(p.tel_e164))}">Copiar</button>
+                </div>`:''}
                 ${p.motivo?`<div class="mt" style="color:var(--acc)">${esc(p.motivo)}</div>`:''}
               </div>
               ${p.tel_e164?`<a class="waq" href="${waLink(p.tel_e164,'Hola, somos Aquí Estamos. Vamos en camino con su ayuda.')}" target="_blank" rel="noopener">${WA_SVG}</a>`:''}
@@ -3250,7 +3272,7 @@ document.addEventListener('click', e=>{
   const af = e.target.closest('[data-abrirficha]');
   if(af){ abrirEnUbicar(af.dataset.abrirficha); return; }
   const cp = e.target.closest('[data-copiar-tel]');
-  if(cp){ e.stopPropagation(); copiarTel(cp.dataset.copiarTel, cp); return; }
+  if(cp){ e.stopPropagation(); copiarCon(cp, cp.dataset.copiarTel); return; }
   if(e.target.closest('#ub-pegar'))   { if(c) ubPegar(); return; }
   if(e.target.closest('#ub-descartar')){ if(c) ubDescartar(c); return; }
   if(e.target.closest('#ub-wa'))      { if(c) ubPedida(c); return; }   // deja rastro; el enlace abre igual
@@ -3391,6 +3413,26 @@ document.addEventListener('input', e=>{ if(e.target.id==='q'){ BUSCA=e.target.va
 function copiar(txt){ if(!txt) return;
   if(navigator.clipboard) navigator.clipboard.writeText(txt).then(()=>toast('Copiado: '+txt)).catch(()=>toast(txt));
   else toast(txt); }
+
+/* Copiar con acuse en el propio botón: en la calle, con el teléfono en una
+   mano y el mercado en la otra, un aviso que se va en dos segundos no se
+   alcanza a ver. El botón se queda en "Copiado" un momento. */
+function copiarCon(btn, txt){
+  if(!txt) return;
+  const antes = btn.dataset.antes || btn.textContent;
+  btn.dataset.antes = antes;
+  const listo = ()=>{ btn.textContent = 'Copiado'; btn.classList.add('ok');
+    clearTimeout(btn._t); btn._t = setTimeout(()=>{
+      btn.textContent = antes; btn.classList.remove('ok'); }, 1600); };
+  if(navigator.clipboard) navigator.clipboard.writeText(txt).then(listo).catch(()=>toast(txt));
+  else toast(txt);
+}
+document.addEventListener('click', e=>{
+  const b = e.target.closest('[data-copiar]');
+  if(!b) return;
+  e.preventDefault(); e.stopPropagation();
+  copiarCon(b, b.getAttribute('data-copiar'));
+});
 
 /* ============================================================
    DATOS: real (Supabase) o demo
