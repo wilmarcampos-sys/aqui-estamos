@@ -197,16 +197,14 @@ body{background:var(--pp);color:var(--tin);font:15px/1.5 Inter,system-ui,sans-se
   border:0;color:var(--dim);font:inherit;font-size:14px;font-weight:700;cursor:pointer}
 .hoja-x:hover{color:var(--txt)}
 .hoja-pie{margin:2px 0 0;text-align:center;font-size:11px;color:#6B7688}
-.planb{display:flex;align-items:center;gap:8px;width:100%;margin-top:10px;
-  padding:11px 13px;border-radius:11px;background:var(--card);
-  border:1px dashed var(--fil);color:var(--dim);font:inherit;font-size:13px;
-  font-weight:700;cursor:pointer;text-align:left}
-.planb:hover{border-color:var(--acc);color:var(--acc)}
-.planb svg{width:16px;height:16px;min-width:16px;flex:0 0 16px}
-.pb-caja{margin-top:9px}
+.pb-caja{margin-top:10px}
+.pb-cab{display:flex;align-items:baseline;gap:10px;margin:2px 2px 8px}
+.pb-x{margin-left:auto;background:none;border:0;color:var(--dim);font:inherit;
+  font-size:12px;font-weight:750;cursor:pointer;padding:2px 4px}
+.pb-x:hover{color:var(--txt)}
 .pb-caja[hidden]{display:none}
 .pb-tit{font-size:11px;font-weight:850;letter-spacing:.7px;text-transform:uppercase;
-  color:var(--dim);margin:2px 2px 8px}
+  color:var(--dim)}
 .pb-op{display:flex;align-items:flex-start;gap:11px;width:100%;text-align:left;
   padding:12px;border-radius:11px;background:var(--card);border:1px solid var(--fil);
   color:var(--txt);font:inherit;cursor:pointer;margin-bottom:7px}
@@ -393,7 +391,7 @@ body{background:var(--pp);color:var(--tin);font:15px/1.5 Inter,system-ui,sans-se
 </div>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="js/config.js?v=2.8.1"></script>
+<script src="js/config.js?v=2.8.2"></script>
 <script>
 const esc = s => String(s??'').replace(/[<>&"]/g, m => ({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[m]));
 const NEC = {alimentos:'Mercado', aseo:'Aseo', arriendo:'Arriendo', agua:'Agua',
@@ -674,10 +672,8 @@ function pintar(){
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
         Cerrada${p.nota?` · ${esc(p.nota)}`:''}${p.reemplazada_por
           ?`. Se entregó en la parada ${p.reemplazada_por}.`:''}</p>` : ''}
-      ${(p.entregada || p.fallida) ? '' : `<button type="button" class="planb" data-planb="${esc(p.id)}">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s7-6.3 7-11a7 7 0 1 0-14 0c0 4.7 7 11 7 11z"/><circle cx="12" cy="10" r="2.6"/></svg>
-        No pude entregar aquí · buscar otra casa cerca</button>
-      <div class="pb-caja" id="pb-${esc(p.id)}" hidden></div>`}
+      ${(p.entregada || p.fallida) ? '' :
+        `<div class="pb-caja" id="pb-${esc(p.id)}" hidden></div>`}
       ${(p.fallida || dirHallable(p.direccion, p.barrio)) ? '' : `<p class="llamar">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round"><path d="M12 8v5M12 16.5h.01"/><circle cx="12" cy="12" r="9"/></svg>
         Esta dirección no tiene número. <b>Llama antes de ir</b> para que te
@@ -896,7 +892,10 @@ async function planB(btn, parada, forzar){
         'no esté ya en la ruta de otro equipo. Avísale a quien coordina.</p>';
       return;
     }
-    caja.innerHTML = '<p class="pb-tit">Casas cerca, ninguna de otro equipo</p>' +
+    caja.innerHTML = `<div class="pb-cab">
+        <span class="pb-tit">Casas cerca, ninguna de otro equipo</span>
+        <button type="button" class="pb-x" data-pbcerrar="${esc(parada)}">Cerrar</button>
+      </div>` +
       data.map(x=>{
         const necs = (x.necesidades||[]).map(k=>NEC[k]||k).slice(0,3).join(', ');
         return `<button type="button" class="pb-op" data-pbop="${esc(x.censo_id)}"
@@ -1144,6 +1143,8 @@ document.addEventListener('click', e=>{
   const be = e.target.closest('[data-eq]');
   if(be){ EQ = +be.dataset.eq; pintar();
     document.getElementById('barras').scrollIntoView({block:'nearest'}); return; }
+  const px = e.target.closest('[data-pbcerrar]');
+  if(px){ document.getElementById('pb-' + px.dataset.pbcerrar).hidden = true; return; }
   const nh = e.target.closest('[data-nohay]');
   if(nh){ noHay(nh, nh.getAttribute('data-nohay')); return; }
   const pb = e.target.closest('[data-planb]');
@@ -1178,7 +1179,7 @@ try{ if(localStorage.getItem('aviso_ruta')) document.getElementById('aviso').hid
    muestra el dinosaurio. */
 if('serviceWorker' in navigator){
   addEventListener('load', ()=> navigator.serviceWorker
-    .register('sw-ruta.js?v=2.8.1').catch(()=>{}));
+    .register('sw-ruta.js?v=2.8.2').catch(()=>{}));
 }
 
 /* Cuántos están mirando esta misma ruta ahora. En la calle sirve para saber
