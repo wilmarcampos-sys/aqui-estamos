@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0D1520">
+<meta name="robots" content="noindex, nofollow">
+<title>Mi ruta · Aquí Estamos</title>
+<link rel="icon" type="image/svg+xml" href="logo/marca.svg">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<style>
+/* ============================================================
+   LA RUTA DEL EQUIPO
+   ============================================================
+   El equipo entra con un enlace y ya: en la calle, con el celular en una
+   mano y el mercado en la otra, una contraseña es una barrera de verdad.
+   Lo que protege es que el enlace no se adivina, y que la función del
+   servidor solo devuelve las paradas de ese enlace.
+   No se indexa (noindex) y lleva nombres y teléfonos, así que el aviso de
+   no reenviarlo va arriba, donde se ve.
+   ============================================================ */
+:root{
+  --pp:#0D1520; --card:#16222F; --sup:#1B2836; --tin:#EAF0F7; --dim:#8FA0B6;
+  --fil:#26364A; --acc:#F2B705; --urg:#E8453C; --ok:#3F9A68;
+  --safe:env(safe-area-inset-bottom,0px);
+}
+*{box-sizing:border-box;margin:0}
+body{background:var(--pp);color:var(--tin);font:15px/1.5 Inter,system-ui,sans-serif;
+  -webkit-font-smoothing:antialiased;padding-bottom:calc(24px + var(--safe))}
+.env{max-width:820px;margin:0 auto;padding:0 15px}
+
+.top{background:linear-gradient(140deg,#1B2A3D,#141F2E 62%,#101A26);
+  border-bottom:1px solid var(--fil);padding:16px 0 18px;margin-bottom:16px}
+.marca{display:flex;align-items:center;gap:8px;font-size:16px;font-weight:900;letter-spacing:-.4px}
+.marca svg{width:22px;height:22px}
+.marca i{font-style:normal;color:var(--acc)}
+.top h1{margin:14px 0 0;font-size:26px;font-weight:900;letter-spacing:-1px;line-height:1.12}
+.top .sub{margin:5px 0 0;font-size:13.5px;color:var(--dim);text-transform:capitalize}
+.avance{display:flex;align-items:center;gap:14px;margin-top:16px}
+.avance b{font-size:30px;font-weight:900;letter-spacing:-1.2px;color:var(--acc);
+  font-variant-numeric:tabular-nums;flex:0 0 auto}
+.avance b s{text-decoration:none;font-size:18px;color:var(--dim)}
+.avance .pista{flex:1;height:6px;border-radius:3px;background:rgba(255,255,255,.12);overflow:hidden}
+.avance .pista i{display:block;height:100%;background:var(--acc);border-radius:3px;
+  transition:width .5s ease}
+.aviso{display:flex;gap:10px;align-items:flex-start;margin-top:16px;padding:11px 13px;
+  border-radius:11px;background:rgba(232,69,60,.12);border:1px solid rgba(232,69,60,.3);
+  font-size:12.5px;line-height:1.5;color:#F3B9B5}
+.aviso svg{width:17px;height:17px;flex:0 0 auto;margin-top:1px;color:var(--urg)}
+
+.eqs{display:flex;gap:7px;overflow-x:auto;margin-bottom:14px;padding-bottom:2px;
+  scrollbar-width:none}
+.eqs::-webkit-scrollbar{display:none}
+.eqs button{flex:0 0 auto;background:var(--card);border:1px solid var(--fil);color:var(--dim);
+  font:inherit;font-size:13px;font-weight:750;padding:9px 15px;border-radius:999px;cursor:pointer}
+.eqs button.on{background:var(--acc);color:#0D1520;border-color:var(--acc)}
+
+#mapa{height:230px;border-radius:14px;overflow:hidden;border:1px solid var(--fil);
+  margin-bottom:14px;background:#0F1A26}
+.abrir{display:flex;align-items:center;justify-content:center;gap:9px;width:100%;
+  background:var(--acc);color:#0D1520;font-size:15px;font-weight:850;padding:15px;
+  border-radius:12px;text-decoration:none;margin-bottom:20px;min-height:52px}
+.abrir svg{width:18px;height:18px}
+
+.par{background:var(--card);border:1px solid var(--fil);border-radius:14px;
+  padding:15px;margin-bottom:10px}
+.par.hecha{opacity:.5}
+.par .cab{display:flex;align-items:flex-start;gap:11px}
+.par .n{flex:0 0 auto;width:40px;height:40px;border-radius:11px;background:var(--sup);
+  color:var(--dim);font-size:14px;font-weight:900;display:grid;place-items:center;
+  border:1.5px solid var(--fil);font-family:inherit;cursor:pointer;
+  transition:background .18s,transform .15s}
+.par .n.tick:active{transform:scale(.92)}
+.par .n.on{background:var(--ok);border-color:var(--ok);color:#fff;font-size:19px}
+.par.hecha{opacity:.55}
+.par .nm{flex:1;min-width:0;font-size:16px;font-weight:850;letter-spacing:-.3px;line-height:1.25}
+.par .nm small{display:block;font-size:12.5px;font-weight:600;color:var(--dim);margin-top:2px}
+.wa{flex:0 0 auto;width:42px;height:42px;border-radius:11px;background:#25D366;
+  display:grid;place-items:center;color:#04220F;text-decoration:none}
+.wa svg{width:21px;height:21px}
+.necs{display:flex;flex-wrap:wrap;gap:5px;margin-top:11px}
+.nec{font-size:11.5px;font-weight:750;padding:4px 9px;border-radius:7px;
+  background:var(--sup);color:var(--tin)}
+.nec.foco{background:rgba(242,183,5,.18);color:var(--acc);
+  box-shadow:inset 0 0 0 1px rgba(242,183,5,.45)}
+.dato{display:flex;align-items:flex-start;gap:9px;margin-top:10px}
+.dato .et{flex:0 0 74px;font-size:10px;font-weight:850;letter-spacing:1px;color:var(--dim);
+  text-transform:uppercase;padding-top:5px}
+.dato .tx{flex:1;min-width:0;font-size:14px;font-weight:700;overflow-wrap:anywhere;
+  padding-top:3px;text-decoration:none;color:var(--tin)}
+.dato .tx.tel{color:var(--acc);letter-spacing:.4px}
+.dato .tx.sin{color:var(--dim);font-weight:600;font-style:italic}
+.cp{flex:0 0 auto;background:var(--sup);border:1px solid var(--fil);color:var(--dim);
+  border-radius:8px;min-height:34px;padding:0 11px;font:inherit;font-size:11.5px;
+  font-weight:800;cursor:pointer;display:inline-flex;align-items:center}
+.cp.ok{background:rgba(63,154,104,.2);border-color:var(--ok);color:#7ED4A2}
+.motivo{display:inline-block;margin-top:9px;padding:3px 9px;border-radius:999px;
+  background:rgba(232,163,61,.16);color:#E8A33D;font-size:11.5px;font-weight:750}
+.cargando,.error{padding:40px 15px;text-align:center;color:var(--dim);font-size:14px}
+.error b{display:block;color:var(--tin);font-size:17px;font-weight:850;margin-bottom:6px}
+.pie{margin-top:26px;padding-top:18px;border-top:1px solid var(--fil);
+  font-size:11.5px;line-height:1.6;color:#6B7688;text-align:center}
+</style>
+</head>
+<body>
+
+<div class="top"><div class="env">
+  <span class="marca">
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <defs><clipPath id="rm"><path d="M12 1.6c-4.6 0-8.3 3.7-8.3 8.3 0 5.9 8.3 12.5 8.3 12.5s8.3-6.6 8.3-12.5c0-4.6-3.7-8.3-8.3-8.3z"/></clipPath></defs>
+      <g clip-path="url(#rm)"><rect width="12" height="24" fill="#F2B705"/><rect x="12" width="12" height="24" fill="#D62828"/></g>
+      <path d="M5.9 9.1h6.4a1.35 1.35 0 0 1 0 2.7H5.9z" fill="#fff"/>
+      <path d="M18.1 12.2h-6.4a1.35 1.35 0 0 0 0 2.7h6.4z" fill="#fff"/>
+    </svg><span>Aquí<i> Estamos</i></span></span>
+  <h1 id="tit">Cargando la ruta…</h1>
+  <p class="sub" id="sub"></p>
+  <div class="avance" id="av" hidden>
+    <b><span id="hechas">0</span><s>/<span id="total">0</span></s></b>
+    <span class="pista"><i id="barra" style="width:0"></i></span>
+  </div>
+  <div class="aviso">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4M12 17h.01"/><path d="M10.3 3.9 2.4 18a2 2 0 0 0 1.7 3h15.8a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>
+    <span>Este enlace lleva nombres, direcciones y teléfonos de familias.
+      Es solo para el equipo. <b>No lo reenvíes ni lo publiques.</b></span>
+  </div>
+</div></div>
+
+<div class="env">
+  <div class="eqs" id="eqs" hidden></div>
+  <div id="mapa" hidden></div>
+  <a class="abrir" id="abrir" hidden target="_blank" rel="noopener">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s7-6.3 7-11a7 7 0 1 0-14 0c0 4.7 7 11 7 11z"/><circle cx="12" cy="10" r="2.6"/></svg>
+    Abrir la ruta en Google Maps</a>
+  <div id="lista"><p class="cargando">Cargando la ruta…</p></div>
+  <p class="pie">Censo levantado en terreno por Red de iglesias AMCER · Asociación CREA<br>
+    aquiestamos.co</p>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="js/config.js?v=1.97.0"></script>
+<script>
+const esc = s => String(s??'').replace(/[<>&"]/g, m => ({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[m]));
+const NEC = {alimentos:'Mercado', aseo:'Aseo', arriendo:'Arriendo', agua:'Agua',
+  ropa:'Carpas y cobijas', medicamentos:'Medicinas', utensilios:'Utensilios',
+  bebes:'Pañales', transporte:'Transporte', materiales:'Materiales',
+  movilidad:'Silla de ruedas', servicios:'Servicios', mascotas:'Mascotas',
+  estructural:'Evaluación', albergue:'Albergue'};
+const MES = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto',
+  'septiembre','octubre','noviembre','diciembre'];
+const DIA = ['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
+
+function telBonito(v){
+  const d = String(v||'').replace(/\D/g,'');
+  const n = d.length===12 && d.startsWith('57') ? d.slice(2) : d;
+  return n.length===10 ? `+57 ${n.slice(0,3)} ${n.slice(3,6)} ${n.slice(6)}` : (v||'');
+}
+function waLink(v, msg){
+  const d = String(v||'').replace(/\D/g,'');
+  return 'https://wa.me/' + (d.length===10 ? '57'+d : d) + '?text=' + encodeURIComponent(msg);
+}
+
+let FILAS = [], EQ = null;
+
+async function cargar(){
+  const t = new URLSearchParams(location.search).get('t');
+  if(!t) return fallo('Falta el enlace', 'Pídele a quien coordina que te reenvíe el enlace completo de tu ruta.');
+  try{
+    const db = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
+    const {data, error} = await db.rpc('ruta_publica', {t});
+    if(error) throw error;
+    if(!data || !data.length) return fallo('Esta ruta ya no está',
+      'El enlace no existe o la jornada se borró. Pídele uno nuevo a quien coordina.');
+    FILAS = data; EQ = data[0].mi_equipo;
+    pintar();
+  }catch(e){
+    fallo('No se pudo abrir la ruta', 'Revisa que tengas señal e intenta otra vez.');
+  }
+}
+function fallo(t, d){
+  document.getElementById('tit').textContent = t;
+  document.getElementById('lista').innerHTML = `<p class="error"><b>${esc(t)}</b>${esc(d)}</p>`;
+}
+
+function pintar(){
+  const f0 = FILAS[0];
+  const d = f0.fecha ? new Date(f0.fecha+'T12:00:00') : null;
+  document.getElementById('tit').textContent = f0.abierta ? (f0.jornada || 'Jornada')
+    : `Equipo ${f0.mi_equipo}`;
+  document.getElementById('sub').textContent = [
+    f0.abierta ? null : (f0.jornada||null),
+    d && !isNaN(d) ? `${DIA[d.getDay()]} ${d.getDate()} de ${MES[d.getMonth()]}` : null
+  ].filter(Boolean).join(' · ');
+
+  // el selector de equipos solo aparece si la jornada los dejó abiertos
+  const eqs = [...new Set(FILAS.map(x=>x.equipo))].sort((a,b)=>a-b);
+  const cE = document.getElementById('eqs');
+  if(f0.abierta && eqs.length > 1){
+    cE.hidden = false;
+    cE.innerHTML = eqs.map(n=>`<button data-eq="${n}" class="${n===EQ?'on':''}">Equipo ${n}${
+      n===f0.mi_equipo?' · el tuyo':''}</button>`).join('');
+  }
+
+  const mias = FILAS.filter(x=>x.equipo===EQ);
+  if(!mias.length) return;
+  const hechas = mias.filter(x=>x.entregada).length;
+  document.getElementById('av').hidden = false;
+  document.getElementById('hechas').textContent = hechas;
+  document.getElementById('total').textContent = mias.length;
+  document.getElementById('barra').style.width = Math.round(hechas/mias.length*100)+'%';
+
+  const conPunto = mias.filter(x=>x.lat && x.lng);
+  const a = document.getElementById('abrir');
+  if(conPunto.length){
+    a.hidden = false;
+    a.href = 'https://www.google.com/maps/dir/' + conPunto.map(x=>x.lat+','+x.lng).join('/');
+  }
+
+  document.getElementById('lista').innerHTML = mias.map(p=>{
+    const necs = (p.necesidades||[]).map(k=>
+      `<span class="nec ${k===f0.tipo?'foco':''}">${esc(NEC[k]||k)}</span>`).join('');
+    return `<article class="par${p.entregada?' hecha':''}">
+      <div class="cab">
+        <button type="button" class="n tick${p.entregada?' on':''}" data-marcar="${esc(p.id)}"
+          aria-pressed="${p.entregada?'true':'false'}"
+          title="${p.entregada?'Entregada — toca para desmarcar':'Marcar como entregada'}"
+        >${p.entregada?'✓':p.orden}</button>
+        <div class="nm">${esc(p.nombre||'Vivienda')}
+          <small>${p.personas?`${p.personas} persona${p.personas>1?'s':''}`:''}${
+            p.barrio?` · ${esc(p.barrio)}`:''}</small></div>
+        ${p.tel_e164?`<a class="wa" href="${waLink(p.tel_e164,'Hola, somos Aquí Estamos. Vamos en camino con su ayuda.')}" target="_blank" rel="noopener">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.5 2 2 6.5 2 12c0 1.8.5 3.4 1.3 4.9L2 22l5.3-1.4A10 10 0 1 0 12 2Zm0 18.2c-1.5 0-3-.4-4.3-1.2l-.3-.2-3.1.8.8-3-.2-.3A8.2 8.2 0 1 1 12 20.2Z"/></svg></a>`:''}
+      </div>
+      ${p.motivo?`<span class="motivo">${esc(p.motivo)}</span>`:''}
+      ${necs?`<div class="necs">${necs}</div>`:''}
+      <div class="dato"><span class="et">Dirección</span>
+        ${p.direccion
+          ? `<span class="tx">${esc(p.direccion)}</span>
+             <button type="button" class="cp" data-cp="${esc(p.direccion)}">Copiar</button>`
+          : '<span class="tx sin">Sin dirección</span>'}</div>
+      <div class="dato"><span class="et">Teléfono</span>
+        ${p.tel_e164
+          ? `<a class="tx tel" href="tel:${esc(p.tel_e164)}">${esc(telBonito(p.tel_e164))}</a>
+             <button type="button" class="cp" data-cp="${esc(telBonito(p.tel_e164))}">Copiar</button>`
+          : '<span class="tx sin">Sin teléfono</span>'}</div>
+    </article>`;
+  }).join('');
+
+  mapa(conPunto);
+}
+
+let M = null, capa = null;
+function mapa(ps){
+  const el = document.getElementById('mapa');
+  if(!ps.length || typeof L === 'undefined'){ el.hidden = true; return; }
+  el.hidden = false;
+  if(!M){
+    M = L.map(el, {zoomControl:true, attributionControl:false, scrollWheelZoom:false});
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
+      {maxZoom:18}).addTo(M);
+    capa = L.layerGroup().addTo(M);
+  }
+  capa.clearLayers();
+  L.polyline(ps.map(p=>[p.lat,p.lng]), {color:'#F2B705', weight:3, opacity:.75}).addTo(capa);
+  ps.forEach(p=>{
+    L.marker([p.lat,p.lng], {icon: L.divIcon({className:'', iconSize:[30,30],
+      html:`<div style="width:30px;height:30px;border-radius:50%;display:grid;place-items:center;
+        background:${p.entregada?'#3F9A68':'#F2B705'};color:#0D1520;font:900 13px Inter,sans-serif;
+        border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.4)">${p.entregada?'✓':p.orden}</div>`})
+    }).addTo(capa);
+  });
+  M.fitBounds(L.latLngBounds(ps.map(p=>[p.lat,p.lng])), {padding:[28,28], maxZoom:16});
+  setTimeout(()=>M.invalidateSize(), 120);
+}
+
+/* Marcar escribe de una en el servidor: si el equipo espera al final del día
+   para reportar, no reporta. Se pinta primero y se corrige si el servidor
+   dice que no, para que en la calle con mala señal no se sienta trabado. */
+let marcando = false;
+async function marcar(btn){
+  if(marcando) return;
+  const id = btn.getAttribute('data-marcar');
+  const fila = FILAS.find(x=>String(x.id)===String(id));
+  if(!fila) return;
+  const nuevo = !fila.entregada;
+  marcando = true;
+  fila.entregada = nuevo; pintar();
+  try{
+    const db = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
+    const t = new URLSearchParams(location.search).get('t');
+    const {error} = await db.rpc('marcar_parada', {t, parada:id, hecha:nuevo});
+    if(error) throw error;
+  }catch(e){
+    fila.entregada = !nuevo; pintar();
+    alert('No se pudo guardar. Revisa la señal e intenta otra vez.');
+  }
+  marcando = false;
+}
+
+document.addEventListener('click', e=>{
+  const m = e.target.closest('[data-marcar]');
+  if(m){ marcar(m); return; }
+  const b = e.target.closest('[data-cp]');
+  if(b){
+    const t = b.getAttribute('data-cp');
+    navigator.clipboard?.writeText(t).then(()=>{
+      const a = b.dataset.antes || b.textContent;
+      b.dataset.antes = a; b.textContent = 'Copiado'; b.classList.add('ok');
+      clearTimeout(b._t); b._t = setTimeout(()=>{ b.textContent = a; b.classList.remove('ok'); }, 1600);
+    });
+    return;
+  }
+  const q = e.target.closest('[data-eq]');
+  if(q){ EQ = +q.dataset.eq; pintar(); scrollTo({top:0, behavior:'smooth'}); }
+});
+
+cargar();
+
+/* Cada minuto se vuelve a pedir la ruta: si otro del mismo equipo marcó una
+   entrega desde su teléfono, aparece acá sin recargar. No se refresca si la
+   pestaña está oculta ni mientras se está guardando algo. */
+setInterval(async ()=>{
+  if(document.hidden || marcando || !FILAS.length) return;
+  const t = new URLSearchParams(location.search).get('t');
+  try{
+    const db = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
+    const {data} = await db.rpc('ruta_publica', {t});
+    if(data && data.length){ FILAS = data; pintar(); }
+  }catch(e){ /* sin señal: se queda con lo que tiene */ }
+}, 60000);
+</script>
+</body>
+</html>
