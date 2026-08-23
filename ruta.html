@@ -68,6 +68,12 @@ body{background:var(--pp);color:var(--tin);font:15px/1.5 Inter,system-ui,sans-se
 .comp button:active{transform:scale(.93)}
 .comp button svg{width:19px;height:19px}
 .comp button.ok{border-color:var(--ok);color:#7ED4A2}
+.banda{display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:12px;
+  margin-bottom:10px;font-size:13px;font-weight:650;line-height:1.45;
+  background:rgba(232,69,60,.12);border:1px solid rgba(232,69,60,.4);color:#FFB4AE}
+.banda.ok{background:rgba(63,154,104,.14);border-color:rgba(63,154,104,.42);color:#8FDCB0}
+.banda svg{width:20px;height:20px;flex:0 0 auto}
+.banda b{font-weight:900}
 .aviso{display:flex;gap:10px;align-items:flex-start;margin-top:16px;padding:11px 13px;
   border-radius:11px;background:rgba(232,69,60,.12);border:1px solid rgba(232,69,60,.3);
   font-size:12.5px;line-height:1.5;color:#F3B9B5}
@@ -125,6 +131,34 @@ body{background:var(--pp);color:var(--tin);font:15px/1.5 Inter,system-ui,sans-se
 .error b{display:block;color:var(--tin);font-size:17px;font-weight:850;margin-bottom:6px}
 .pie{margin-top:26px;padding-top:18px;border-top:1px solid var(--fil);
   font-size:11.5px;line-height:1.6;color:#6B7688;text-align:center}
+
+/* ---- hoja de ruta en papel ----
+   Es la única capa que sobrevive a todo: sin señal, sin batería, con el
+   teléfono prestado. Se imprime antes de salir y va en la guantera. */
+@media print{
+  @page{ size:A4; margin:12mm }
+  body{background:#fff!important;color:#000!important;font-size:11pt}
+  .cab,.mapa,.eqs,.comp,.vivo,.avance .pista,.banda,.aviso,.abrir,.hint-pdf,
+  .waq,.pie,.marca-pie{display:none!important}
+  .impr{display:block!important}
+  .lista{display:block}
+  .parada{break-inside:avoid;page-break-inside:avoid;border:0;border-bottom:1px solid #bbb;
+    border-radius:0;background:none!important;padding:9pt 0;color:#000!important}
+  .parada *{color:#000!important}
+  .num{border:1.5pt solid #000;background:none!important;color:#000!important}
+  .tick{border:1.5pt solid #000!important;width:16pt;height:16pt;background:none!important}
+  .nec{border:1pt solid #666;background:none!important;color:#000!important}
+  .marca-list{background:none!important;border:1pt solid #999}
+  a{text-decoration:none}
+}
+.abrir.sec{background:var(--card);color:var(--txt);border:1px solid var(--fil);margin-top:9px}
+.abrir.sec:hover{border-color:var(--acc);color:var(--acc)}
+.hint-pdf{margin:8px 4px 0;font-size:12.5px;line-height:1.5;color:var(--dim);text-align:center}
+.impr{display:none}
+.impr h1{margin:0;font-size:17pt;font-weight:800}
+.impr p{margin:3pt 0 0;font-size:10pt;color:#333}
+.impr .reglas{margin:8pt 0 10pt;padding:6pt 0;border-top:1px solid #000;
+  border-bottom:1px solid #000;font-size:9.5pt;color:#000}
 </style>
 </head>
 <body>
@@ -156,6 +190,20 @@ body{background:var(--pp);color:var(--tin);font:15px/1.5 Inter,system-ui,sans-se
       </button>
     </span>
   </div>
+  <div class="impr" id="impr">
+    <h1 id="impr-tit">Hoja de ruta</h1>
+    <p id="impr-sub"></p>
+    <p class="reglas">Marca cada casilla al entregar. Al volver a tener señal,
+      abre el enlace y márcalas también ahí, o pásale esta hoja a quien coordina.</p>
+  </div>
+  <div class="banda" id="sinred" hidden>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M2 4l20 16M5 12.5a11 11 0 0 1 4-2.6M2 8.8A16 16 0 0 1 7 6M17 6.5a16 16 0 0 1 5 2.3M14.6 10.4a11 11 0 0 1 2.4 1.3M9.5 16a6 6 0 0 1 5 0M12 20h.01"/></svg>
+    <span>Sin señal. Estás viendo la ruta guardada; lo que marques se manda solo cuando vuelva.</span>
+  </div>
+  <div class="banda ok" id="pend" hidden>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5.4l3.3 2"/></svg>
+    <span><b>0</b> entregas esperando señal para enviarse.</span>
+  </div>
   <div class="aviso">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4M12 17h.01"/><path d="M10.3 3.9 2.4 18a2 2 0 0 0 1.7 3h15.8a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>
     <span>Este enlace lleva nombres, direcciones y teléfonos de familias.
@@ -169,6 +217,11 @@ body{background:var(--pp);color:var(--tin);font:15px/1.5 Inter,system-ui,sans-se
   <a class="abrir" id="abrir" hidden target="_blank" rel="noopener">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s7-6.3 7-11a7 7 0 1 0-14 0c0 4.7 7 11 7 11z"/><circle cx="12" cy="10" r="2.6"/></svg>
     Abrir la ruta en Google Maps</a>
+  <button type="button" class="abrir sec" id="btn-pdf" hidden>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 8V4.5h10V8"/><rect x="4" y="8" width="16" height="7.5" rx="1.8"/><path d="M7 14h10v5.5H7z"/></svg>
+    Guardar la hoja de ruta en PDF</button>
+  <p class="hint-pdf" id="hint-pdf" hidden>Imprímela o guárdala antes de salir:
+    sirve aunque te quedes sin señal o sin batería.</p>
   <div id="lista"><p class="cargando">Cargando la ruta…</p></div>
   <p class="pie">Censo levantado en terreno por Red de iglesias AMCER · Asociación CREA<br>
     aquiestamos.co</p>
@@ -176,7 +229,7 @@ body{background:var(--pp);color:var(--tin);font:15px/1.5 Inter,system-ui,sans-se
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="js/config.js?v=2.1.0"></script>
+<script src="js/config.js?v=2.2.0"></script>
 <script>
 const esc = s => String(s??'').replace(/[<>&"]/g, m => ({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[m]));
 const NEC = {alimentos:'Mercado', aseo:'Aseo', arriendo:'Arriendo', agua:'Agua',
@@ -198,7 +251,60 @@ function waLink(v, msg){
   return 'https://wa.me/' + (d.length===10 ? '57'+d : d) + '?text=' + encodeURIComponent(msg);
 }
 
-let FILAS = [], EQ = null;
+let FILAS = [], EQ = null, DESDE_COPIA = false;
+
+/* La ruta se guarda en el teléfono apenas se abre. Si mañana el equipo entra
+   sin señal, ve la copia con la hora en que se guardó, en vez de un error.
+   Se guarda por token: un teléfono puede llevar dos rutas distintas. */
+const LLAVE = t => 'ruta_' + t;
+function guardarCopia(t, data){
+  try{ localStorage.setItem(LLAVE(t), JSON.stringify({en: Date.now(), data})); }catch(e){}
+}
+function leerCopia(t){
+  try{ return JSON.parse(localStorage.getItem(LLAVE(t)) || 'null'); }catch(e){ return null; }
+}
+
+/* Lo que se marca sin señal no se pierde: queda en una cola y se manda solo
+   cuando vuelve la conexión. En la calle esto pasa todo el tiempo, y una
+   entrega que no se registra es una casa a la que se vuelve por nada. */
+const COLA = t => 'cola_' + t;
+function enCola(t){ try{ return JSON.parse(localStorage.getItem(COLA(t)) || '[]'); }catch(e){ return []; } }
+function guardarCola(t, c){ try{ localStorage.setItem(COLA(t), JSON.stringify(c)); }catch(e){} }
+function encolar(t, parada, hecha){
+  const c = enCola(t).filter(x => String(x.parada) !== String(parada));
+  c.push({parada, hecha, en: Date.now()});
+  guardarCola(t, c);
+  pintarPendientes();
+}
+async function vaciarCola(){
+  const t = new URLSearchParams(location.search).get('t');
+  const c = enCola(t);
+  if(!c.length || !navigator.onLine) return;
+  const db = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
+  const quedan = [];
+  for(const m of c){
+    try{
+      const {error} = await db.rpc('marcar_parada', {t, parada:m.parada, hecha:m.hecha});
+      if(error) throw error;
+    }catch(e){ quedan.push(m); }
+  }
+  guardarCola(t, quedan);
+  pintarPendientes();
+}
+function pintarPendientes(){
+  const t = new URLSearchParams(location.search).get('t');
+  const n = enCola(t).length;
+  const c = document.getElementById('pend');
+  if(!c) return;
+  c.hidden = !n;
+  if(n) c.querySelector('b').textContent = n;
+}
+addEventListener('online', ()=>{ pintarEstadoRed(); vaciarCola(); });
+addEventListener('offline', pintarEstadoRed);
+function pintarEstadoRed(){
+  const c = document.getElementById('sinred');
+  if(c) c.hidden = navigator.onLine;
+}
 
 async function cargar(){
   const t = new URLSearchParams(location.search).get('t');
@@ -222,11 +328,25 @@ async function cargar(){
         'Puede estar incompleto o la jornada se borró. Pídele uno nuevo a quien coordina.');
     }
     FILAS = data;
+    guardarCopia(t, data);
+    DESDE_COPIA = false;
     // el enlace general (equipo 0) no es de nadie: abre en el primer equipo
     const hay = new Set(data.map(x=>x.equipo));
     EQ = hay.has(data[0].mi_equipo) ? data[0].mi_equipo : Math.min(...hay);
     pintar();
+    vaciarCola();
   }catch(e){
+    // Sin señal, la copia guardada vale más que un mensaje de error: son las
+    // direcciones que el equipo necesita en ese momento.
+    const copia = leerCopia(t);
+    if(copia && copia.data && copia.data.length){
+      FILAS = copia.data;
+      DESDE_COPIA = copia.en;
+      const hay = new Set(FILAS.map(x=>x.equipo));
+      EQ = hay.has(FILAS[0].mi_equipo) ? FILAS[0].mi_equipo : Math.min(...hay);
+      pintar();
+      return;
+    }
     fallo('No se pudo abrir la ruta', 'Revisa que tengas señal e intenta otra vez.');
   }
 }
@@ -268,6 +388,10 @@ function pintar(){
     a.hidden = false;
     a.href = 'https://www.google.com/maps/dir/' + conPunto.map(x=>x.lat+','+x.lng).join('/');
   }
+  // La hoja de ruta no necesita coordenadas: con nombre, dirección y
+  // teléfono ya sirve, y esas son justo las paradas peor ubicadas.
+  document.getElementById('btn-pdf').hidden  = !mias.length;
+  document.getElementById('hint-pdf').hidden = !mias.length;
 
   document.getElementById('lista').innerHTML = mias.map(p=>{
     const necs = (p.necesidades||[]).map(k=>
@@ -344,11 +468,13 @@ async function marcar(btn){
     const {error} = await db.rpc('marcar_parada', {t, parada:id, hecha:nuevo});
     if(error) throw error;
   }catch(e){
-    fila.entregada = !nuevo; pintar();
-    alert('No se pudo guardar. Revisa la señal e intenta otra vez.');
+    // No se revierte: la entrega sí ocurrió. Se guarda y se manda después.
+    encolar(t2(), id, nuevo);
+    pintar();
   }
   marcando = false;
 }
+const t2 = () => new URLSearchParams(location.search).get('t');
 
 /* Compartir la ruta es pasársela a otro del mismo equipo —el que maneja, el
    que se bajó a tocar la puerta—, no publicarla. Por eso el mensaje repite
@@ -364,6 +490,19 @@ function textoCompartir(){
 document.addEventListener('click', e=>{
   if(e.target.closest('#sh-wa')){
     open('https://wa.me/?text='+encodeURIComponent(textoCompartir()), '_blank');
+    return;
+  }
+  if(e.target.closest('#btn-pdf')){
+    const f0 = FILAS[0] || {};
+    const mias = FILAS.filter(x=>x.equipo===EQ);
+    document.getElementById('impr-tit').textContent =
+      (f0.abierta ? (f0.jornada||'Jornada') : `Equipo ${f0.mi_equipo}`) +
+      (f0.abierta ? ` · Equipo ${EQ}` : '');
+    document.getElementById('impr-sub').textContent =
+      [f0.jornada && f0.abierta ? null : f0.jornada,
+       document.getElementById('sub').textContent,
+       `${mias.length} paradas`].filter(Boolean).join(' · ');
+    print();
     return;
   }
   const cp = e.target.closest('#sh-cp');
@@ -391,6 +530,16 @@ document.addEventListener('click', e=>{
 });
 
 cargar();
+pintarEstadoRed();
+pintarPendientes();
+
+/* Para que un refresco sin señal no borre la ruta de la pantalla. Es el caso
+   que más miedo da en la calle: alguien recarga sin querer y el navegador
+   muestra el dinosaurio. */
+if('serviceWorker' in navigator){
+  addEventListener('load', ()=> navigator.serviceWorker
+    .register('sw-ruta.js?v=2.2.0').catch(()=>{}));
+}
 
 /* Cuántos están mirando esta misma ruta ahora. En la calle sirve para saber
    si el resto del equipo ya abrió el enlace, y si la coordinación está
