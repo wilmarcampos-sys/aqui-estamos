@@ -75,7 +75,7 @@ body{background:var(--pp);color:var(--tin);font:15px/1.5 Inter,system-ui,sans-se
 /* Los avisos de estado no compiten con la ruta: flotan abajo, del ancho de
    su texto, y se quitan solos cuando dejan de ser ciertos. En la calle la
    pantalla es para las direcciones. */
-.pills{position:fixed;left:0;right:0;bottom:calc(14px + var(--safe,0px));z-index:60;
+.pills{position:fixed;left:0;right:0;bottom:calc(14px + var(--safe,0px));z-index:1500;
   display:flex;flex-direction:column;align-items:center;gap:7px;pointer-events:none;
   padding:0 12px}
 .pill{display:inline-flex;align-items:center;gap:8px;padding:9px 15px;border-radius:999px;
@@ -163,7 +163,7 @@ body{background:var(--pp);color:var(--tin);font:15px/1.5 Inter,system-ui,sans-se
 
 /* Motivos frecuentes en vez del cuadro del navegador: en la calle, con una
    mano ocupada, escoger es mucho más rápido que escribir. */
-.scrim{position:fixed;inset:0;z-index:200;background:rgba(4,9,20,.72);
+.scrim{position:fixed;inset:0;z-index:2000;background:rgba(4,9,20,.72);
   backdrop-filter:blur(3px);display:flex;align-items:flex-end;justify-content:center}
 .scrim[hidden]{display:none}
 @media (min-width:640px){ .scrim{align-items:center;padding:20px} }
@@ -393,7 +393,7 @@ body{background:var(--pp);color:var(--tin);font:15px/1.5 Inter,system-ui,sans-se
 </div>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="js/config.js?v=2.8.0"></script>
+<script src="js/config.js?v=2.8.1"></script>
 <script>
 const esc = s => String(s??'').replace(/[<>&"]/g, m => ({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[m]));
 const NEC = {alimentos:'Mercado', aseo:'Aseo', arriendo:'Arriendo', agua:'Agua',
@@ -1178,7 +1178,7 @@ try{ if(localStorage.getItem('aviso_ruta')) document.getElementById('aviso').hid
    muestra el dinosaurio. */
 if('serviceWorker' in navigator){
   addEventListener('load', ()=> navigator.serviceWorker
-    .register('sw-ruta.js?v=2.8.0').catch(()=>{}));
+    .register('sw-ruta.js?v=2.8.1').catch(()=>{}));
 }
 
 /* Cuántos están mirando esta misma ruta ahora. En la calle sirve para saber
