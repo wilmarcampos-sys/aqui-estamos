@@ -8,7 +8,7 @@
 <link rel="icon" type="image/svg+xml" href="logo/marca.svg">
 <title>Aquí Estamos · Administración</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
-<link rel="stylesheet" href="css/app.css?v=1.62.1">
+<link rel="stylesheet" href="css/app.css?v=1.62.2">
 <style>
   /* El panel es mobile-first: una columna, pestañas fijas abajo. En pantalla
      grande se centra en una franja de ancho de celular para no deformarse. */
@@ -462,9 +462,9 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="js/config.js?v=1.62.1"></script>
-<script src="js/version.js?v=1.62.1"></script>
-<script src="js/data.js?v=1.62.1"></script>
+<script src="js/config.js?v=1.62.2"></script>
+<script src="js/version.js?v=1.62.2"></script>
+<script src="js/data.js?v=1.62.2"></script>
 <script>
 /* ============================================================
    PANEL DE ADMINISTRACIÓN — Aquí Estamos
@@ -1362,12 +1362,12 @@ function vUbicar(){
           <select class="campo" id="ub-comuna">
             <option value="">Comuna o corregimiento…</option>
             ${(ZONAS||[]).slice().sort((a,b)=>a.n.localeCompare(b.n)).map(z=>
-              `<option value="${z.lat},${z.lng}" ${norma(z.n)===norma(c.barrio)?'selected':''}>${esc(z.n)}</option>`).join('')}
+              `<option value="${z.lat},${z.lng}" ${(c.barrio && norma(z.n)===norma(c.barrio))?'selected':''}>${esc(z.n)}</option>`).join('')}
           </select>
           <select class="campo" id="ub-barrio">
             <option value="">Barrio del censo…</option>
             ${barriosConocidos().map(b=>
-              `<option value="${b.lat},${b.lng}" ${norma(b.n)===norma(c.barrio)?'selected':''}>${esc(b.n)}${b.n2?` · ${esc(b.n2)}`:''}</option>`).join('')}
+              `<option value="${b.lat},${b.lng}" ${(c.barrio && norma(b.n)===norma(c.barrio))?'selected':''}>${esc(b.n)}${b.n2?` · ${esc(b.n2)}`:''}</option>`).join('')}
           </select>
         </div>
         <input class="campo" id="ub-barrio-txt" value="${esc(c.barrio||'')}" placeholder="Barrio (se guarda con el punto)"
@@ -1437,6 +1437,10 @@ function centroCiudad(nom){
 function ubMapa(c){
   const el = document.getElementById('ubmapa'); if(!el || !window.L) return;
   UB.lat = c.lat ?? null; UB.lng = c.lng ?? null; UB.mk = null;
+  if(UB.ref){ UB.ref.remove(); UB.ref = null; }   // referencia de la ficha anterior
+  const cerca = document.getElementById('ub-cerca'); if(cerca) cerca.innerHTML = '';
+  const lug = document.getElementById('ub-lugares'); if(lug) lug.innerHTML = '';
+  clearTimeout(_cercaT);
   if(UB.map){ UB.map.remove(); UB.map=null; }
   const cc = centroCiudad(c.ciudad);
   UB.map = L.map(el, {zoomControl:true, attributionControl:false})
