@@ -3,142 +3,343 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#0f172a">
+<meta name="theme-color" content="#0D1520">
 <link rel="icon" type="image/svg+xml" href="logo/marca.svg">
-<title>Cómo va la emergencia · Aquí Estamos</title>
-<meta name="description" content="Cifras del terremoto del 10 de agosto de 2026 en el Eje Cafetero y lo que hoy piden las familias censadas en Pereira, Dosquebradas y La Virginia.">
+<title>Reporte en vivo · Aquí Estamos</title>
+<meta name="description" content="La emergencia no terminó. Esto es lo que hoy necesitan las familias censadas en Pereira, Dosquebradas y La Virginia tras el terremoto del 10 de agosto de 2026.">
 <meta property="og:type" content="article">
 <meta property="og:site_name" content="Aquí Estamos">
-<meta property="og:title" content="Cómo va la emergencia · Pereira">
-<meta property="og:description" content="7.4 de magnitud · 321 fallecidos · 1.450 viviendas afectadas. Esto es lo que hoy piden las familias censadas.">
+<meta property="og:title" content="La emergencia no terminó · Pereira">
+<meta property="og:description" content="203 viviendas censadas, 62 casos urgentes. Mira qué falta y dónde, y entrega directo a la familia.">
 <meta property="og:url" content="https://aquiestamos.co/reporte">
 <meta property="og:image" content="https://aquiestamos.co/img/infografia.jpg">
 <meta property="og:locale" content="es_CO">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Cómo va la emergencia · Pereira">
+<meta name="twitter:title" content="La emergencia no terminó · Pereira">
 <meta name="twitter:image" content="https://aquiestamos.co/img/infografia.jpg">
-<link rel="stylesheet" href="css/app.css?v=1.80.0">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<link rel="stylesheet" href="css/reporte.css?v=1.81.0">
 <script>
 /* URL sin ".html" en el sitio publicado */
 (function(){ var h=location.hostname; if(h==='localhost'||h==='127.0.0.1'||h==='') return;
-  var p=location.pathname;
-  if(p.endsWith('.html')) p=p.slice(0,-5);
+  var p=location.pathname; if(p.endsWith('.html')) p=p.slice(0,-5);
   if(p!==location.pathname) history.replaceState(null,'',p+location.search+location.hash); })();
-window.temaEfectivo = function(){
-  try{ var p = localStorage.getItem('ae_tema');
-    if(p==='claro') return 'light'; if(p==='oscuro') return 'dark';
-    return matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
-  }catch(e){ return 'dark'; }
-};
-document.documentElement.setAttribute('data-eff', window.temaEfectivo());
 </script>
-<style>
-  /* app.css fija la ventana porque el mapa la necesita; aquí se lee y se baja.
-     El body queda en overflow:visible a propósito: con overflow:auto se vuelve
-     su propia caja de scroll, y como el overscroll-behavior de html corta el
-     encadenamiento, la rueda y el dedo se quedaban atrapados sin mover nada. */
-  html{overflow-y:auto!important;overflow-x:hidden!important;height:auto!important;
-    position:static!important;overscroll-behavior:auto!important}
-  body{overflow:visible!important;height:auto!important;position:static!important}
-  body{background:var(--bg);color:var(--txt);margin:0;
-    -webkit-overflow-scrolling:touch}
-  .rwrap{max-width:820px;margin:0 auto;padding:0 0 calc(40px + var(--safe))}
-  /* el texto respira; las fotos van a sangre */
-  .rwrap > *:not(.historias):not(.bloque){padding-left:16px;padding-right:16px}
-  .rtop{display:flex;align-items:center;gap:10px;padding:14px 16px 16px}
-  .rtop .mark{width:34px;height:34px;flex:0 0 auto}
-  .rtop h1{margin:0;font-size:17px;font-weight:850;letter-spacing:-.4px;line-height:1.15}
-  .rtop h1 span{color:var(--amb)}
-  .rtop p{margin:1px 0 0;font-size:12px;color:var(--dim)}
-  .rtop .volver{margin-left:auto;font-size:13px;font-weight:750;color:var(--link);
-    text-decoration:none;padding:10px 0 10px 10px;white-space:nowrap}
-
-</style>
 </head>
 <body>
-<div class="rwrap">
 
-  <header class="rtop">
-    <svg class="mark" viewBox="0 0 24 24" aria-hidden="true">
-      <defs><clipPath id="rp"><path d="M12 1.6c-4.6 0-8.3 3.7-8.3 8.3 0 5.9 8.3 12.5 8.3 12.5s8.3-6.6 8.3-12.5c0-4.6-3.7-8.3-8.3-8.3z"/></clipPath></defs>
-      <g clip-path="url(#rp)"><rect width="12" height="24" fill="#F2B705"/><rect x="12" width="12" height="24" fill="#D62828"/></g>
-      <path d="M5.9 9.1h6.4a1.35 1.35 0 0 1 0 2.7H5.9z" fill="#fff"/>
-      <path d="M18.1 12.2h-6.4a1.35 1.35 0 0 0 0 2.7h6.4z" fill="#fff"/>
-    </svg>
-    <div>
-      <h1>Aquí<span>&nbsp;Estamos</span></h1>
-      <p>Cómo va la emergencia · Pereira</p>
-    </div>
-    <a class="volver" href="/">Ir al mapa ›</a>
-  </header>
-
-  <!-- Historias del censo: anónimas, con lo que cada familia contó -->
-  <section class="historias" id="b-historias" style="display:none">
-    <div class="h-foto" id="h-foto" style="background-image:url('img/wck-1.jpg')"></div>
-    <div class="h-velo"></div>
-    <button type="button" class="h-share" data-compartir aria-label="Compartir este reporte">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4"/></svg>
-    </button>
-    <span class="h-marca">
+<!-- 1 · BARRA -->
+<header class="rnav" id="rnav">
+  <div class="env">
+    <a class="marca" href="/">
       <svg viewBox="0 0 24 24" aria-hidden="true">
-        <defs><clipPath id="hm1"><path d="M12 1.6c-4.6 0-8.3 3.7-8.3 8.3 0 5.9 8.3 12.5 8.3 12.5s8.3-6.6 8.3-12.5c0-4.6-3.7-8.3-8.3-8.3z"/></clipPath></defs>
-        <g clip-path="url(#hm1)"><rect width="12" height="24" fill="#F2B705"/><rect x="12" width="12" height="24" fill="#D62828"/></g>
+        <defs><clipPath id="mk"><path d="M12 1.6c-4.6 0-8.3 3.7-8.3 8.3 0 5.9 8.3 12.5 8.3 12.5s8.3-6.6 8.3-12.5c0-4.6-3.7-8.3-8.3-8.3z"/></clipPath></defs>
+        <g clip-path="url(#mk)"><rect width="12" height="24" fill="#F2B705"/><rect x="12" width="12" height="24" fill="#D62828"/></g>
         <path d="M5.9 9.1h6.4a1.35 1.35 0 0 1 0 2.7H5.9z" fill="#fff"/>
         <path d="M18.1 12.2h-6.4a1.35 1.35 0 0 0 0 2.7h6.4z" fill="#fff"/>
       </svg>
-      <b>Aquí<i>&nbsp;Estamos</i><em>aquiestamos.co</em></b>
-    </span>
-    <h2 class="h-tit">Quiénes esperan hoy</h2>
-    <p class="h-sub">Contado por las propias familias. Sin nombres ni direcciones.</p>
-    <div class="carru" id="carru">
-      <div class="carru-pista" id="carru-pista"></div>
-      <div class="carru-nav">
-        <button type="button" id="carru-ant" aria-label="Anterior">‹</button>
-        <div class="carru-puntos" id="carru-puntos"></div>
-        <button type="button" id="carru-sig" aria-label="Siguiente">›</button>
-      </div>
-    </div>
-  </section>
-
-  <div class="bloque" id="b-info">
-    <div class="heropx" id="heropx">
-      <div class="px-foto" style="background-image:url('img/wck-2.jpg')"></div>
-      <div class="px-velo"></div>
-      <div class="px-texto">
-        <h2>Dos semanas<br>después del sismo</h2>
-        <p>7.4 de magnitud · 321 fallecidos · 1.450 viviendas afectadas.
-          Esto es lo que hoy piden las familias censadas.</p>
-      </div>
-      <button type="button" class="h-share" data-compartir aria-label="Compartir este reporte">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4"/></svg>
-      </button>
-      <span class="px-cred">Foto: World Central Kitchen · CC BY 4.0</span>
-      <span class="h-marca chico">
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-          <defs><clipPath id="hm2"><path d="M12 1.6c-4.6 0-8.3 3.7-8.3 8.3 0 5.9 8.3 12.5 8.3 12.5s8.3-6.6 8.3-12.5c0-4.6-3.7-8.3-8.3-8.3z"/></clipPath></defs>
-          <g clip-path="url(#hm2)"><rect width="12" height="24" fill="#F2B705"/><rect x="12" width="12" height="24" fill="#D62828"/></g>
-          <path d="M5.9 9.1h6.4a1.35 1.35 0 0 1 0 2.7H5.9z" fill="#fff"/>
-          <path d="M18.1 12.2h-6.4a1.35 1.35 0 0 0 0 2.7h6.4z" fill="#fff"/>
-        </svg>
-        <b>Aquí<i>&nbsp;Estamos</i><em>aquiestamos.co</em></b>
-      </span>
-    </div>
-    <div class="reporte" id="reporte"></div>
-    <button type="button" class="btn2 pri compartir-cta" id="ab-compartir">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4"/></svg>
-      Compartir este reporte
-    </button>
+      <span>Aquí<i> Estamos</i></span>
+    </a>
+    <nav class="acc">
+      <a href="/">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s7-6.3 7-11a7 7 0 1 0-14 0c0 4.7 7 11 7 11z"/><circle cx="12" cy="10" r="2.6"/></svg>
+        <span class="txt">Ver mapa</span></a>
+      <button type="button" data-compartir>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4"/></svg>
+        <span class="txt">Compartir</span></button>
+      <a class="cta" href="/#ayudar">Quiero ayudar</a>
+    </nav>
   </div>
+</header>
 
-  <p class="creditos-foto">
-    Fotografías de labores de respuesta tras el sismo: <b>World Central Kitchen</b>, publicadas bajo licencia
-    <a href="https://creativecommons.org/licenses/by/4.0/deed.es" target="_blank" rel="noopener">Creative Commons BY 4.0</a>
-    en Wikimedia Commons. Se redimensionaron para la web; no se alteró su contenido.<br>
-    Cifras del sismo: Servicio Geológico Colombiano, USGS y reportes oficiales en prensa nacional.
-    Censo levantado en terreno por la <b>red de iglesias AMCER</b> y la <b>Asociación CREA</b>.
-  </p>
+<!-- 2 · PORTADA -->
+<section class="rhero" id="rhero">
+  <div class="foto" id="hero-foto" style="background-image:url('img/wck-1.jpg')"></div>
+  <div class="velo"></div>
+  <div class="env">
+    <div class="cont">
+      <span class="vivo"><i></i> REPORTE EN VIVO</span>
+      <h1>La emergencia<br>no terminó.</h1>
+      <p class="ciu">Pereira · Dosquebradas · La Virginia</p>
+      <p class="lede">Así está la situación hoy y lo que necesitan las familias
+        afectadas para seguir adelante.</p>
+      <p class="hero-dato">
+        <u><b id="hd-viv">203</b> familias censadas</u><s>·</s>
+        <em><b id="hd-urg">62</b> casos urgentes</em></p>
+      <div class="btns">
+        <a class="bt pri" href="#necesidades">Ver quién necesita ayuda
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h13M13 6l6 6-6 6"/></svg></a>
+        <a class="bt sec" href="/">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s7-6.3 7-11a7 7 0 1 0-14 0c0 4.7 7 11 7 11z"/><circle cx="12" cy="10" r="2.6"/></svg>
+          Ver mapa</a>
+      </div>
+      <p class="sindinero">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 12.5 6 9l3.5 3 2-2 4 4 2-2 4 3.5"/><path d="M9.5 12 6 15.5l2.5 2.5 2-2 2.5 2.5 2-2 2 2"/></svg>
+        No recibimos dinero · Tú entregas directamente a la familia</p>
+    </div>
+  </div>
+  <span class="cred">Foto: World Central Kitchen · CC BY 4.0</span>
+</section>
 
-  <div class="pie"><span id="version"></span></div>
+<!-- 3 · BARRA DE SITUACIÓN -->
+<section class="rcifras">
+  <div class="env">
+    <div class="caja">
+      <div class="fila">
+        <div class="c"><span class="ic" style="background:#EEF1F5;color:#3B475C">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-7 9 7"/><path d="M5.5 9.6V20h13V9.6"/><path d="M10 20v-5h4v5"/></svg></span>
+          <span><b data-cuenta id="k-viv">203</b><span>VIVIENDAS CENSADAS</span></span></div>
+        <div class="c"><span class="ic" style="background:#EEF1F5;color:#3B475C">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><circle cx="18" cy="9" r="2.4"/><path d="M16 20c0-2.6 1-4.6 2.6-5.3"/></svg></span>
+          <span><b data-cuenta id="k-per">694</b><span>PERSONAS</span></span></div>
+        <div class="c"><span class="ic" style="background:#EEF1F5;color:#3B475C">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 4 3 6.5v13L9 17l6 2.5 6-2.5v-13L15 6.5 9 4z"/><path d="M9 4v13M15 6.5v13"/></svg></span>
+          <span><b data-cuenta id="k-bar">53</b><span>BARRIOS Y VEREDAS</span></span></div>
+        <div class="c"><span class="ic" style="background:#FBEAEA;color:#C81E1E">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12h3.5l2-6.5 4.5 13 3-8 1.8 1.5H22"/></svg></span>
+          <span><b data-cuenta id="k-urg" style="color:#C81E1E">62</b><span>CASOS URGENTES</span></span></div>
+      </div>
+      <p class="nota" id="k-nota"><b>190 de 203</b> viviendas ya están ubicadas en el mapa</p>
+    </div>
+  </div>
+</section>
+
+<!-- 4 · NECESIDADES + HISTORIA -->
+<section class="rsec" id="necesidades">
+  <div class="env">
+    <div class="dos aparece">
+      <div class="tar nec">
+        <h3>Esto es lo que necesitan hoy</h3>
+        <p class="sub" style="margin:-12px 0 18px" id="n-sub">Viviendas que pidieron cada ayuda · Censo actualizado</p>
+        <div id="barras"></div>
+        <button type="button" class="vertodas" id="ver-todas">Ver todas las necesidades
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h13M13 6l6 6-6 6"/></svg></button>
+      </div>
+      <article class="hist" id="hist">
+        <div class="foto" id="hist-foto" style="background-image:url('img/wck-2.jpg')"></div>
+        <div class="velo"></div>
+        <div class="cont">
+          <span class="chapa">HISTORIA ANÓNIMA</span>
+          <h3 id="h-lugar">Pereira</h3>
+          <p id="h-texto">Cargando…</p>
+          <div class="cond" id="h-cond"></div>
+          <button type="button" class="mas" id="h-mas">Leer más historias reales
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h13M13 6l6 6-6 6"/></svg></button>
+        </div>
+        <span class="cred">Foto: World Central Kitchen · CC BY 4.0</span>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- 5 · QUIÉNES NECESITAN ATENCIÓN PRIMERO -->
+<section class="rsec">
+  <div class="env aparece">
+    <h2>Quiénes necesitan atención primero</h2>
+    <p class="sub">Cifras vivas del censo puerta a puerta</p>
+    <div class="prio">
+      <div class="pr"><div class="top"><span class="ic">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20.5S3.8 15 3.8 9.4A4.6 4.6 0 0 1 12 6.6a4.6 4.6 0 0 1 8.2 2.8c0 5.6-8.2 11.1-8.2 11.1z"/><path d="M12 10v4M10 12h4"/></svg></span>
+        <b data-cuenta id="p-urg">62</b></div>
+        <span>CASOS URGENTES</span><small>Necesitan atención prioritaria</small></div>
+      <div class="pr"><div class="top"><span class="ic">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="2.6"/><path d="M12 8v7M8.5 10.5h7M9.5 21l2.5-6 2.5 6"/></svg></span>
+        <b data-cuenta id="p-men">151</b></div>
+        <span>MENORES DE 5 AÑOS</span><small id="p-men-sub">En 111 hogares censados</small></div>
+      <div class="pr"><div class="top"><span class="ic">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="7" r="3"/><path d="M5.5 20c0-3.6 2.9-6.5 6.5-6.5s6.5 2.9 6.5 6.5"/></svg></span>
+        <b data-cuenta id="p-vul">43</b></div>
+        <span>HOGARES VULNERABLES</span><small>Embarazo, enfermedad grave o discapacidad</small></div>
+      <div class="pr"><div class="top"><span class="ic">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7.5" width="18" height="12" rx="2.4"/><path d="M9 7.5V6a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v1.5M3 13h18"/></svg></span>
+        <b data-cuenta id="p-emp">22</b></div>
+        <span>PERSONAS SIN EMPLEO</span><small>Como consecuencia del sismo</small></div>
+    </div>
+  </div>
+</section>
+
+<!-- 6 y 7 · MAPA + CÓMO FUNCIONA -->
+<section class="rsec" id="mapa">
+  <div class="env aparece">
+    <h2>Mira dónde hace falta ayuda</h2>
+    <p class="sub" id="m-sub">190 viviendas ya están ubicadas en el mapa</p>
+    <div class="dos">
+      <div class="tar" style="padding:18px">
+        <div class="chips" id="chips"></div>
+        <div class="mapa-mini" id="mini"></div>
+        <a class="abrir-mapa" href="/">Abrir mapa completo
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4h6v6M20 4l-8.5 8.5"/><path d="M18 14v5a1.6 1.6 0 0 1-1.6 1.6H5A1.6 1.6 0 0 1 3.4 19V7.6A1.6 1.6 0 0 1 5 6h5"/></svg></a>
+        <p class="sub" style="margin:12px 0 0;font-size:12.5px">
+          El mapa no muestra direcciones exactas: cada punto es aproximado al barrio.</p>
+      </div>
+      <div>
+        <h3 style="margin:0 0 14px;font-size:19px;font-weight:850;letter-spacing:-.4px">Cómo funciona</h3>
+        <div class="pasos">
+          <div class="paso"><span class="n">1</span>
+            <div><b>Censamos</b><p>Voluntarios recorren barrios y veredas para identificar
+              a cada familia afectada.</p></div></div>
+          <div class="paso"><span class="n">2</span>
+            <div><b>Ubicamos</b><p>Cada vivienda queda registrada en el mapa con su
+              necesidad principal.</p></div></div>
+          <div class="paso"><span class="n">3</span>
+            <div><b>Conectamos</b><p>Quien quiere ayudar entrega directamente a la familia.</p></div></div>
+          <div class="paso"><span class="n i">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 4.5 6v5.5c0 4.6 3.2 8.4 7.5 9.5 4.3-1.1 7.5-4.9 7.5-9.5V6L12 3z"/><path d="M9.2 12.2l2 2 3.6-3.8"/></svg></span>
+            <div><b>No recibimos dinero</b><p>Aquí no hay intermediarios ni cuenta bancaria.
+              Quien ayuda entrega directamente a la familia.</p></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 8 · EMPRESAS Y FUNDACIONES -->
+<section class="rsec">
+  <div class="env aparece">
+    <div class="emp">
+      <h2>¿Tu empresa puede ayudar a varias familias?</h2>
+      <p class="sub">Coordinamos ayuda donde más se necesita.</p>
+      <div class="ops">
+        <span class="op"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 4h2.2l2.4 10.4h9.6l2-7.4H7"/><circle cx="9.6" cy="19" r="1.4"/><circle cx="17" cy="19" r="1.4"/></svg>20 mercados</span>
+        <span class="op"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="5" y="9" width="14" height="11.5" rx="2.6"/><path d="M9 9V6.4a3 3 0 0 1 6 0V9"/></svg>50 kits de higiene</span>
+        <span class="op"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 4h2.2l2.4 10.4h9.6l2-7.4H7"/><circle cx="9.6" cy="19" r="1.4"/><circle cx="17" cy="19" r="1.4"/></svg>100 mercados</span>
+        <span class="op"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3.2s6 6.4 6 10.2a6 6 0 0 1-12 0c0-3.8 6-10.2 6-10.2z"/></svg>Agua potable</span>
+        <span class="op"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="10" cy="17" r="4"/><path d="M14 4h2M13 4v7h4l3 6"/></svg>Movilidad</span>
+        <span class="op"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2.5" y="5" width="19" height="5.5" rx="1"/><rect x="2.5" y="13" width="19" height="5.5" rx="1"/></svg>Materiales</span>
+        <span class="op"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 11l9-7 9 7"/><path d="M5.5 9.6V20h13V9.6"/></svg>Ayuda para arriendo</span>
+      </div>
+      <div class="btns">
+        <a class="bt pri" href="/#coordinar">Coordinar una ayuda en bloque</a>
+        <a class="bt sec" href="#necesidades">Ver necesidades disponibles</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 9 · QUIÉNES ESTÁN EN EL TERRITORIO -->
+<section class="rsec">
+  <div class="env aparece">
+    <h2>Quiénes están haciendo este trabajo</h2>
+    <p class="sub">Este censo existe porque hay gente recorriendo los barrios</p>
+    <div class="terr">
+      <article class="prot"><span class="ic">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.5v5M9.5 5h5M6 21V10.5l6-3.5 6 3.5V21"/><path d="M10 21v-4.5h4V21"/></svg></span>
+        <b>Red de iglesias AMCER</b>
+        <p>Levantó el censo puerta a puerta en Pereira, Dosquebradas y La Virginia.</p></article>
+      <article class="prot"><span class="ic">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9 4 3 6.5v13L9 17l6 2.5 6-2.5v-13L15 6.5 9 4z"/><path d="M9 4v13M15 6.5v13"/></svg></span>
+        <b>Asociación CREA</b>
+        <p>Coordina el censo, ubica cada vivienda en el mapa y organiza rutas de entrega.</p></article>
+    </div>
+    <div class="aliados">
+      <div class="org"><span class="ic">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="17" r="4"/><path d="M14 4h2M13 4v7h4l3 6"/></svg></span>
+        <span><small>Aliado</small><b>Fundación del Dr. Simi</b>
+          <small>Sillas de ruedas y movilidad</small></span></div>
+      <div class="org"><span class="ic">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7.5" width="18" height="12" rx="2.4"/><path d="M7.5 7.5V6a2 2 0 0 1 2-2h5a2 2 0 0 1 2 2v1.5M3 13h18"/></svg></span>
+        <span><small>Aliado</small><b>alluda.online</b>
+          <small>Red de centros de acopio</small></span></div>
+    </div>
+    <p class="terr-pie">Censo levantado en terreno por
+      <b>Red de iglesias AMCER · Asociación CREA</b></p>
+  </div>
+</section>
+
+<!-- 10 · CIFRAS OFICIALES DEL SISMO -->
+<section class="rsec">
+  <div class="env aparece">
+    <div class="of-caja">
+      <h3>Cifras oficiales del sismo
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 7.8h.01"/></svg></h3>
+      <p class="av">Estas cifras son oficiales y no corresponden al censo de Aquí Estamos.</p>
+      <div class="of-fila">
+        <div class="of-c"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12h3.5l2-6.5 4.5 13 3-8 1.8 1.5H22"/></svg>
+          <span><b>7.4 Mw</b><span>MAGNITUD</span></span></div>
+        <div class="of-c"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><circle cx="18" cy="9" r="2.4"/><path d="M16 20c0-2.6 1-4.6 2.6-5.3"/></svg>
+          <span><b>321</b><span>FALLECIDOS</span></span></div>
+        <div class="of-c"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="8.6"/><path d="M12 8v8M8 12h8"/></svg>
+          <span><b>4.595</b><span>HERIDOS</span></span></div>
+        <div class="of-c"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M16.2 16.2 21 21"/></svg>
+          <span><b>257</b><span>DESAPARECIDOS</span></span></div>
+        <div class="of-c"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-7 9 7"/><path d="M5.5 9.6V20h13V9.6"/></svg>
+          <span><b>1.450</b><span>VIVIENDAS AFECTADAS</span></span></div>
+      </div>
+      <p class="of-fuente">10 de agosto de 2026 · 07:34 a.m. · Intensidad VIII — Severo ·
+        Epicentro: San José del Palmar, Chocó · Profundidad 103 km · +325 réplicas.<br>
+        Fuente: Servicio Geológico Colombiano · USGS · reportes oficiales en prensa nacional.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 11 · COMPARTIR -->
+<section class="rsec" id="compartir">
+  <div class="env aparece">
+    <h2>Ayuda a que esto llegue a más personas</h2>
+    <p class="sub">Las imágenes se arman en este momento con las cifras de hoy</p>
+    <div class="comp">
+      <button type="button" class="cbt" id="sh-wa2"><span class="ic" style="background:#E4F5EA;color:#1F9D55">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.5 2 2 6.5 2 12c0 1.8.5 3.4 1.3 4.9L2 22l5.3-1.4A10 10 0 1 0 12 2Zm0 18.2c-1.5 0-3-.4-4.3-1.2l-.3-.2-3.1.8.8-3-.2-.3A8.2 8.2 0 1 1 12 20.2Z"/></svg></span>
+        Compartir por WhatsApp<small>Manda el enlace del reporte</small></button>
+      <button type="button" class="cbt" id="sh-link2"><span class="ic" style="background:#E9EDF5;color:#3B475C">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.5 1.5"/><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7L12 19"/></svg></span>
+        Copiar enlace<small>aquiestamos.co/reporte</small></button>
+      <button type="button" class="cbt" id="sh-ig2"><span class="ic" style="background:#F7E8F0;color:#B4407C">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1.2" fill="currentColor"/></svg></span>
+        Imagen para Instagram<small>1080 × 1350</small></button>
+      <button type="button" class="cbt" id="sh-est"><span class="ic" style="background:#E4F5EA;color:#1F9D55">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2.5" width="12" height="19" rx="2.6"/><path d="M10.5 5.5h3"/></svg></span>
+        Estado de WhatsApp<small>1080 × 1920, con una historia</small></button>
+      <a class="cbt" href="img/infografia.jpg" target="_blank" rel="noopener"><span class="ic" style="background:#FDF3E1;color:#C98B22">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="14" rx="2.5"/><path d="m6 15 4-4 3 3 2-2 3 3"/></svg></span>
+        Descargar infografía<small>Imagen completa para imprimir</small></a>
+    </div>
+    <p class="sub" style="margin:12px 0 0" id="sh-msg"></p>
+  </div>
+</section>
+
+<!-- 12 · PIE -->
+<footer class="rpie">
+  <div class="env">
+    <div>
+      <div class="marca">Aquí<i> Estamos</i>.co</div>
+      <p><b style="color:#fff">Mira qué falta y dónde. Entrega directo a la familia.</b><br>
+        Coordinamos un mapa de necesidades, un censo puerta a puerta y rutas de
+        entrega por equipos. No hay intermediarios ni cuenta bancaria.</p>
+    </div>
+    <div>
+      <h4>Comparte para que más personas puedan ayudar</h4>
+      <div class="redes">
+        <button type="button" id="pie-wa" aria-label="WhatsApp">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.5 2 2 6.5 2 12c0 1.8.5 3.4 1.3 4.9L2 22l5.3-1.4A10 10 0 1 0 12 2Zm0 18.2c-1.5 0-3-.4-4.3-1.2l-.3-.2-3.1.8.8-3-.2-.3A8.2 8.2 0 1 1 12 20.2Z"/></svg></button>
+        <button type="button" id="pie-link" aria-label="Copiar enlace">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.5 1.5"/><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7L12 19"/></svg></button>
+        <button type="button" data-compartir aria-label="Más opciones">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4"/></svg></button>
+      </div>
+    </div>
+    <div class="legal">
+      Censo levantado en terreno por<br><b style="color:#fff">Red de iglesias AMCER · Asociación CREA</b><br><br>
+      Aliados: Fundación del Dr. Simi · alluda.online
+    </div>
+    <p class="creditos">
+      Fotografías de labores de respuesta tras el sismo: <b>World Central Kitchen</b>,
+      publicadas bajo licencia <a href="https://creativecommons.org/licenses/by/4.0/deed.es" target="_blank" rel="noopener">Creative Commons BY 4.0</a>
+      en Wikimedia Commons. Se redimensionaron para la web; no se alteró su contenido.
+      Las historias son anónimas y se publican con autorización de cada familia:
+      no se muestran nombres, direcciones ni coordenadas exactas (Ley 1581 de 2012).
+      © 2026 Aquí Estamos · Transparente · Directo · Sin intermediarios
+    </p>
+  </div>
+</footer>
+
+<!-- CTA fija en el teléfono -->
+<div class="cta-fija">
+  <a class="bt sec" href="/">Ver mapa</a>
+  <a class="bt pri" href="/#ayudar">Quiero ayudar</a>
 </div>
 
 <!-- VENTANA DE COMPARTIR -->
@@ -149,7 +350,7 @@ document.documentElement.setAttribute('data-eff', window.temaEfectivo());
       <button type="button" class="mc-x" id="cerrar-compartir" aria-label="Cerrar">&times;</button>
     </div>
     <div class="mc-body">
-      <p class="muted" style="margin:0 0 14px;font-size:13.5px">La imagen se arma en este momento con las cifras de hoy.</p>
+      <p class="muted">La imagen se arma en este momento con las cifras de hoy.</p>
       <button type="button" class="opc" id="sh-link">
         <span class="oi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.5 1.5"/><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7L12 19"/></svg></span>
         <span class="ot"><b>Enviar el enlace</b><small>aquiestamos.co/reporte</small></span></button>
@@ -158,24 +359,21 @@ document.documentElement.setAttribute('data-eff', window.temaEfectivo());
         <span class="ot"><b>Imagen para Instagram</b><small>Formato de publicación, 1080 &times; 1350</small></span></button>
       <button type="button" class="opc" id="sh-wa">
         <span class="oi"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.5 2 2 6.5 2 12c0 1.8.5 3.4 1.3 4.9L2 22l5.3-1.4A10 10 0 1 0 12 2Zm0 18.2c-1.5 0-3-.4-4.3-1.2l-.3-.2-3.1.8.8-3-.2-.3A8.2 8.2 0 1 1 12 20.2Z"/></svg></span>
-        <span class="ot"><b>Imagen para WhatsApp</b><small>Formato de estado, 1080 &times; 1920 &middot; incluye una historia</small></span></button>
+        <span class="ot"><b>Estado de WhatsApp</b><small>1080 &times; 1920 &middot; incluye una historia</small></span></button>
       <a class="opc" href="img/infografia.jpg" target="_blank" rel="noopener">
         <span class="oi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="14" rx="2.5"/><path d="m6 15 4-4 3 3 2-2 3 3"/></svg></span>
         <span class="ot"><b>Ver la infografía completa</b><small>Imagen grande, para imprimir o descargar</small></span></a>
-      <p class="muted" style="margin:12px 3px 0;font-size:12px" id="sh-msg"></p>
     </div>
   </div>
 </div>
 
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="js/config.js?v=1.80.0"></script>
-<script src="js/version.js?v=1.80.0"></script>
+<script src="js/config.js?v=1.81.0"></script>
 <script>
-  // utilidades mínimas que las piezas compartidas esperan del sitio
   const esc = s => String(s??'').replace(/[<>&"]/g, m => ({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[m]));
 </script>
-<script src="js/historias.js?v=1.80.0"></script>
-<script src="js/reporte.js?v=1.80.0"></script>
-<script src="js/compartir-img.js?v=1.80.0"></script>
+<script src="js/reporte.js?v=1.81.0"></script>
+<script src="js/compartir-img.js?v=1.81.0"></script>
 </body>
 </html>

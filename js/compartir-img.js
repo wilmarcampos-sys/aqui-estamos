@@ -20,6 +20,16 @@ const CIF = {
 };
 
 function cifrasVivas(){
+  // en /reporte los datos ya vienen del censo; en el mapa se sacan de S
+  if(typeof RES !== 'undefined' && RES){
+    CIF.viviendas = RES.viviendas; CIF.personas = RES.personas;
+    CIF.urgentes = RES.urgentes; CIF.menores = RES.menores;
+    CIF.vulnerables = RES.vulnerables;
+    if(typeof TOP !== 'undefined' && TOP.length)
+      CIF.top = TOP.slice(0,6).map(([k,n])=>[(NEC[k]||[k])[0].replace(' / alimentos','')
+        .replace('Subsidio de ','').replace('Carpas y cobijas','Carpas'), n]);
+    return;
+  }
   try{
     const cs = (typeof S!=='undefined' && S.censo) ? S.censo : [];
     if(!cs.length) return;
@@ -185,8 +195,9 @@ function dibujarTarjeta(alto){
 
   /* ---------- la historia, sobre una segunda foto ---------- */
   const pieH = 176, tope = H - pieH;
-  const h = (window.__HISTORIAS && window.__HISTORIAS.length)
-    ? window.__HISTORIAS[Math.floor(Math.random()*window.__HISTORIAS.length)] : null;
+  const hs = (typeof HIST !== 'undefined' && HIST.length) ? HIST
+           : (window.__HISTORIAS || []);
+  const h = hs.length ? hs[Math.floor(Math.random()*hs.length)] : null;
   const filaRiesgo = 92;
   let libre = tope - y - 30;
   const cajaMin = largo ? 260 : 150;
