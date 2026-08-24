@@ -118,13 +118,22 @@ body{background:var(--pp);color:var(--tin);font:15px/1.5 Inter,system-ui,sans-se
 .par .cab{display:flex;align-items:flex-start;gap:11px}
 /* El número dejó de ser botón: parecía tocable sin serlo del todo, y la
    acción real se escondía en un ícono al lado. Ahora solo dice qué parada es. */
-.par .n{flex:0 0 auto;width:38px;height:38px;border-radius:11px;background:var(--sup);
-  color:var(--dim);font-size:14px;font-weight:900;display:grid;place-items:center;
-  border:1.5px solid var(--fil)}
-.par .n.on{background:var(--ok);border-color:var(--ok);color:#fff;font-size:19px}
-.par .n.cx{background:#E8453C;border-color:#E8453C;color:#fff;font-size:19px}
+.par .n{position:relative;flex:0 0 auto;width:38px;height:38px;border-radius:11px;
+  background:var(--sup);color:var(--dim);font-size:14px;font-weight:900;
+  display:grid;place-items:center;border:1.5px solid var(--fil)}
+.par .n.on{background:var(--ok);border-color:var(--ok);color:#fff}
+.par .n.cx{background:#E8453C;border-color:#E8453C;color:#fff}
 /* intentada pero todavía pendiente: ni verde ni cerrada */
 .par .n.tt{background:rgba(232,163,61,.18);border-color:rgba(232,163,61,.6);color:#E8A33D}
+/* El número se queda siempre: es la referencia de qué parada es, y hace
+   falta justo cuando ya se marcó y hay que corregir algo. El estado va
+   en una marca aparte. */
+.par .n .mk{position:absolute;right:-5px;bottom:-5px;width:18px;height:18px;
+  border-radius:50%;display:grid;place-items:center;font-style:normal;
+  font-size:12px;font-weight:900;line-height:1;border:2px solid var(--card)}
+.par .n .mk.ok{background:#fff;color:var(--ok)}
+.par .n .mk.no{background:#fff;color:#E8453C}
+.par .n .mk.es{background:#E8A33D;color:#0D1520}
 .par.hecha{opacity:.55}
 .par .nm{flex:1;min-width:0;font-size:16px;font-weight:850;letter-spacing:-.3px;line-height:1.25}
 .par .nm small{display:block;font-size:12.5px;font-weight:600;color:var(--dim);margin-top:2px}
@@ -421,7 +430,7 @@ body{background:var(--pp);color:var(--tin);font:15px/1.5 Inter,system-ui,sans-se
 </div>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="js/config.js?v=3.1.0"></script>
+<script src="js/config.js?v=3.1.1"></script>
 <script>
 const esc = s => String(s??'').replace(/[<>&"]/g, m => ({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[m]));
 const NEC = {alimentos:'Mercado', aseo:'Aseo', arriendo:'Arriendo', agua:'Agua',
@@ -668,8 +677,10 @@ function pintar(){
     return `<article class="par${p.entregada?' hecha':''}${p.fallida?' cerr':''}">
       <div class="cab">
         <span class="n${p.entregada?' on':''}${p.fallida?' cx':''}${
-          (!p.entregada && !p.fallida && p.intentos>0)?' tt':''}"
-        >${p.entregada?'✓':p.fallida?'×':p.orden}</span>
+          (!p.entregada && !p.fallida && p.intentos>0)?' tt':''}">${p.orden}${
+          p.entregada ? '<i class="mk ok">✓</i>'
+          : p.fallida ? '<i class="mk no">×</i>'
+          : p.intentos>0 ? '<i class="mk es">!</i>' : ''}</span>
         <div class="nm">${esc(p.nombre||'Vivienda')}
           <small>${p.personas?`${p.personas} persona${p.personas>1?'s':''}`:''}${
             p.barrio?` · ${esc(p.barrio)}`:''}</small></div>
@@ -1313,7 +1324,7 @@ try{ if(localStorage.getItem('aviso_ruta')) document.getElementById('aviso').hid
    muestra el dinosaurio. */
 if('serviceWorker' in navigator){
   addEventListener('load', ()=> navigator.serviceWorker
-    .register('sw-ruta.js?v=3.1.0').catch(()=>{}));
+    .register('sw-ruta.js?v=3.1.1').catch(()=>{}));
 }
 
 /* Cuántos están mirando esta misma ruta ahora. En la calle sirve para saber
