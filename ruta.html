@@ -115,6 +115,9 @@ body{background:var(--pp);color:var(--tin);font:15px/1.5 Inter,system-ui,sans-se
 .par{background:var(--card);border:1px solid var(--fil);border-radius:14px;
   padding:15px;margin-bottom:10px}
 .par.hecha{opacity:.5}
+/* La parada intentada queda en transición: se ve de lejos, sin abrirla. */
+.par.tran{border-color:rgba(232,163,61,.45);
+  box-shadow:inset 3px 0 0 #E8A33D}
 .par .cab{display:flex;align-items:flex-start;gap:11px}
 /* El número dejó de ser botón: parecía tocable sin serlo del todo, y la
    acción real se escondía en un ícono al lado. Ahora solo dice qué parada es. */
@@ -181,7 +184,7 @@ body{background:var(--pp);color:var(--tin);font:15px/1.5 Inter,system-ui,sans-se
 .ab.si{background:rgba(63,154,104,.14);color:#7ED4A2;border-color:rgba(63,154,104,.5)}
 .ab.si:hover{background:rgba(63,154,104,.24);border-color:var(--ok)}
 .ab.si:active{transform:scale(.985)}
-.ab.no{background:rgba(232,163,61,.12);color:#E8A33D;border-color:rgba(232,163,61,.45)}
+.ab.no{background:rgba(232,163,61,.18);color:#E8A33D;border-color:rgba(232,163,61,.6)}
 .ab.no:hover{background:rgba(232,163,61,.2);border-color:#E8A33D}
 .ab.no:active{transform:scale(.985)}
 .ab.hecho{width:100%;background:var(--ok);border-color:var(--ok);color:#04220F;
@@ -434,7 +437,7 @@ body{background:var(--pp);color:var(--tin);font:15px/1.5 Inter,system-ui,sans-se
 </div>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="js/config.js?v=3.2.0"></script>
+<script src="js/config.js?v=3.2.1"></script>
 <script>
 const esc = s => String(s??'').replace(/[<>&"]/g, m => ({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[m]));
 const NEC = {alimentos:'Mercado', aseo:'Aseo', arriendo:'Arriendo', agua:'Agua',
@@ -678,7 +681,8 @@ function pintar(){
   document.getElementById('lista').innerHTML = todas.map(p=>{
     const necs = (p.necesidades||[]).map(k=>
       `<span class="nec ${k===f0.tipo?'foco':''}">${esc(NEC[k]||k)}</span>`).join('');
-    return `<article class="par${p.entregada?' hecha':''}${p.fallida?' cerr':''}">
+    return `<article class="par${p.entregada?' hecha':''}${p.fallida?' cerr':''}${
+      (!p.entregada && !p.fallida && p.intentos>0)?' tran':''}">
       <div class="cab">
         <span class="n${p.entregada?' on':''}${p.fallida?' cx':''}${
           (!p.entregada && !p.fallida && p.intentos>0)?' tt':''}">${p.orden}${
@@ -1351,7 +1355,7 @@ try{ if(localStorage.getItem('aviso_ruta')) document.getElementById('aviso').hid
    muestra el dinosaurio. */
 if('serviceWorker' in navigator){
   addEventListener('load', ()=> navigator.serviceWorker
-    .register('sw-ruta.js?v=3.2.0').catch(()=>{}));
+    .register('sw-ruta.js?v=3.2.1').catch(()=>{}));
 }
 
 /* Cuántos están mirando esta misma ruta ahora. En la calle sirve para saber
