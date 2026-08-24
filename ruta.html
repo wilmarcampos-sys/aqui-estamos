@@ -87,6 +87,7 @@ body{background:var(--pp);color:var(--tin);font:15px/1.5 Inter,system-ui,sans-se
 .pill[hidden]{display:none}
 .pill svg{width:15px;height:15px;flex:0 0 auto}
 .pill b{font-weight:900}
+.pill.gris{background:var(--card);border-color:var(--fil);color:var(--dim)}
 .pill.roja{background:rgba(120,26,22,.92);border:1px solid rgba(232,69,60,.5);color:#FFC4BF}
 .pill.ambar{background:rgba(92,64,12,.92);border:1px solid rgba(232,163,61,.5);color:#F5D89B}
 .aviso{position:relative}
@@ -378,6 +379,10 @@ body{background:var(--pp);color:var(--tin);font:15px/1.5 Inter,system-ui,sans-se
 <body>
 
 <div class="top"><div class="pills" id="pills" aria-live="polite">
+  <span class="pill gris" id="cerrada" hidden>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+    Jornada cerrada · ya no se puede marcar
+  </span>
   <span class="pill roja" id="sinred" hidden>
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M2 4l20 16M9.5 16a6 6 0 0 1 5 0M12 20h.01M5 12.5a11 11 0 0 1 4-2.6M17 6.5a16 16 0 0 1 5 2.3"/></svg>
     Sin señal · se guarda en el teléfono
@@ -476,7 +481,7 @@ body{background:var(--pp);color:var(--tin);font:15px/1.5 Inter,system-ui,sans-se
 </div>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="js/config.js?v=4.0.1"></script>
+<script src="js/config.js?v=4.0.2"></script>
 <script>
 const esc = s => String(s??'').replace(/[<>&"]/g, m => ({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[m]));
 const NEC = {alimentos:'Mercado', aseo:'Aseo', arriendo:'Arriendo', agua:'Agua',
@@ -805,7 +810,8 @@ function pintar(){
 
   const fin = !!f0.cerrada;
   document.body.classList.toggle('fin', fin);
-  document.getElementById('cerrada').hidden = !fin;
+  const avCerr = document.getElementById('cerrada');
+  if(avCerr) avCerr.hidden = !fin;
   mapa(conPunto);
   if(!fin) pintarSalida(); else document.getElementById('salida').hidden = true;
 }
@@ -857,9 +863,13 @@ async function marcar(btn, nota){
   }catch(e){
     // No se revierte: la entrega sí ocurrió. Se guarda y se manda después.
     encolar(t2(), id, nuevo, nota);
-    pintar();
+    try{ pintar(); }catch(_){}
+  }finally{
+    // Pase lo que pase, el candado se suelta. Con un error al repintar se
+    // quedaba puesto y la segunda entrega ya no hacía nada: el equipo tenía
+    // que recargar sin saber por qué.
+    marcando = false;
   }
-  marcando = false;
 }
 const t2 = () => new URLSearchParams(location.search).get('t');
 
@@ -1479,7 +1489,7 @@ try{ if(localStorage.getItem('aviso_ruta')) document.getElementById('aviso').hid
    muestra el dinosaurio. */
 if('serviceWorker' in navigator){
   addEventListener('load', ()=> navigator.serviceWorker
-    .register('sw-ruta.js?v=4.0.1').catch(()=>{}));
+    .register('sw-ruta.js?v=4.0.2').catch(()=>{}));
 }
 
 /* Cuántos están mirando esta misma ruta ahora. En la calle sirve para saber
