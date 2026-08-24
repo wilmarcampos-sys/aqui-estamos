@@ -329,7 +329,7 @@ body{background:var(--pp);color:var(--tin);font:15px/1.5 Inter,system-ui,sans-se
 @media print{
   @page{ size:A4; margin:12mm }
   body{background:#fff!important;color:#000!important;font-size:11pt}
-  .cab,.mapa,.eqs,.comp,.vivo,.avance .pista,.banda,.aviso,.abrir,.hint-pdf,
+  .cab,.mapa,.eqs,.comp,.vivo,.avance .pista,.banda,.aviso,.abrir,.hint-pdf,.salida,
   .waq,.pie,.marca-pie{display:none!important}
   .impr{display:block!important}
   .lista{display:block}
@@ -345,6 +345,22 @@ body{background:var(--pp);color:var(--tin);font:15px/1.5 Inter,system-ui,sans-se
 .abrir.sec{background:var(--card);color:var(--txt);border:1px solid var(--fil);margin-top:9px}
 .abrir.sec:hover{border-color:var(--acc);color:var(--acc)}
 .hint-pdf{margin:8px 4px 0;font-size:12.5px;line-height:1.5;color:var(--dim);text-align:center}
+/* Cerrar la salida no cierra la jornada: mañana el equipo abre el mismo
+   enlace y sigue. Sirve para que la coordinación sepa quién ya paró, y para
+   tener historia por día en vez de un solo bloque de tres días. */
+.salida{display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+  background:var(--card);border:1px solid var(--fil);border-radius:14px;
+  padding:15px 16px;margin:18px 0 10px}
+.salida .sal-txt{flex:1 1 200px;min-width:0}
+.salida b{display:block;font-size:15px;font-weight:850;letter-spacing:-.3px}
+.salida span{display:block;font-size:12.5px;color:var(--dim);margin-top:3px;line-height:1.45}
+.sal-bt{flex:0 0 auto;min-height:48px;padding:0 18px;border-radius:12px;
+  background:var(--sup);border:1.5px solid var(--fil);color:var(--txt);
+  font:inherit;font-size:14px;font-weight:850;cursor:pointer}
+.sal-bt:hover{border-color:var(--acc);color:var(--acc)}
+.sal-bt:active{transform:scale(.985)}
+.salida.cerrada{border-color:rgba(63,154,104,.4);box-shadow:inset 3px 0 0 var(--ok)}
+.salida.cerrada .sal-bt{display:none}
 .impr{display:none}
 .impr h1{margin:0;font-size:17pt;font-weight:800}
 .impr p{margin:3pt 0 0;font-size:10pt;color:#333}
@@ -423,6 +439,14 @@ body{background:var(--pp);color:var(--tin);font:15px/1.5 Inter,system-ui,sans-se
   <p class="hint-pdf" id="hint-pdf" hidden>Imprímela o guárdala antes de salir:
     sirve aunque te quedes sin señal o sin batería.</p>
   <div id="lista"><p class="cargando">Cargando la ruta…</p></div>
+  <div class="salida" id="salida" hidden>
+    <div class="sal-txt">
+      <b id="sal-tit">Salida de hoy</b>
+      <span id="sal-sub"></span>
+    </div>
+    <button type="button" class="sal-bt" id="sal-cerrar">Terminamos por hoy</button>
+  </div>
+
   <p class="pie">Censo levantado en terreno por Red de iglesias AMCER · Asociación CREA<br>
     aquiestamos.co</p>
 </div>
@@ -445,7 +469,7 @@ body{background:var(--pp);color:var(--tin);font:15px/1.5 Inter,system-ui,sans-se
 </div>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="js/config.js?v=3.4.0"></script>
+<script src="js/config.js?v=3.5.0"></script>
 <script>
 const esc = s => String(s??'').replace(/[<>&"]/g, m => ({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[m]));
 const NEC = {alimentos:'Mercado', aseo:'Aseo', arriendo:'Arriendo', agua:'Agua',
@@ -762,6 +786,7 @@ function pintar(){
   }).join('');
 
   mapa(conPunto);
+  pintarSalida();
 }
 
 let M = null, capa = null;
@@ -1362,6 +1387,53 @@ document.addEventListener('click', e=>{
 
 cargar();
 pintarEstadoRed();
+
+/* Estado de la salida en curso, para el equipo que está en la calle. */
+async function pintarSalida(){
+  const caja = document.getElementById('salida'); if(!caja) return;
+  try{
+    const db = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
+    const {data} = await db.rpc('salida_actual', {t: t2(), p_equipo: EQ});
+    const s = data && data[0];
+    if(!s || !s.abierta){ caja.hidden = true; return; }
+    caja.hidden = false;
+    caja.classList.remove('cerrada');
+    const ini = s.inicio ? new Date(s.inicio) : null;
+    const hh = ini ? Math.floor((Date.now()-ini)/3600000) : 0;
+    const mm = ini ? Math.round(((Date.now()-ini)%3600000)/60000) : 0;
+    document.getElementById('sal-tit').textContent =
+      s.numero === 1 ? 'Salida de hoy' : `Salida ${s.numero}`;
+    document.getElementById('sal-sub').textContent =
+      `${s.entregadas} entregada${s.entregadas===1?'':'s'}` +
+      (s.cerradas ? ` · ${s.cerradas} cerrada${s.cerradas===1?'':'s'}` : '') +
+      (ini ? ` · ${hh?hh+'h ':''}${mm}m en la calle` : '') +
+      (s.pendientes ? ` · quedan ${s.pendientes}` : '');
+  }catch(e){ caja.hidden = true; }
+}
+
+document.addEventListener('click', async e=>{
+  if(!e.target.closest('#sal-cerrar')) return;
+  const bt = e.target.closest('#sal-cerrar');
+  if(!confirm('TERMINAMOS POR HOY\n\n'
+    + '· La jornada NO se cierra: mañana abres este mismo enlace y sigues.\n'
+    + '· Queda registrado a qué hora salieron y cuánto entregaron hoy.\n'
+    + '· La coordinación va a ver que tu equipo ya paró.')) return;
+  bt.disabled = true;
+  try{
+    const db = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
+    const {data, error} = await db.rpc('cerrar_salida', {t: t2(), p_equipo: EQ});
+    if(error || !data || !data[0] || !data[0].ok) throw new Error();
+    const s = data[0];
+    document.getElementById('salida').classList.add('cerrada');
+    document.getElementById('sal-tit').textContent = 'Salida cerrada';
+    document.getElementById('sal-sub').textContent =
+      `${s.entregadas} entregada${s.entregadas===1?'':'s'} hoy` +
+      (s.pendientes ? ` · quedan ${s.pendientes} para mañana` : ' · no quedó ninguna');
+  }catch(err){
+    bt.disabled = false;
+    alert('No se pudo cerrar sin señal. Inténtalo cuando vuelva.');
+  }
+});
 pintarPendientes();
 // quien ya lo leyó no necesita verlo cada vez que abre la ruta
 try{ if(localStorage.getItem('aviso_ruta')) document.getElementById('aviso').hidden = true; }catch(_){}
@@ -1371,7 +1443,7 @@ try{ if(localStorage.getItem('aviso_ruta')) document.getElementById('aviso').hid
    muestra el dinosaurio. */
 if('serviceWorker' in navigator){
   addEventListener('load', ()=> navigator.serviceWorker
-    .register('sw-ruta.js?v=3.4.0').catch(()=>{}));
+    .register('sw-ruta.js?v=3.5.0').catch(()=>{}));
 }
 
 /* Cuántos están mirando esta misma ruta ahora. En la calle sirve para saber
