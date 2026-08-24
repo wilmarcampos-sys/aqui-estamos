@@ -173,14 +173,16 @@ body{background:var(--pp);color:var(--tin);font:15px/1.5 Inter,system-ui,sans-se
   padding:0 12px;border-radius:12px;font:inherit;font-size:14.5px;font-weight:850;
   letter-spacing:-.2px;cursor:pointer;border:1.5px solid transparent;text-align:center}
 .ab svg{width:19px;height:19px;flex:0 0 auto}
-/* Antes de tocarlo es neutro: todavía no ha pasado nada. El verde se gana
-   al entregar, no se regala. Y el rojo del otro dice, sin leer, que esa
-   casa quedó sin recibir. */
-.ab.si{background:var(--sup);color:var(--txt);border-color:var(--fil)}
-.ab.si:hover{border-color:var(--ok);color:var(--ok)}
+/* Los dos en tono tenue mientras no ha pasado nada: el sólido se gana con
+   el resultado. El de no entregar va en ámbar y no en rojo porque lo que
+   casi siempre sigue es "vuelvo mañana", no "cerramos esa casa"; el rojo
+   se reserva para la parada cerrada de verdad. Y un rojo que se oprime en
+   una de cada cinco paradas deja de significar peligro. */
+.ab.si{background:rgba(63,154,104,.14);color:#7ED4A2;border-color:rgba(63,154,104,.5)}
+.ab.si:hover{background:rgba(63,154,104,.24);border-color:var(--ok)}
 .ab.si:active{transform:scale(.985)}
-.ab.no{background:var(--sup);color:#F08A82;border-color:rgba(232,69,60,.5)}
-.ab.no:hover{background:rgba(232,69,60,.12);border-color:#E8453C}
+.ab.no{background:rgba(232,163,61,.12);color:#E8A33D;border-color:rgba(232,163,61,.45)}
+.ab.no:hover{background:rgba(232,163,61,.2);border-color:#E8A33D}
 .ab.no:active{transform:scale(.985)}
 .ab.hecho{width:100%;background:var(--ok);border-color:var(--ok);color:#04220F;
   font-size:14px;font-weight:850}
@@ -212,6 +214,8 @@ body{background:var(--pp);color:var(--tin);font:15px/1.5 Inter,system-ui,sans-se
 .hoja-op:active{transform:scale(.99)}
 .hoja-op.otro{color:var(--dim);font-weight:650;border-style:dashed}
 .hoja-op.pri{background:var(--acc);border-color:var(--acc);color:#0D1520;font-weight:850}
+.hoja-op.cerrar{color:#F08A82;border-color:rgba(232,69,60,.4)}
+.hoja-op.cerrar.sug{background:rgba(232,69,60,.12);border-color:rgba(232,69,60,.6)}
 .hoja-op.casa{display:flex;align-items:flex-start;gap:11px;font-weight:600}
 .hoja-op.casa .ch-m{flex:0 0 auto;font-size:11.5px;font-weight:900;color:var(--acc);
   background:var(--chip);border-radius:7px;padding:5px 8px;min-width:56px;text-align:center}
@@ -430,7 +434,7 @@ body{background:var(--pp);color:var(--tin);font:15px/1.5 Inter,system-ui,sans-se
 </div>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="js/config.js?v=3.1.1"></script>
+<script src="js/config.js?v=3.2.0"></script>
 <script>
 const esc = s => String(s??'').replace(/[<>&"]/g, m => ({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[m]));
 const NEC = {alimentos:'Mercado', aseo:'Aseo', arriendo:'Arriendo', agua:'Agua',
@@ -860,11 +864,14 @@ function pasoReemplazo(motivo){
     motivo + ' en la casa de ' + (f.nombre || 'esta parada') +
     '. ¿Quieres entregar en otra casa cerca?';
   document.getElementById('hoja-ops').hidden = false;
+  const cerrable = /ya no vive|no quiso|ya recibió|ya recibio/i.test(motivo);
   document.getElementById('hoja-ops').innerHTML =
     `<button type="button" class="hoja-op pri" data-paso2="buscar">
        Sí, buscar otra casa cerca</button>
      <button type="button" class="hoja-op" data-paso2="seguir">
-       No, seguir con mi ruta</button>`;
+       No, la dejo pendiente para volver</button>
+     <button type="button" class="hoja-op cerrar${cerrable?' sug':''}" data-paso2="cerrar">
+       No volvemos a esa casa · cerrarla</button>`;
   document.getElementById('hoja-otro').hidden = true;
 }
 
@@ -926,6 +933,20 @@ async function deshacerIntento(btn, parada){
   }
 }
 
+/* Cerrar sin reemplazo: la casa ya no va. Se separa de "no estaban", que
+   sigue pendiente, porque son decisiones distintas y una no se deshace igual. */
+async function cerrarParada(parada, motivo){
+  try{
+    const db = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
+    const {error} = await db.rpc('cerrar_parada',
+      {t: t2(), p_parada: parada, p_motivo: motivo});
+    if(error) throw error;
+    await cargar();
+  }catch(e){
+    alert('No se pudo cerrar sin señal. Inténtalo cuando vuelva.');
+  }
+}
+
 async function grabarIntento(parada, motivo){
 
   /* El intento se graba ya, sin esperar a que escojan reemplazo. Un equipo
@@ -965,10 +986,16 @@ document.addEventListener('click', e=>{
   if(e.target.closest('#hoja-cerrar') || e.target.id === 'scrim'){ cerrarHoja(); return; }
   const p2 = e.target.closest('[data-paso2]');
   if(p2){
-    const buscar = p2.dataset.paso2 === 'buscar';
-    const guardado = PEND;
-    grabarIntento(guardado.parada, guardado.motivo);   // el intento se graba ya
-    if(buscar){ pasoCasas(); } else { cerrarHoja(); }
+    const q = p2.dataset.paso2, g = PEND;
+    if(q === 'cerrar'){
+      if(!confirm('CERRAR LA PARADA\n\n' + (g.motivo||'') + '\n\n'
+        + '· Deja de contar como pendiente para tu equipo.\n'
+        + '· Esa casa no vuelve a salir en la ruta.\n'
+        + '· Si solo no estaban hoy, mejor déjala pendiente.')) return;
+      cerrarParada(g.parada, g.motivo); cerrarHoja(); return;
+    }
+    grabarIntento(g.parada, g.motivo);   // el intento se graba ya
+    if(q === 'buscar'){ pasoCasas(); } else { cerrarHoja(); }
     return;
   }
   const ca = e.target.closest('[data-casa]');
@@ -1324,7 +1351,7 @@ try{ if(localStorage.getItem('aviso_ruta')) document.getElementById('aviso').hid
    muestra el dinosaurio. */
 if('serviceWorker' in navigator){
   addEventListener('load', ()=> navigator.serviceWorker
-    .register('sw-ruta.js?v=3.1.1').catch(()=>{}));
+    .register('sw-ruta.js?v=3.2.0').catch(()=>{}));
 }
 
 /* Cuántos están mirando esta misma ruta ahora. En la calle sirve para saber
