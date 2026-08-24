@@ -11,7 +11,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
-<link rel="stylesheet" href="css/app.css?v=3.7.0">
+<link rel="stylesheet" href="css/app.css?v=3.9.0">
 <style>
   /* El panel es mobile-first: una columna, pestañas fijas abajo. En pantalla
      grande se centra en una franja de ancho de celular para no deformarse. */
@@ -835,9 +835,9 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="js/config.js?v=3.7.0"></script>
-<script src="js/version.js?v=3.7.0"></script>
-<script src="js/data.js?v=3.7.0"></script>
+<script src="js/config.js?v=3.9.0"></script>
+<script src="js/version.js?v=3.9.0"></script>
+<script src="js/data.js?v=3.9.0"></script>
 <script>
 /* ============================================================
    PANEL DE ADMINISTRACIÓN — Aquí Estamos
@@ -1640,6 +1640,45 @@ async function cargarRevisar(){
 }
 
 let JORNADAS = [];
+/* Quien recibio de verdad, por ficha. La regla vieja excluia por cercania
+   —300 m de una entrega— y eso tenia sentido cuando lo unico que habia eran
+   reportes anonimos del mapa. Con el censo hay identidad: cada parada
+   entregada dice exactamente a que ficha llego.
+   Medido sobre la jornada de hoy: la regla de 300 m excluia 112 viviendas
+   cuando solo 36 habian recibido. 76 sin nada, 14 de ellas urgentes. */
+let RECIBIO = new Map();   // censo_id -> {ts, tipo}
+async function cargarRecibieron(){
+  if(DEMO) return;
+  const {data} = await db.from('jornada_paradas')
+    .select('censo_id, entregada_el, jornadas(tipo)')
+    .eq('entregada', true).not('censo_id','is',null)
+    .order('entregada_el', {ascending:false}).limit(3000);
+  RECIBIO = new Map();
+  (data||[]).forEach(x=>{
+    const k = String(x.censo_id);
+    const ts = x.entregada_el ? Date.parse(x.entregada_el) : 0;
+    const tipo = x.jornadas ? x.jornadas.tipo : null;
+    const y = RECIBIO.get(k);
+    if(!y || ts > y.ts) RECIBIO.set(k, {ts, tipo});
+  });
+}
+
+/* Quien ya esta en una jornada sin cerrar no vuelve a entrar en otra: se
+   estarian mandando dos equipos a la misma casa, o peor, la nueva jornada
+   se lleva las pendientes que el equipo todavia piensa visitar. */
+let ENJORNADA = new Map();   // censo_id -> titulo de la jornada
+async function cargarEnJornada(){
+  if(DEMO) return;
+  const {data} = await db.from('jornada_paradas')
+    .select('censo_id, fallida, jornadas!inner(titulo, fecha, estado)')
+    .not('censo_id','is',null).neq('jornadas.estado','cerrada').limit(3000);
+  ENJORNADA = new Map();
+  (data||[]).forEach(x=>{
+    if(x.fallida) return;   // cerrada como no lograda: puede volver a entrar
+    ENJORNADA.set(String(x.censo_id), x.jornadas.titulo || x.jornadas.fecha);
+  });
+}
+
 let SALIDAS = [];
 /* Quien ya paro y quien sigue en la calle. Sin esto la coordinacion no puede
    distinguir un equipo que termino de uno que se quedo sin senal. */
@@ -2000,7 +2039,9 @@ async function jCerrarSalida(equipo, btn){
   const n = (data||[]).length;
   toast(n ? `${n} salida${n===1?'':'s'} cerrada${n===1?'':'s'}`
           : 'No había ninguna salida abierta');
-  await cargarSalidas(); vDespachos();
+  await cargarSalidas();
+  await cargarRecibieron();
+  await cargarEnJornada(); vDespachos();
 }
 
 async function jRutasAbiertas(v){
@@ -2099,6 +2140,8 @@ async function jCerrar(){
     const {error} = await db.from('jornadas').update({estado:'cerrada'}).eq('id', j.id);
     if(error) return toast('No se pudo cerrar la jornada');
     await cargarSalidas();
+  await cargarRecibieron();
+  await cargarEnJornada();
   }
   j.estado='cerrada'; vJornadas();
   toast(pend.length ? `Jornada cerrada · ${pend.length} quedaron sin entregar`
@@ -2371,7 +2414,9 @@ function ubCola(){
   const censoVivas = CENSO.filter(c=>!c.archivada).length;
   const repsN      = reps.length;
   const vivas = (DP.fuenteCenso===false?[]:CENSO).filter(c=>!c.archivada).concat(reps);
-  const lista = UB.modo==='aprox' ? vivas.filter(c=>c.lat && c.aprox) : vivas.filter(c=>!c.lat);
+  const lista = UB.modo==='aprox'  ? vivas.filter(c=>c.lat && c.aprox)
+              : UB.modo==='sinnum' ? vivas.filter(c=>!dirHallable(c))
+              : vivas.filter(c=>!c.lat);
   // lo aplazado vuelve al final, no al frente: si no, las fichas imposibles
   // reaparecen en cada vuelta y el trabajo no avanza nunca.
   return lista.sort((a,b)=>(a.saltadaEl||0)-(b.saltadaEl||0));
@@ -2519,8 +2564,9 @@ function ubBuscar(){
 }
 
 function vUbicar(){
-  const sin   = CENSO.filter(c=>!c.lat).length;
-  const aprox = CENSO.filter(c=>c.lat && c.aprox).length;
+  const sin    = CENSO.filter(c=>!c.lat).length;
+  const aprox  = CENSO.filter(c=>c.lat && c.aprox).length;
+  const sinNum = CENSO.filter(c=>!c.archivada && !dirHallable(c)).length;
   const cola  = ubCola();
   if(UB.i >= cola.length) UB.i = 0;
   // `suelta` es una ficha abierta desde el buscador que no pertenece a la cola
@@ -2549,10 +2595,15 @@ function vUbicar(){
     <div class="seg" id="ubseg">
       <button data-ub="sin" class="${UB.modo==='sin'?'on':''}">Sin ubicar <span class="c">${sin}</span></button>
       <button data-ub="aprox" class="${UB.modo==='aprox'?'on':''}">Aproximadas <span class="c">${aprox}</span></button>
-    </div>`}
-    ${UB.q ? '' : !c ? `<div class="vacio"><b>Nada pendiente aquí</b><p>${UB.modo==='sin'
-        ? 'Todas las viviendas del censo tienen un punto.'
-        : 'Ninguna vivienda quedó con ubicación aproximada.'}</p></div>` : `
+      <button data-ub="sinnum" class="${UB.modo==='sinnum'?'on':''}">Sin número <span class="c">${sinNum}</span></button>
+    </div>
+    ${UB.modo==='sinnum'?`<p class="hint" style="margin:8px 3px 0">
+      Estas direcciones no tienen número: el equipo llega al sector y ahí empieza
+      a preguntar. Llama y corrige la dirección aquí mismo.</p>`:''}`}
+    ${UB.q ? '' : !c ? `<div class="vacio"><b>Nada pendiente aquí</b><p>${
+        UB.modo==='sin'    ? 'Todas las viviendas del censo tienen un punto.'
+      : UB.modo==='sinnum' ? 'Todas las direcciones del censo tienen número.'
+      : 'Ninguna vivienda quedó con ubicación aproximada.'}</p></div>` : `
     <div class="ubgrid">
       <div class="ubcol">
         ${suelta ? `<div class="navcola">
@@ -3034,13 +3085,24 @@ function dpCandidatas(){
   return base.concat(dpReportes()).filter(c=>{
     if(DP.seleccion && DP.seleccion.size && !DP.seleccion.has(String(c.id))) return false;
     if(c.archivada) return false;
+    if(ENJORNADA.has(String(c.id))) return false;
     if(!c.lat || !c.lng) return false;
     if(c.aprox && !DP.incluirAprox) return false;
     // "todas por igual": a veces no se reparte según lo que cada quien pidió,
     // sino lo mismo para todo el censo (una donación grande de un solo tipo).
     if(!DP.todas && !(c.needs||[]).includes(DP.tipo)) return false;
-    const ya = ENTREGAS.some(y=>y.k===DP.tipo && y.lat &&
-      distM(c.lat,c.lng,+y.lat,+y.lng)<300 && (now()-y.ts) < 7*24*H);
+    // Por ficha cuando la hay; la cercania se deja solo para los reportes
+    // del mapa, que son anonimos y no tienen a quien identificar.
+    let ya;
+    const r = RECIBIO.get(String(c.id));
+    if(r){
+      ya = (now() - r.ts) < 7*24*H && (r.tipo === DP.tipo || DP.todas);
+    } else if(c.origen === 'reporte'){
+      ya = ENTREGAS.some(y=>y.k===DP.tipo && y.lat &&
+        distM(c.lat,c.lng,+y.lat,+y.lng)<300 && (now()-y.ts) < 7*24*H);
+    } else {
+      ya = false;   // ficha del censo que nunca ha recibido
+    }
     return !ya && unica(c);
   });
 }
@@ -3073,8 +3135,14 @@ function dpPuntaje(c){
     p -= 60; por.push(`${c.intentos} intentos sin éxito`);
   }
   if(DP.reglas.has('olvidadas')){
-    const cerca = ENTREGAS.some(y=>y.lat && distM(c.lat,c.lng,y.lat,y.lng)<300);
-    if(!cerca){ p+=30; por.push('nunca ha recibido'); }
+    // "nunca ha recibido" es de la familia, no del vecindario
+    const r = RECIBIO.get(String(c.id));
+    if(!r){ p+=30; por.push('nunca ha recibido'); }
+    else {
+      const dias = Math.floor((now()-r.ts)/(24*H));
+      if(dias >= 21){ p+=20; por.push(`sin recibir hace ${dias} días`); }
+      else if(dias >= 14){ p+=10; }
+    }
   }
   return {p, por};
 }
@@ -3269,10 +3337,17 @@ function vDespachos(){
             : `${piden.length-cand} no entran: sin ubicación utilizable${atendidas>0?` o ya recibieron esto hace poco`:''}`}
             <br>En el paso siguiente decides cuántos equipos salen.</small></span>
         </div>
+        ${ENJORNADA.size?`<p class="hint" style="margin-top:10px">
+          ${ENJORNADA.size} vivienda${ENJORNADA.size===1?'':'s'} no aparece${ENJORNADA.size===1?'':'n'}
+          porque ya está${ENJORNADA.size===1?'':'n'} en una jornada sin cerrar.
+          Vuelven cuando esa jornada se cierre.</p>`:''}
         ${!cand?`<p class="hint warn" style="margin-top:12px">${vivas.length
             ? 'Ninguna de las seleccionadas tiene ubicación utilizable. Marca “incluir las de ubicación parcial”, o ubícalas en la pestaña Ubicar.'
             : 'No hay destinos con los filtros de arriba. Activa otra fuente o desmarca el filtro de categoría.'}</p>`:''}
-        <button class="btn" id="dp-1" style="width:100%;margin-top:14px" ${cand?'':'disabled'}>Siguiente${cand?` · ${alcanzan} destino${alcanzan===1?'':'s'}`:''}</button>
+        <div class="btnrow" style="margin-top:14px">
+          <button class="btn flat" id="dp-cancelar" style="flex:0 1 auto;min-width:120px">Cancelar</button>
+          <button class="btn" id="dp-1" style="flex:1 1 200px" ${cand?'':'disabled'}>Siguiente${cand?` · ${alcanzan} destino${alcanzan===1?'':'s'}`:''}</button>
+        </div>
       </div>`;
     return;
   }
@@ -3318,8 +3393,9 @@ function vDespachos(){
           ${entran<cand?`<div class="cl"><b>${cand-entran}</b><span>quedan para la próxima jornada</span></div>`:''}
         </div>
         <div class="btnrow" style="margin-top:14px">
-          <button class="btn flat" id="dp-atras" style="flex:0 1 auto;min-width:110px">Atrás</button>
-          <button class="btn" id="dp-2" style="flex:1 1 200px">Siguiente</button>
+          <button class="btn flat" id="dp-atras" style="flex:0 1 auto;min-width:100px">Atrás</button>
+          <button class="btn flat" id="dp-cancelar" style="flex:0 1 auto;min-width:100px">Cancelar</button>
+          <button class="btn" id="dp-2" style="flex:1 1 180px">Siguiente</button>
         </div>
       </div>`;
     return;
@@ -3335,7 +3411,8 @@ function vDespachos(){
             <span class="st"><b>${r.n}</b><small>${r.d}</small></span><span class="sw"></span></button>`).join('')}
         </div>
         <div class="btnrow" style="margin-top:14px">
-          <button class="btn flat" id="dp-atras" style="flex:0 1 auto;min-width:110px">Atrás</button>
+          <button class="btn flat" id="dp-atras" style="flex:0 1 auto;min-width:100px">Atrás</button>
+          <button class="btn flat" id="dp-cancelar" style="flex:0 1 auto;min-width:100px">Cancelar</button>
           <button class="btn" id="dp-armar" style="flex:1 1 200px">Armar los despachos</button>
         </div>
       </div>`;
@@ -3944,6 +4021,18 @@ document.addEventListener('click', e=>{
     DP.unidades=Math.max(1,v||1); DP.paso=2; vDespachos(); return; }
   if(e.target.closest('#dp-2')){ DP.paso=3; vDespachos(); return; }
   if(e.target.closest('#dp-atras')){ DP.paso=Math.max(1,DP.paso-1); vDespachos(); return; }
+  if(e.target.closest('#dp-cancelar')){
+    // Salir a medio armar no borra nada: la jornada solo existe cuando se
+    // guarda en el paso 3. Igual se avisa, porque escoger destinos y reglas
+    // toma un rato y perderlo por un toque seria molesto.
+    if(!confirm('CANCELAR\n\nSe pierde lo que llevas escogido de esta jornada.\n'
+      + 'Nada de lo ya guardado se toca.')) return;
+    DP = { paso:1, tipo:'alimentos', unidades:60, equipos:3, tope:8,
+           incluirAprox:false, todas:false, conReportes:false, radio:5,
+           reglas:new Set(['urgencia','vulnerable','olvidadas','hallable']),
+           rutas:null, seleccion:null };
+    JVER = null; vDespachos(); return;
+  }
   if(e.target.closest('#dp-armar')){ DP.rutas=dpArmar(); DP.paso=4; vDespachos(); agruparFilas(); return; }
   if(e.target.closest('#dp-rehacer')){ DP.paso=3; vDespachos(); return; }
   if(e.target.closest('#dp-guardar')){ dpGuardar(); return; }
@@ -4105,6 +4194,8 @@ async function cargar(){
   CENSO = (cen.data||[]).map(deCen);
   await cargarJornadas();
   await cargarSalidas();
+  await cargarRecibieron();
+  await cargarEnJornada();
   await cargarRevisar();
   render();
 }
