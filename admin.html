@@ -11,7 +11,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
-<link rel="stylesheet" href="css/app.css?v=3.0.1">
+<link rel="stylesheet" href="css/app.css?v=3.1.0">
 <style>
   /* El panel es mobile-first: una columna, pestañas fijas abajo. En pantalla
      grande se centra en una franja de ancho de celular para no deformarse. */
@@ -117,7 +117,9 @@
   .jrow:hover{border-color:var(--line2)}
   .jnom .jnt{overflow-wrap:anywhere;min-width:0}
   .jrow.hecha{opacity:.5;background:none}
-  .jrow > .tick2{grid-area:tick;margin-top:2px}
+  .jrow > .tick2.solo{cursor:default;pointer-events:none}
+  .tick2.cx{background:rgba(232,69,60,.16);border-color:rgba(232,69,60,.5);color:#F08A82}
+  .tick2{grid-area:tick;margin-top:2px}
   .jrow .jq{grid-area:nom;min-width:0}
   .jrow .jn2{grid-area:nec;min-width:0}
   .jrow .jd{grid-area:dir;min-width:0}
@@ -211,6 +213,29 @@
   .dh-bt svg{width:15px;height:15px}
   @media (min-width:760px){ .dhero{min-height:200px} .dh-cont{padding:22px 26px}
     .dhero b{font-size:28px} }
+
+  /* ---- bandeja de revisión ---- */
+  .rev{background:var(--bg2);border:1px solid var(--line);border-radius:14px;
+    padding:15px;margin-bottom:11px}
+  .rev-cab b{display:block;font-size:15.5px;font-weight:850;letter-spacing:-.3px}
+  .rev-cab span{display:block;font-size:12px;color:var(--dim);margin-top:2px}
+  .rev-nota{margin:11px 0 0;padding:11px 13px;border-radius:10px;
+    background:color-mix(in srgb, var(--pri) 12%, transparent);
+    border:1px solid color-mix(in srgb, var(--pri) 34%, transparent);
+    font-size:14px;font-weight:700;line-height:1.45;color:var(--txt)}
+  .rev-datos{display:flex;flex-wrap:wrap;gap:4px 14px;margin-top:9px;
+    font-size:12.5px;color:var(--dim)}
+  .rev-sub{margin:10px 0 9px;font-size:12.5px;color:var(--dim);line-height:1.45}
+  .rev-ojo{margin:9px 0 0;font-size:12.5px;font-weight:750;color:var(--pri)}
+  .rev-op{display:flex;align-items:flex-start;gap:11px;padding:11px 12px;border-radius:11px;
+    background:var(--card);border:1px solid var(--line);margin-bottom:7px;cursor:pointer}
+  .rev-op:has(input:checked){border-color:var(--acc)}
+  .rev-op input{width:19px;height:19px;accent-color:var(--acc);flex:0 0 auto;margin:1px 0 0}
+  .rev-op b{display:block;font-size:14px;font-weight:800}
+  .rev-op small{display:block;font-size:12px;color:var(--dim);margin-top:2px}
+  .rev-acc{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+  .rev-acc .btn{width:auto;flex:1 1 130px;min-height:44px;padding:0 14px;font-size:13.5px}
+  .vacio2{padding:22px 4px;text-align:center;color:var(--dim);font-size:13.5px}
   /* ---- tablero de inicio ---- */
   .dgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
   @media (max-width:520px){ .dgrid{grid-template-columns:1fr 1fr} }
@@ -338,6 +363,8 @@
 
   /* teléfono de la ficha: leerlo, copiarlo o llamar sin transcribirlo */
   /* casilla de entregado en la hoja de ruta */
+  .tick2.solo{cursor:default;pointer-events:none}
+  .tick2.cx{background:rgba(232,69,60,.16);border-color:rgba(232,69,60,.5);color:#F08A82}
   .tick2{width:34px;height:34px;flex:0 0 auto;border-radius:10px;border:1.8px solid var(--line2);
     background:var(--surf);color:#fff;font-size:17px;font-weight:800;cursor:pointer;font-family:inherit;
     display:grid;place-items:center;margin-right:10px}
@@ -362,7 +389,9 @@
     .dline .dtx{padding-top:0!important}
     .card{page-break-after:always}
     .muted,.mt{color:#444!important}
-    .tick2{border:1.5px solid #000!important;background:#fff!important}
+    .tick2.solo{cursor:default;pointer-events:none}
+  .tick2.cx{background:rgba(232,69,60,.16);border-color:rgba(232,69,60,.5);color:#F08A82}
+  .tick2{border:1.5px solid #000!important;background:#fff!important}
     .tick2::after{content:"entregado";position:absolute;margin-left:42px;font-size:9px;color:#666}
     .prow{position:relative}
   }
@@ -791,9 +820,9 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="js/config.js?v=3.0.1"></script>
-<script src="js/version.js?v=3.0.1"></script>
-<script src="js/data.js?v=3.0.1"></script>
+<script src="js/config.js?v=3.1.0"></script>
+<script src="js/version.js?v=3.1.0"></script>
+<script src="js/data.js?v=3.1.0"></script>
 <script>
 /* ============================================================
    PANEL DE ADMINISTRACIÓN — Aquí Estamos
@@ -1131,6 +1160,19 @@ function vInicio(){
       ${dato(proximas,'jornadas')}
     </div>`}
 
+    ${(REVISAR.notas.length || REVISAR.dups.length) ? `
+    <div class="lbl">Para revisar</div>
+    <div class="tiles">
+      ${REVISAR.notas.length ? `<button class="tile" data-rev="notas">
+        <span class="ti">${icd('doc')}<i class="c">${REVISAR.notas.length}</i></span>
+        <b>Lo que reportaron los equipos</b>
+        <span>Números errados, duplicados y direcciones que no existen</span></button>` : ''}
+      ${REVISAR.dups.length ? `<button class="tile" data-rev="dups">
+        <span class="ti">${icd('gente')}<i class="c">${REVISAR.dups.length}</i></span>
+        <b>Posibles fichas repetidas</b>
+        <span>La misma casa censada dos veces</span></button>` : ''}
+    </div>` : ''}
+
     <div class="lbl">Ir a</div>
     <div class="tiles">${atajos}</div>
 
@@ -1144,6 +1186,84 @@ function vInicio(){
       <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.1 9.5a3 3 0 0 1 5.8 1c0 2-2.9 3-2.9 3"/><path d="M12 17h.01"/></svg>
       <div class="grow"><b>¿Cómo funciona la coordinación?</b></div><span class="chev">›</span>
     </button>`;
+}
+
+/* Una hoja por tipo: los reportes de los equipos y las fichas repetidas.
+   Las dos terminan en lo mismo —arreglar el censo antes de la proxima
+   jornada— pero se leen distinto y conviene no mezclarlas. */
+function abrirRevisar(tipo){
+  if(tipo === 'notas'){
+    const filas = REVISAR.notas.map(n=>{
+      const c = CENSO.find(x=>String(x.id)===String(n.censo_id));
+      return `<div class="rev">
+        <div class="rev-cab">
+          <b>${esc(n.nombre || 'Vivienda')}</b>
+          <span>Equipo ${n.equipo} · parada ${n.orden}${
+            n.intentos>1?` · ${n.intentos} intentos`:''}</span>
+        </div>
+        <p class="rev-nota">${esc(n.nota)}</p>
+        ${c ? `<div class="rev-datos">
+          <span>${esc(c.dir || 'Sin dirección')}</span>
+          <span>${esc(telBonito(c.tel) || 'Sin teléfono')}</span></div>` : ''}
+        <div class="rev-acc">
+          ${c ? `<button class="btn flat" data-abrirficha="${esc(n.censo_id)}">Abrir la ficha</button>` : ''}
+          <button class="btn flat" data-revok="${esc(n.id)}">Ya lo arreglé</button>
+        </div>
+      </div>`;
+    }).join('') || '<p class="vacio2">Nada pendiente por revisar.</p>';
+    abrirSheet(`<div class="sec" style="margin-top:4px">Lo que reportaron los equipos</div>
+      <p class="muted" style="margin:6px 0 14px">Lo que escribieron en la calle al no poder
+        entregar. Casi siempre es una corrección al censo, no una nota de visita.</p>
+      ${filas}`);
+    return;
+  }
+
+  const filas = REVISAR.dups.map((g,i)=>{
+    const ops = g.ids.map((id,k)=>`<label class="rev-op">
+      <input type="radio" name="dup${i}" value="${esc(id)}" ${k===0?'checked':''}>
+      <span><b>${esc(g.nombres[k])}</b>
+        <small>${esc(g.fichas[k])} · ${g.personas[k]||0} persona${g.personas[k]===1?'':'s'}</small></span>
+    </label>`).join('');
+    return `<div class="rev">
+      <div class="rev-cab">
+        <b>${esc(g.motivo)}</b>
+        <span>${esc(g.direccion || '')}${g.telefono?` · ${esc(telBonito(g.telefono))}`:''}</span>
+      </div>
+      ${g.en_ruta ? '<p class="rev-ojo">Una de estas ya está en una ruta programada.</p>' : ''}
+      <p class="rev-sub">¿Cuál se queda? Las otras se archivan, pero sus necesidades
+        y condiciones pasan a la que quede.</p>
+      ${ops}
+      <div class="rev-acc">
+        <button class="btn" data-fusionar="${i}">Fusionar</button>
+        <button class="btn flat" data-nofusion="${i}">No son la misma</button>
+      </div>
+    </div>`;
+  }).join('') || '<p class="vacio2">No se detectaron fichas repetidas.</p>';
+
+  abrirSheet(`<div class="sec" style="margin-top:4px">Posibles fichas repetidas</div>
+    <p class="muted" style="margin:6px 0 14px">Mismo teléfono, misma dirección o mismo nombre.
+      Revisa antes de fusionar: dos hermanos en la misma casa pueden ser dos hogares.</p>
+    ${filas}`);
+}
+
+async function fusionarGrupo(i){
+  const g = REVISAR.dups[i]; if(!g) return;
+  const sel = document.querySelector(`input[name="dup${i}"]:checked`);
+  if(!sel) return;
+  const conservar = sel.value;
+  const absorber = g.ids.filter(x=>String(x)!==String(conservar));
+  const nomQueda = g.nombres[g.ids.findIndex(x=>String(x)===String(conservar))];
+  if(!confirm(`FUSIONAR ${g.ids.length} FICHAS\n\nSe queda: ${nomQueda}\n`
+    + `Se archivan: ${absorber.length}\n\n`
+    + '· Las necesidades y condiciones de todas pasan a la que queda.\n'
+    + '· Las archivadas dejan de salir en rutas y en el censo.\n'
+    + '· Se puede deshacer desde la ficha archivada.')) return;
+  const {data, error} = await db.rpc('fusionar_fichas',
+    {p_conservar: conservar, p_absorber: absorber, p_quien: YO.email || 'el panel'});
+  if(error || !data || !data[0] || !data[0].ok) return toast('No se pudo fusionar');
+  toast(`Fusionadas · ${data[0].necesidades.length} necesidades en la ficha que queda`);
+  cerrarSheet();
+  await cargar();
 }
 
 function movimientos(){
@@ -1483,6 +1603,27 @@ async function dpGuardar(){
   await cargarJornadas(); DP.paso=5; vDespachos();
 }
 
+let REVISAR = {dups: [], notas: []};
+
+/* Lo que los equipos escriben en la calle es la mejor fuente de correcciones
+   que tiene el censo, y hasta hoy se quedaba en la nota de una parada que
+   nadie volvia a abrir. Un "numero errado" o un "es el esposo, registro
+   doble" valen mas que cualquier deteccion automatica: el detector compara
+   textos, y en la calle la misma casa esta escrita de tres formas. */
+async function cargarRevisar(){
+  if(DEMO) return;
+  try{
+    const [d, n] = await Promise.all([
+      db.rpc('duplicados_censo'),
+      db.from('jornada_paradas')
+        .select('id,jornada_id,equipo,orden,nombre,nota,censo_id,intentos,ultimo_intento,revisada')
+        .not('nota','is',null).order('ultimo_intento',{ascending:false}).limit(200),
+    ]);
+    REVISAR.dups  = d.data || [];
+    REVISAR.notas = (n.data || []).filter(x=>!x.revisada);
+  }catch(e){ /* si falla, el tablero simplemente no muestra el bloque */ }
+}
+
 let JORNADAS = [];
 async function cargarJornadas(){
   if(DEMO) return;
@@ -1578,13 +1719,14 @@ function vJornadas(){
           </div>
           ${!abierto?'':`
           <div class="rutamapa" id="jmap-${n}"></div>
-          <p class="muted" style="margin:8px 3px 10px;font-size:12.5px">Toca la casilla al entregar cada una.</p>
+          <p class="muted" style="margin:8px 3px 10px;font-size:12.5px">
+            Las entregas las marca el equipo desde su enlace. Aquí se ven, no se tocan.</p>
           <div>
             ${ps.map(p=>`<div class="jrow${p.entregada?' hecha':''}">
-              <button type="button" class="tick2 ${p.entregada?'on':''}" data-entregar="${esc(p.id)}"
-                title="${p.entregada?'Entregada — toca para desmarcar':'Marcar como entregada'}"
-                aria-pressed="${p.entregada?'true':'false'}"
-                aria-label="${p.entregada?'Entregada a '+esc(p.nombre||'')+'. Toca para desmarcar':'Marcar como entregada a '+esc(p.nombre||'')}">${p.entregada?'✓':''}</button>
+              <span class="tick2 solo ${p.entregada?'on':''}${p.fallida?' cx':''}"
+                title="${p.entregada?'Entregada':p.fallida?'No se pudo entregar':'Pendiente'}"
+                aria-label="${p.entregada?'Entregada':p.fallida?'No se pudo entregar':'Pendiente'}"
+                >${p.entregada?'✓':p.fallida?'×':''}</span>
               <div class="jq">
                 <div class="jnom"><span class="jn">${p.orden}</span>
                   <span class="jnt">${esc(p.nombre||'Vivienda')}${p.personas?` · ${p.personas}p`:''}</span></div>
@@ -3683,7 +3825,7 @@ document.addEventListener('click', e=>{
     vJornadas(); return; }
   if(e.target.closest('#j-imprimir')){ window.print(); return; }
   if(e.target.closest('#j-borrar')){ jBorrar(); return; }
-  const en = e.target.closest('[data-entregar]');
+  const en = null && e.target.closest('[data-entregar]');
   if(en){ jEntregar(en.dataset.entregar); return; }
   const ce = e.target.closest('[data-compartir-eq]');
   if(ce){ jCompartirEquipo(+ce.dataset.compartirEq, ce); return; }
@@ -3824,6 +3966,7 @@ async function cargar(){
   CONTACTOS = {}; (cont.data||[]).forEach(x=>{ if(x.folio && !CONTACTOS[x.folio]) CONTACTOS[x.folio]={nombre:x.nombre,tel:x.tel_e164,whatsapp:x.whatsapp}; });
   CENSO = (cen.data||[]).map(deCen);
   await cargarJornadas();
+  await cargarRevisar();
   render();
 }
 
