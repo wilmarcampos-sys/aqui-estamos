@@ -11,7 +11,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
-<link rel="stylesheet" href="css/app.css?v=3.6.0">
+<link rel="stylesheet" href="css/app.css?v=3.6.1">
 <style>
   /* El panel es mobile-first: una columna, pestañas fijas abajo. En pantalla
      grande se centra en una franja de ancho de celular para no deformarse. */
@@ -835,9 +835,9 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="js/config.js?v=3.6.0"></script>
-<script src="js/version.js?v=3.6.0"></script>
-<script src="js/data.js?v=3.6.0"></script>
+<script src="js/config.js?v=3.6.1"></script>
+<script src="js/version.js?v=3.6.1"></script>
+<script src="js/data.js?v=3.6.1"></script>
 <script>
 /* ============================================================
    PANEL DE ADMINISTRACIÓN — Aquí Estamos
@@ -2046,11 +2046,35 @@ function jBorrar(){
   };
 }
 
+/* Cerrar la jornada es decir "no vamos a volver a intentar", y por eso tiene
+   que nombrar lo que se queda sin entregar: si no, esas casas desaparecen en
+   silencio y nadie sabe que quedaron debiendo. Cierra tambien las salidas
+   abiertas, o la del ultimo dia nunca queda registrada. */
 async function jCerrar(){
   const j = JORNADAS.find(x=>String(x.id)===String(JVER)); if(!j) return;
+  const ps = j.paradas || [];
+  const pend = ps.filter(p=>!p.entregada && !p.fallida);
+  const hechas = ps.filter(p=>p.entregada).length;
+
+  if(!confirm(`CERRAR LA JORNADA\n\n`
+    + `${hechas} entregadas de ${ps.filter(p=>!p.fallida).length}.\n`
+    + (pend.length
+        ? `Quedan ${pend.length} sin entregar y se van a dar por no logradas.\n`
+          + `Esas familias siguen en el censo y pueden entrar a la próxima jornada.\n\n`
+        : 'No queda ninguna pendiente.\n\n')
+    + '· Los enlaces de los equipos dejan de mostrarse como jornada en curso.\n'
+    + '· Si todavía piensan volver a alguna casa, mejor cierra solo la salida.')) return;
+
+  if(!DEMO){
+    await db.rpc('cerrar_salidas_panel',
+      {p_jornada: j.id, p_equipo: null, p_quien: YO.email || 'el panel'});
+    const {error} = await db.from('jornadas').update({estado:'cerrada'}).eq('id', j.id);
+    if(error) return toast('No se pudo cerrar la jornada');
+    await cargarSalidas();
+  }
   j.estado='cerrada'; vJornadas();
-  if(!DEMO) await db.from('jornadas').update({estado:'cerrada'}).eq('id', j.id);
-  toast('Jornada cerrada.');
+  toast(pend.length ? `Jornada cerrada · ${pend.length} quedaron sin entregar`
+                    : 'Jornada cerrada · todo entregado');
 }
 
 
