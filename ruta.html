@@ -469,7 +469,7 @@ body{background:var(--pp);color:var(--tin);font:15px/1.5 Inter,system-ui,sans-se
 </div>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="js/config.js?v=3.6.2"></script>
+<script src="js/config.js?v=3.7.0"></script>
 <script>
 const esc = s => String(s??'').replace(/[<>&"]/g, m => ({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[m]));
 const NEC = {alimentos:'Mercado', aseo:'Aseo', arriendo:'Arriendo', agua:'Agua',
@@ -785,8 +785,11 @@ function pintar(){
     </article>`;
   }).join('');
 
+  const fin = !!f0.cerrada;
+  document.body.classList.toggle('fin', fin);
+  document.getElementById('cerrada').hidden = !fin;
   mapa(conPunto);
-  pintarSalida();
+  if(!fin) pintarSalida(); else document.getElementById('salida').hidden = true;
 }
 
 let M = null, capa = null;
@@ -1395,14 +1398,23 @@ async function pintarSalida(){
     const db = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
     const {data} = await db.rpc('salida_actual', {t: t2(), p_equipo: EQ});
     const s = data && data[0];
+    // Se cierra una sola vez: si ya se hizo, el recuadro queda de recuento,
+    // sin boton. Volver a abrirlo haria que el tiempo no signifique nada.
+    if(s && s.ya_cerrada){
+      caja.hidden = false; caja.classList.add('cerrada');
+      document.getElementById('sal-tit').textContent = 'Salida cerrada';
+      document.getElementById('sal-sub').textContent =
+        `${s.entregadas} entregada${s.entregadas===1?'':'s'}` +
+        (s.pendientes ? ` · quedan ${s.pendientes} para otro día` : ' · no quedó ninguna');
+      return;
+    }
     if(!s || !s.abierta){ caja.hidden = true; return; }
     caja.hidden = false;
     caja.classList.remove('cerrada');
     const ini = s.inicio ? new Date(s.inicio) : null;
     const hh = ini ? Math.floor((Date.now()-ini)/3600000) : 0;
     const mm = ini ? Math.round(((Date.now()-ini)%3600000)/60000) : 0;
-    document.getElementById('sal-tit').textContent =
-      s.numero === 1 ? 'Salida de hoy' : `Salida ${s.numero}`;
+    document.getElementById('sal-tit').textContent = 'Salida de hoy';
     document.getElementById('sal-sub').textContent =
       `${s.entregadas} entregada${s.entregadas===1?'':'s'}` +
       (s.cerradas ? ` · ${s.cerradas} cerrada${s.cerradas===1?'':'s'}` : '') +
@@ -1415,8 +1427,10 @@ document.addEventListener('click', async e=>{
   const bt = e.target.closest('#sal-cerrar');
   if(!bt) return;
   if(!confirm('TERMINAMOS POR HOY\n\n'
-    + '· La jornada NO se cierra: mañana abres este mismo enlace y sigues.\n'
-    + '· Queda registrado a qué hora salieron y cuánto entregaron hoy.\n'
+    + '· Se hace UNA sola vez: queda registrado a qué hora salieron y\n'
+    + '  cuánto entregaron. Después ya no se puede volver a cerrar.\n'
+    + '· La jornada NO se cierra: mañana abres este mismo enlace y sigues\n'
+    + '  entregando lo que falta.\n'
     + '· La coordinación va a ver que tu equipo ya paró.')) return;
   bt.disabled = true;
   try{
@@ -1443,7 +1457,7 @@ try{ if(localStorage.getItem('aviso_ruta')) document.getElementById('aviso').hid
    muestra el dinosaurio. */
 if('serviceWorker' in navigator){
   addEventListener('load', ()=> navigator.serviceWorker
-    .register('sw-ruta.js?v=3.6.2').catch(()=>{}));
+    .register('sw-ruta.js?v=3.7.0').catch(()=>{}));
 }
 
 /* Cuántos están mirando esta misma ruta ahora. En la calle sirve para saber

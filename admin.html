@@ -11,7 +11,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
-<link rel="stylesheet" href="css/app.css?v=3.6.2">
+<link rel="stylesheet" href="css/app.css?v=3.7.0">
 <style>
   /* El panel es mobile-first: una columna, pestañas fijas abajo. En pantalla
      grande se centra en una franja de ancho de celular para no deformarse. */
@@ -835,9 +835,9 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="js/config.js?v=3.6.2"></script>
-<script src="js/version.js?v=3.6.2"></script>
-<script src="js/data.js?v=3.6.2"></script>
+<script src="js/config.js?v=3.7.0"></script>
+<script src="js/version.js?v=3.7.0"></script>
+<script src="js/data.js?v=3.7.0"></script>
 <script>
 /* ============================================================
    PANEL DE ADMINISTRACIÓN — Aquí Estamos
@@ -1730,8 +1730,8 @@ function vJornadas(){
           p.entregada_el?Date.parse(p.entregada_el):0,
           p.ultimo_intento?Date.parse(p.ultimo_intento):0,
           p.cerrada_el?Date.parse(p.cerrada_el):0), 0);
-        const ultCierre = sals.length ? Math.max(...sals.map(x=>Date.parse(x.fin))) : 0;
-        const enCalle = ultAct > ultCierre;
+        // se cierra una sola vez: o ya cerro, o sigue en la calle
+        const enCalle = !sals.length && ultAct > 0;
         return `<div class="card equipo" style="padding:14px;margin-top:12px">
           <div class="row" style="align-items:flex-start">
             <button type="button" class="eqtog grow" data-equipo="${n}" aria-expanded="${abierto}">
@@ -1755,12 +1755,12 @@ function vJornadas(){
             <span class="sal-est ${enCalle?'act':'par'}">${enCalle?'En la calle':'Ya paró'}</span>
             ${sals.map(x=>{
               const mins = x.inicio ? Math.round((Date.parse(x.fin)-Date.parse(x.inicio))/60000) : null;
-              return `<span class="sal-pill" title="${x.cuenta_tiempo
-                ?'Cuenta para el promedio de tiempo'
-                :'No cuenta para tiempos: es una salida de repaso'}">Salida ${x.numero}
-                · ${x.entregadas} entregada${x.entregadas===1?'':'s'}${
-                mins!==null?` · ${mins>=60?Math.floor(mins/60)+'h '+(mins%60)+'m':mins+'m'}`:''}${
-                x.cuenta_tiempo?'':' ·'}</span>`;
+              return `<span class="sal-pill" title="Desde ${new Date(x.inicio)
+                .toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit'})} hasta ${
+                new Date(x.fin).toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit'})}"
+                >${x.entregadas} entregada${x.entregadas===1?'':'s'}${
+                mins!==null?` en ${mins>=60?Math.floor(mins/60)+'h '+(mins%60)+'m':mins+'m'}`:''}${
+                x.pendientes?` · ${x.pendientes} sin entregar`:''}</span>`;
             }).join('')}
             ${enCalle && ultAct ? `<span class="sal-pill viva">Última marca ${hace(ultAct)}</span>` : ''}
             ${enCalle ? `<button type="button" class="sal-cerr" data-cerrarsal="${n}"
@@ -1831,8 +1831,9 @@ function vJornadas(){
                  title="Todos los equipos ya cerraron su salida de hoy">
                  Terminamos por hoy · ya cerrada</button>`;
         })()}
-        ${j.estado!=='cerrada'?`<button class="btn" id="j-cerrar" style="flex:1 1 200px">Cerrar la jornada</button>`:
-          '<span class="sbadge bok" style="align-self:center">Jornada cerrada</span>'}
+        ${j.estado!=='cerrada'
+          ? `<button class="btn" id="j-cerrar" style="flex:1 1 200px">Cerrar la jornada</button>`
+          : `<button class="btn flat" id="j-reabrir" style="flex:1 1 200px">Reabrir la jornada</button>`}
       </div>
       <button type="button" class="cerrar-txt" id="j-borrar"
         style="display:block;margin:16px auto 0;background:none;border:0;color:var(--dim);font-family:inherit;
@@ -2060,6 +2061,22 @@ function jBorrar(){
    que nombrar lo que se queda sin entregar: si no, esas casas desaparecen en
    silencio y nadie sabe que quedaron debiendo. Cierra tambien las salidas
    abiertas, o la del ultimo dia nunca queda registrada. */
+/* Cerrar deja los enlaces en solo lectura, asi que tiene que haber vuelta
+   atras: un cierre por equivocacion sin forma de deshacerlo deja a cinco
+   equipos sin poder marcar nada. */
+async function jReabrir(){
+  const j = JORNADAS.find(x=>String(x.id)===String(JVER)); if(!j) return;
+  if(!confirm('REABRIR LA JORNADA\n\n'
+    + 'Los equipos vuelven a poder marcar desde sus enlaces.\n'
+    + 'La siguiente marca abre una salida nueva.')) return;
+  if(!DEMO){
+    const {error} = await db.from('jornadas').update({estado:'en_curso'}).eq('id', j.id);
+    if(error) return toast('No se pudo reabrir');
+  }
+  j.estado='en_curso'; vDespachos();
+  toast('Jornada reabierta');
+}
+
 async function jCerrar(){
   const j = JORNADAS.find(x=>String(x.id)===String(JVER)); if(!j) return;
   const ps = j.paradas || [];
@@ -2072,7 +2089,8 @@ async function jCerrar(){
         ? `Quedan ${pend.length} sin entregar y se van a dar por no logradas.\n`
           + `Esas familias siguen en el censo y pueden entrar a la próxima jornada.\n\n`
         : 'No queda ninguna pendiente.\n\n')
-    + '· Los enlaces de los equipos dejan de mostrarse como jornada en curso.\n'
+    + '· Los enlaces quedan en solo lectura: los equipos ya no podrán marcar nada.\n'
+    + '· Se puede reabrir desde aquí si hiciera falta.\n'
     + '· Si todavía piensan volver a alguna casa, mejor cierra solo la salida.')) return;
 
   if(!DEMO){
@@ -3933,6 +3951,7 @@ document.addEventListener('click', e=>{
   if(e.target.closest('#j-nueva')){ DP.paso=1; DP.rutas=null; vDespachos(); return; }
   if(e.target.closest('#j-volver')){ JVER=null; vJornadas(); return; }
   if(e.target.closest('#j-cerrar')){ jCerrar(); return; }
+  if(e.target.closest('#j-reabrir')){ jReabrir(); return; }
   const et = e.target.closest('[data-equipo]');
   if(et){ const n=+et.dataset.equipo;
     JEQ.has(n) ? JEQ.delete(n) : JEQ.add(n);
