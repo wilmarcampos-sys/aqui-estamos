@@ -11,7 +11,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
-<link rel="stylesheet" href="css/app.css?v=3.6.1">
+<link rel="stylesheet" href="css/app.css?v=3.6.2">
 <style>
   /* El panel es mobile-first: una columna, pestañas fijas abajo. En pantalla
      grande se centra en una franja de ancho de celular para no deformarse. */
@@ -835,9 +835,9 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="js/config.js?v=3.6.1"></script>
-<script src="js/version.js?v=3.6.1"></script>
-<script src="js/data.js?v=3.6.1"></script>
+<script src="js/config.js?v=3.6.2"></script>
+<script src="js/version.js?v=3.6.2"></script>
+<script src="js/data.js?v=3.6.2"></script>
 <script>
 /* ============================================================
    PANEL DE ADMINISTRACIÓN — Aquí Estamos
@@ -1810,17 +1810,27 @@ function vJornadas(){
       }).join('')}
       <div class="btnrow" style="margin-top:14px">
         <button class="btn flat" id="j-imprimir" style="flex:1 1 200px">Imprimir hojas de ruta</button>
-        ${eq.some(n=>{
-          const ps2 = j.paradas.filter(p=>p.equipo===n);
-          const ua = ps2.reduce((m,p)=>Math.max(m,
-            p.entregada_el?Date.parse(p.entregada_el):0,
-            p.ultimo_intento?Date.parse(p.ultimo_intento):0,
-            p.cerrada_el?Date.parse(p.cerrada_el):0), 0);
-          const sl = SALIDAS.filter(x=>String(x.jornada_id)===String(j.id) && x.equipo===n);
-          const uc = sl.length ? Math.max(...sl.map(x=>Date.parse(x.fin))) : 0;
-          return ua > uc;
-        }) ? `<button class="btn flat" id="j-cerrar-salidas" style="flex:1 1 220px">
-          Cerrar la salida de todos</button>` : ''}
+        ${(() => {
+          // solo tiene sentido si alguien sigue en la calle; si ya todos
+          // cerraron, lo unico que queda por hacer es cerrar la jornada
+          const enCalleAlguno = eq.some(n=>{
+            const ps2 = j.paradas.filter(p=>p.equipo===n);
+            const ua = ps2.reduce((m,p)=>Math.max(m,
+              p.entregada_el?Date.parse(p.entregada_el):0,
+              p.ultimo_intento?Date.parse(p.ultimo_intento):0,
+              p.cerrada_el?Date.parse(p.cerrada_el):0), 0);
+            const sl = SALIDAS.filter(x=>String(x.jornada_id)===String(j.id) && x.equipo===n);
+            const uc = sl.length ? Math.max(...sl.map(x=>Date.parse(x.fin))) : 0;
+            return ua > uc;
+          });
+          if(j.estado === 'cerrada') return '';
+          return enCalleAlguno
+            ? `<button class="btn flat" id="j-cerrar-salidas" style="flex:1 1 220px">
+                 Terminamos por hoy · todos los equipos</button>`
+            : `<button class="btn flat" style="flex:1 1 220px" disabled
+                 title="Todos los equipos ya cerraron su salida de hoy">
+                 Terminamos por hoy · ya cerrada</button>`;
+        })()}
         ${j.estado!=='cerrada'?`<button class="btn" id="j-cerrar" style="flex:1 1 200px">Cerrar la jornada</button>`:
           '<span class="sbadge bok" style="align-self:center">Jornada cerrada</span>'}
       </div>
