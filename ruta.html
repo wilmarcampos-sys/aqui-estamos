@@ -114,10 +114,16 @@ body{background:var(--pp);color:var(--tin);font:15px/1.5 Inter,system-ui,sans-se
 
 .par{background:var(--card);border:1px solid var(--fil);border-radius:14px;
   padding:15px;margin-bottom:10px}
-.par.hecha{opacity:.5}
-/* La parada intentada queda en transición: se ve de lejos, sin abrirla. */
-.par.tran{border-color:rgba(232,163,61,.45);
-  box-shadow:inset 3px 0 0 #E8A33D}
+/* Una franja al costado por estado. Se lee bajando la lista, sin abrir
+   nada y sin tener que interpretar un color de fondo: verde entregada,
+   ámbar a medias, rojo cerrada.
+   El atenuado va en el contenido y no en la tarjeta, para que la franja no
+   se apague junto con el resto. */
+.par.tran{border-color:rgba(232,163,61,.45);box-shadow:inset 3px 0 0 #E8A33D}
+.par.hecha{border-color:rgba(63,154,104,.42);box-shadow:inset 3px 0 0 var(--ok)}
+.par.cerr{border-color:rgba(232,69,60,.42);box-shadow:inset 3px 0 0 #E8453C}
+.par.hecha > *:not(.acc),
+.par.cerr  > *:not(.acc){opacity:.62}
 .par .cab{display:flex;align-items:flex-start;gap:11px}
 /* El número dejó de ser botón: parecía tocable sin serlo del todo, y la
    acción real se escondía en un ícono al lado. Ahora solo dice qué parada es. */
@@ -137,7 +143,7 @@ body{background:var(--pp);color:var(--tin);font:15px/1.5 Inter,system-ui,sans-se
 .par .n .mk.ok{background:#fff;color:var(--ok)}
 .par .n .mk.no{background:#fff;color:#E8453C}
 .par .n .mk.es{background:#E8A33D;color:#0D1520}
-.par.hecha{opacity:.55}
+
 .par .nm{flex:1;min-width:0;font-size:16px;font-weight:850;letter-spacing:-.3px;line-height:1.25}
 .par .nm small{display:block;font-size:12.5px;font-weight:600;color:var(--dim);margin-top:2px}
 .wa{flex:0 0 auto;width:42px;height:42px;border-radius:11px;background:#25D366;
@@ -257,7 +263,7 @@ body{background:var(--pp);color:var(--tin);font:15px/1.5 Inter,system-ui,sans-se
 .pb-op small{display:block;font-size:12px;color:var(--dim);margin-top:2px;line-height:1.4}
 .pb-vacio{font-size:12.5px;color:var(--dim);padding:10px 2px;line-height:1.5}
 /* Reemplazada: ni pendiente ni entregada. Cerrada, y se ve cerrada. */
-.par.cerr{opacity:.6}
+
 .cerrada{display:flex;align-items:flex-start;gap:8px;margin:10px 0 0;padding:9px 11px;
   border-radius:10px;background:var(--chip);border:1px solid var(--fil);
   color:var(--dim);font-size:12.5px;line-height:1.45;font-weight:650}
@@ -437,7 +443,7 @@ body{background:var(--pp);color:var(--tin);font:15px/1.5 Inter,system-ui,sans-se
 </div>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="js/config.js?v=3.2.1"></script>
+<script src="js/config.js?v=3.3.0"></script>
 <script>
 const esc = s => String(s??'').replace(/[<>&"]/g, m => ({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[m]));
 const NEC = {alimentos:'Mercado', aseo:'Aseo', arriendo:'Arriendo', agua:'Agua',
@@ -1355,7 +1361,7 @@ try{ if(localStorage.getItem('aviso_ruta')) document.getElementById('aviso').hid
    muestra el dinosaurio. */
 if('serviceWorker' in navigator){
   addEventListener('load', ()=> navigator.serviceWorker
-    .register('sw-ruta.js?v=3.2.1').catch(()=>{}));
+    .register('sw-ruta.js?v=3.3.0').catch(()=>{}));
 }
 
 /* Cuántos están mirando esta misma ruta ahora. En la calle sirve para saber
