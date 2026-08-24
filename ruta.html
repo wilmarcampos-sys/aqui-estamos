@@ -116,12 +116,13 @@ body{background:var(--pp);color:var(--tin);font:15px/1.5 Inter,system-ui,sans-se
   padding:15px;margin-bottom:10px}
 .par.hecha{opacity:.5}
 .par .cab{display:flex;align-items:flex-start;gap:11px}
-.par .n{flex:0 0 auto;width:40px;height:40px;border-radius:11px;background:var(--sup);
+/* El número dejó de ser botón: parecía tocable sin serlo del todo, y la
+   acción real se escondía en un ícono al lado. Ahora solo dice qué parada es. */
+.par .n{flex:0 0 auto;width:38px;height:38px;border-radius:11px;background:var(--sup);
   color:var(--dim);font-size:14px;font-weight:900;display:grid;place-items:center;
-  border:1.5px solid var(--fil);font-family:inherit;cursor:pointer;
-  transition:background .18s,transform .15s}
-.par .n.tick:active{transform:scale(.92)}
+  border:1.5px solid var(--fil)}
 .par .n.on{background:var(--ok);border-color:var(--ok);color:#fff;font-size:19px}
+.par .n.cx{background:var(--sup);border-color:var(--fil);color:var(--dim);font-size:18px}
 .par.hecha{opacity:.55}
 .par .nm{flex:1;min-width:0;font-size:16px;font-weight:850;letter-spacing:-.3px;line-height:1.25}
 .par .nm small{display:block;font-size:12.5px;font-weight:600;color:var(--dim);margin-top:2px}
@@ -152,14 +153,25 @@ body{background:var(--pp);color:var(--tin);font:15px/1.5 Inter,system-ui,sans-se
 /* Plan B: si no hay nadie en la casa, devolverse con el mercado es la peor
    salida. Se ofrecen casas del censo que estén cerca y que no sean parada de
    ningún otro equipo, para que dos no lleguen a la misma puerta. */
-/* Va pegado a la casilla: son las dos respuestas posibles al llegar a una
-   puerta —entregué, o no había nadie—. */
-.nohay{flex:0 0 auto;width:38px;height:38px;border-radius:11px;background:var(--card);
-  border:1px solid var(--fil);color:var(--dim);display:grid;place-items:center;
-  cursor:pointer;font:inherit;transition:border-color .2s,color .2s}
-.nohay:hover{border-color:var(--pri,#E8A33D);color:#E8A33D}
-.nohay:active{transform:scale(.94)}
-.nohay svg{width:17px;height:17px}
+/* Las dos respuestas posibles al llegar a una puerta, del ancho de la
+   tarjeta y con la palabra escrita. Tres de cinco equipos nunca tocaron el
+   ícono que había antes: no se leía como algo que se pudiera oprimir. */
+.acc{margin-top:13px;padding-top:13px;border-top:1px solid var(--fil);display:flex;gap:8px}
+.acc.dos > *{flex:1 1 0;min-width:0}
+.ab{display:flex;align-items:center;justify-content:center;gap:8px;min-height:52px;
+  padding:0 12px;border-radius:12px;font:inherit;font-size:14.5px;font-weight:850;
+  letter-spacing:-.2px;cursor:pointer;border:1.5px solid transparent;text-align:center}
+.ab svg{width:19px;height:19px;flex:0 0 auto}
+.ab.si{background:var(--ok);color:#04220F;border-color:var(--ok)}
+.ab.si:active{transform:scale(.985)}
+.ab.no{background:var(--card);color:#E8A33D;border-color:rgba(232,163,61,.55)}
+.ab.no:active{transform:scale(.985)}
+.ab.hecho{width:100%;background:none;border-color:var(--fil);color:var(--dim);
+  font-size:13px;font-weight:700}
+.ab.hecho:hover{border-color:var(--ok);color:var(--ok)}
+.ab.cerr{width:100%;background:none;border-color:var(--fil);color:var(--dim);
+  font-size:13px;font-weight:700;cursor:default}
+@media (max-width:380px){ .acc.dos{flex-direction:column} .ab{min-height:50px} }
 
 /* Motivos frecuentes en vez del cuadro del navegador: en la calle, con una
    mano ocupada, escoger es mucho más rápido que escribir. */
@@ -295,7 +307,7 @@ body{background:var(--pp);color:var(--tin);font:15px/1.5 Inter,system-ui,sans-se
     border-radius:0;background:none!important;padding:9pt 0;color:#000!important}
   .parada *{color:#000!important}
   .num{border:1.5pt solid #000;background:none!important;color:#000!important}
-  .tick{border:1.5pt solid #000!important;width:16pt;height:16pt;background:none!important}
+  .n-viejo{border:1.5pt solid #000!important;width:16pt;height:16pt;background:none!important}
   .nec{border:1pt solid #666;background:none!important;color:#000!important}
   .marca-list{background:none!important;border:1pt solid #999}
   a{text-decoration:none}
@@ -403,7 +415,7 @@ body{background:var(--pp);color:var(--tin);font:15px/1.5 Inter,system-ui,sans-se
 </div>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="js/config.js?v=2.9.1"></script>
+<script src="js/config.js?v=3.0.0"></script>
 <script>
 const esc = s => String(s??'').replace(/[<>&"]/g, m => ({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[m]));
 const NEC = {alimentos:'Mercado', aseo:'Aseo', arriendo:'Arriendo', agua:'Agua',
@@ -649,15 +661,8 @@ function pintar(){
       `<span class="nec ${k===f0.tipo?'foco':''}">${esc(NEC[k]||k)}</span>`).join('');
     return `<article class="par${p.entregada?' hecha':''}${p.fallida?' cerr':''}">
       <div class="cab">
-        <button type="button" class="n tick${p.entregada?' on':''}" data-marcar="${esc(p.id)}"
-          aria-pressed="${p.entregada?'true':'false'}"
-          title="${p.entregada?'Entregada — toca para desmarcar':'Marcar como entregada'}"
-        >${p.entregada?'✓':p.orden}</button>
-        ${(p.entregada || p.fallida) ? '' : `<button type="button" class="nohay"
-          data-nohay="${esc(p.id)}" title="No estaban / no abrieron"
-          aria-label="Marcar que no estaban en la casa">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21V9l6-4 6 4M9 21v-6h4v6M2.5 2.5l19 19"/></svg>
-        </button>`}
+        <span class="n${p.entregada?' on':''}${p.fallida?' cx':''}"
+        >${p.entregada?'✓':p.fallida?'×':p.orden}</span>
         <div class="nm">${esc(p.nombre||'Vivienda')}
           <small>${p.personas?`${p.personas} persona${p.personas>1?'s':''}`:''}${
             p.barrio?` · ${esc(p.barrio)}`:''}</small></div>
@@ -696,6 +701,21 @@ function pintar(){
           ? `<a class="tx tel" href="tel:${esc(p.tel_e164)}">${esc(telBonito(p.tel_e164))}</a>
              <button type="button" class="cp" data-cp="${esc(telBonito(p.tel_e164))}">Copiar</button>`
           : '<span class="tx sin">Sin teléfono</span>'}</div>
+
+      ${(p.entregada || p.fallida) ? `<div class="acc">
+        <button type="button" class="ab ${p.entregada?'hecho':'cerr'}" ${p.fallida?'disabled':''}
+          data-marcar="${esc(p.id)}">
+          ${p.entregada
+            ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> Entregado · toca para corregir'
+            : 'Parada cerrada'}</button>
+      </div>` : `<div class="acc dos">
+        <button type="button" class="ab si" data-marcar="${esc(p.id)}">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+          Entregado</button>
+        <button type="button" class="ab no" data-nohay="${esc(p.id)}">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21V9l6-4 6 4M9 21v-6h4v6M2.5 2.5l19 19"/></svg>
+          No pude entregar</button>
+      </div>`}
     </article>`;
   }).join('');
 
@@ -1286,7 +1306,7 @@ try{ if(localStorage.getItem('aviso_ruta')) document.getElementById('aviso').hid
    muestra el dinosaurio. */
 if('serviceWorker' in navigator){
   addEventListener('load', ()=> navigator.serviceWorker
-    .register('sw-ruta.js?v=2.9.1').catch(()=>{}));
+    .register('sw-ruta.js?v=3.0.0').catch(()=>{}));
 }
 
 /* Cuántos están mirando esta misma ruta ahora. En la calle sirve para saber
