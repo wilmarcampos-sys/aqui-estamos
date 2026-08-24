@@ -11,7 +11,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
-<link rel="stylesheet" href="css/app.css?v=3.9.0">
+<link rel="stylesheet" href="css/app.css?v=4.0.0">
 <style>
   /* El panel es mobile-first: una columna, pestañas fijas abajo. En pantalla
      grande se centra en una franja de ancho de celular para no deformarse. */
@@ -835,9 +835,9 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="js/config.js?v=3.9.0"></script>
-<script src="js/version.js?v=3.9.0"></script>
-<script src="js/data.js?v=3.9.0"></script>
+<script src="js/config.js?v=4.0.0"></script>
+<script src="js/version.js?v=4.0.0"></script>
+<script src="js/data.js?v=4.0.0"></script>
 <script>
 /* ============================================================
    PANEL DE ADMINISTRACIÓN — Aquí Estamos
@@ -1609,6 +1609,7 @@ async function dpGuardar(){
   const paradas = rutas.flatMap(r=>r.paradas.map((x,j)=>({
     jornada_id:data.id, equipo:r.equipo, orden:j+1,
     censo_id: String(x.c.id).startsWith('rep:') ? null : x.c.id,
+    suplente: !!x.suplente,
     folio:x.c.ficha||null, nombre:x.c.nombre||null, direccion:x.c.dir||null, barrio:x.c.barrio||null,
     tel_e164:x.c.tel||null, personas:x.c.personas||0, lat:x.c.lat, lng:x.c.lng,
     motivo:(x.por||[]).join(' · ')||null })));
@@ -3048,7 +3049,7 @@ function dirHallable(c){
   return true;
 }
 
-let DP = { paso:1, tipo:'alimentos', unidades:60, equipos:3, tope:8,
+let DP = { paso:1, tipo:'alimentos', unidades:60, equipos:3, tope:8, suplentes:30,
            incluirAprox:false, todas:false, conReportes:false, radio:5, reglas:new Set(['urgencia','vulnerable','olvidadas','hallable','contactar']), rutas:null };
 
 /* Candidatas: solo con punto exacto (a un punto aproximado no se puede
@@ -3231,6 +3232,33 @@ function dpArmar(){
     return {equipo:i+1, paradas:ruta, km:largo(ruta)/1000,
             personas:ruta.reduce((s2,x)=>s2+(x.c.personas||0),0)};
   });
+
+  /* Suplentes: casas cercanas a la ruta de cada equipo que van en la hoja
+     desde el principio. Ayer se entregaron 36 de 50 —el 28% de las puertas
+     no resultó— y cada equipo tuvo que parar a pedir alternativas. Con
+     suplentes en mano el equipo sigue caminando.
+     No son compromiso con esas familias: solo se visitan si una titular
+     falla, y por eso no cuentan en el x/10 hasta que se usen. */
+  if(DP.suplentes > 0 && sobran.length){
+    const yaEnRuta = new Set();
+    rutas.forEach(r=>r.paradas.forEach(x=>yaEnRuta.add(String(x.c.id))));
+    rutas.forEach(r=>{
+      const cuantas = Math.max(1, Math.round(r.paradas.length * DP.suplentes / 100));
+      const k = centroide(r.paradas);
+      const cand = sobran
+        .filter(x=>!yaEnRuta.has(String(x.c.id)))
+        .map(x=>({x, d:distM(k.lat, k.lng, x.c.lat, x.c.lng)}))
+        .filter(o=>!DP.radio || o.d <= DP.radio*1000)
+        .sort((a,b)=> a.d - b.d || b.x.p - a.x.p)
+        .slice(0, cuantas);
+      cand.forEach(o=>{
+        yaEnRuta.add(String(o.x.c.id));
+        r.paradas.push({...o.x, suplente:true});
+        const i = sobran.indexOf(o.x); if(i>=0) sobran.splice(i,1);
+      });
+    });
+  }
+
   rutas.sobran = sobran;
   return rutas;
 }
@@ -3377,6 +3405,19 @@ function vDespachos(){
         <p class="muted" style="margin:6px 3px 0;font-size:12.5px">
           Es un máximo, no una cuota: si hay menos destinos que cupos, se
           reparten parejo entre todos los equipos.</p>
+
+        <div class="lbl" style="margin-top:16px">Casas suplentes por equipo</div>
+        <div class="seg" id="dp-sup" style="margin-top:8px">
+          ${[0,20,30,50].map(v=>`<button data-dsup="${v}" class="${DP.suplentes===v?'on':''}">${
+            v===0?'Ninguna':'+'+v+'%'}</button>`).join('')}
+        </div>
+        <p class="muted" style="margin:6px 3px 0;font-size:12.5px">
+          ${DP.suplentes
+            ? `Cada equipo lleva ${Math.max(1,Math.round(DP.tope*DP.suplentes/100))} casa${
+                Math.max(1,Math.round(DP.tope*DP.suplentes/100))===1?'':'s'} de más, cerca de su ruta,
+               por si alguna puerta no abre. No cuentan como entrega comprometida.`
+            : 'Sin suplentes: si una casa falla, el equipo tiene que buscar alternativa en el momento.'}
+          <br>La jornada pasada no resultó el 28% de las puertas.</p>
         <div class="totalbox" style="margin-top:16px">
           <b>${entran}</b>
           <span>reciben en esta jornada<small>Lo que manda es el más pequeño de los tres</small></span>
@@ -4005,6 +4046,8 @@ document.addEventListener('click', e=>{
 // asistente de despachos
 document.addEventListener('click', e=>{
   const t=e.target.closest('#dp-tipo [data-dt]');   if(t){ DP.tipo=t.dataset.dt; vDespachos(); return; }
+  const sp=e.target.closest('#dp-sup [data-dsup]');
+  if(sp){ DP.suplentes=+sp.dataset.dsup; vDespachos(); return; }
   const q=e.target.closest('#dp-tp [data-dt]');
   if(q){ DP.tope=Math.max(1,Math.min(20,DP.tope + +q.dataset.dt)); vDespachos(); return; }
   const ra=e.target.closest('#dp-radio [data-dradio]'); if(ra){ DP.radio=+ra.dataset.dradio; vDespachos(); return; }
@@ -4027,7 +4070,7 @@ document.addEventListener('click', e=>{
     // toma un rato y perderlo por un toque seria molesto.
     if(!confirm('CANCELAR\n\nSe pierde lo que llevas escogido de esta jornada.\n'
       + 'Nada de lo ya guardado se toca.')) return;
-    DP = { paso:1, tipo:'alimentos', unidades:60, equipos:3, tope:8,
+    DP = { paso:1, tipo:'alimentos', unidades:60, equipos:3, tope:8, suplentes:30,
            incluirAprox:false, todas:false, conReportes:false, radio:5,
            reglas:new Set(['urgencia','vulnerable','olvidadas','hallable']),
            rutas:null, seleccion:null };

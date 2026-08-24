@@ -121,6 +121,13 @@ body{background:var(--pp);color:var(--tin);font:15px/1.5 Inter,system-ui,sans-se
    se apague junto con el resto. */
 .par.tran{border-color:rgba(232,163,61,.45);box-shadow:inset 3px 0 0 #E8A33D}
 .par.hecha{border-color:rgba(63,154,104,.42);box-shadow:inset 3px 0 0 var(--ok)}
+/* Las suplentes se ven distintas a propósito: son un plan por si acaso, no
+   una casa que esté esperando al equipo. */
+.par.sup{border-style:dashed}
+.par.sup.hecha{border-style:solid}
+.sup-cab{margin:22px 2px 10px;padding-top:16px;border-top:1px solid var(--fil)}
+.sup-cab b{display:block;font-size:15px;font-weight:850;letter-spacing:-.3px}
+.sup-cab span{display:block;font-size:12.5px;color:var(--dim);margin-top:3px;line-height:1.45}
 .par.cerr{border-color:rgba(232,69,60,.42);box-shadow:inset 3px 0 0 #E8453C}
 .par.hecha > *:not(.acc),
 .par.cerr  > *:not(.acc){opacity:.62}
@@ -469,7 +476,7 @@ body{background:var(--pp);color:var(--tin);font:15px/1.5 Inter,system-ui,sans-se
 </div>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="js/config.js?v=3.9.0"></script>
+<script src="js/config.js?v=4.0.0"></script>
 <script>
 const esc = s => String(s??'').replace(/[<>&"]/g, m => ({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[m]));
 const NEC = {alimentos:'Mercado', aseo:'Aseo', arriendo:'Arriendo', agua:'Agua',
@@ -663,7 +670,8 @@ function pintar(){
   const pista = document.getElementById('pista');
   if(eqs.length > 1){
     const porEq = eqs.map(n=>{
-      const f = FILAS.filter(x=>x.equipo===n && !x.fallida);
+      const f = FILAS.filter(x=>x.equipo===n && !x.fallida &&
+                                (!x.suplente || x.entregada));
       // Cuando un equipo cierra una casa y toma otra, el denominador no se
       // mueve —sale una, entra otra— y la ruta parece intacta. Se cuentan
       // aparte para poder decirlo.
@@ -707,7 +715,7 @@ function pintar(){
     if(chips) chips.hidden = true;
   }
 
-  const conPunto = mias.filter(x=>x.lat && x.lng);
+  const conPunto = titulares.filter(x=>x.lat && x.lng);
   const a = document.getElementById('abrir');
   if(conPunto.length){
     a.hidden = false;
@@ -718,10 +726,10 @@ function pintar(){
   document.getElementById('btn-pdf').hidden  = !mias.length;
   document.getElementById('hint-pdf').hidden = !mias.length;
 
-  document.getElementById('lista').innerHTML = todas.map(p=>{
+  const tarjeta = p => {
     const necs = (p.necesidades||[]).map(k=>
       `<span class="nec ${k===f0.tipo?'foco':''}">${esc(NEC[k]||k)}</span>`).join('');
-    return `<article class="par${p.entregada?' hecha':''}${p.fallida?' cerr':''}${
+    return `<article class="par${p.suplente?' sup':''}${p.entregada?' hecha':''}${p.fallida?' cerr':''}${
       (!p.entregada && !p.fallida && p.intentos>0)?' tran':''}">
       <div class="cab">
         <span class="n${p.entregada?' on':''}${p.fallida?' cx':''}${
@@ -783,7 +791,13 @@ function pintar(){
           No pude entregar</button>
       </div>`}
     </article>`;
-  }).join('');
+  };
+  document.getElementById('lista').innerHTML =
+    titulares.map(tarjeta).join('') +
+    (suplentes.length ? `<div class="sup-cab">
+       <b>Suplentes</b>
+       <span>Solo si una casa no abre. No están comprometidas con nadie.</span>
+     </div>` + suplentes.map(tarjeta).join('') : '');
 
   const fin = !!f0.cerrada;
   document.body.classList.toggle('fin', fin);
@@ -1197,6 +1211,8 @@ async function hacerPDF(btn){
 
   const f0 = FILAS[0] || {};
   const mias = FILAS.filter(x=>x.equipo===EQ);
+  const titulares = mias.filter(x=>!x.suplente);
+  const suplentes = mias.filter(x=>x.suplente);
   const {jsPDF} = window.jspdf;
   const doc = new jsPDF({unit:'mm', format:'a4'});
   const M = 14, A = 210, ancho = A - M*2;
@@ -1212,7 +1228,7 @@ async function hacerPDF(btn){
   const eq = f0.abierta ? EQ : f0.mi_equipo;
   const personas = mias.reduce((a,x)=>a+(x.personas||0), 0);
   let km = 0;
-  const conPunto = mias.filter(x=>x.lat && x.lng);
+  const conPunto = titulares.filter(x=>x.lat && x.lng);
   conPunto.forEach((x,i)=>{ if(i) km += dist(conPunto[i-1].lat, conPunto[i-1].lng, x.lat, x.lng); });
 
   doc.setFillColor(13, 21, 32);
@@ -1339,6 +1355,8 @@ async function hacerPDF(btn){
 function textoCompartir(){
   const f0 = FILAS[0] || {};
   const mias = FILAS.filter(x=>x.equipo===EQ);
+  const titulares = mias.filter(x=>!x.suplente);
+  const suplentes = mias.filter(x=>x.suplente);
   const cual = f0.abierta ? `${f0.jornada||'Jornada'} · todas las rutas`
                           : `Equipo ${f0.mi_equipo} · ${f0.jornada||'jornada'}`;
   return `${cual}\n${mias.length} paradas.\n\n${location.href}\n\n`
@@ -1457,7 +1475,7 @@ try{ if(localStorage.getItem('aviso_ruta')) document.getElementById('aviso').hid
    muestra el dinosaurio. */
 if('serviceWorker' in navigator){
   addEventListener('load', ()=> navigator.serviceWorker
-    .register('sw-ruta.js?v=3.9.0').catch(()=>{}));
+    .register('sw-ruta.js?v=4.0.0').catch(()=>{}));
 }
 
 /* Cuántos están mirando esta misma ruta ahora. En la calle sirve para saber
