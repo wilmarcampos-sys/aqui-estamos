@@ -486,7 +486,7 @@ body{background:var(--pp);color:var(--tin);font:15px/1.5 Inter,system-ui,sans-se
 </div>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="js/config.js?v=4.1.0"></script>
+<script src="js/config.js?v=4.1.1"></script>
 <script>
 const esc = s => String(s??'').replace(/[<>&"]/g, m => ({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[m]));
 const NEC = {alimentos:'Mercado', aseo:'Aseo', arriendo:'Arriendo', agua:'Agua',
@@ -665,11 +665,12 @@ function pintar(){
   // Se ven todas, incluidas las cerradas —el equipo tiene que saber qué pasó
   // con esa casa—, pero solo las vivas cuentan para el avance.
   const todas = FILAS.filter(x=>x.equipo===EQ);
-  const mias  = todas.filter(x=>!x.fallida);
-  // Las suplentes van aparte al final de la lista. Si la jornada se armó
-  // antes de que existieran, la columna no viene y todas son titulares.
-  const titulares = mias.filter(x=>!x.suplente);
-  const suplentes = mias.filter(x=>x.suplente);
+  const mias  = todas.filter(x=>!x.fallida);   // solo para el avance
+  // Las cerradas SÍ se pintan, en su puesto: si la 7 desaparece entre la 6 y
+  // la 8, el equipo cree que se borró y pregunta. Se ven en rojo, con el
+  // motivo y con el botón de reabrir.
+  const titulares = todas.filter(x=>!x.suplente).sort((a,b)=>a.orden-b.orden);
+  const suplentes = todas.filter(x=>x.suplente).sort((a,b)=>a.orden-b.orden);
   if(!todas.length) return;
   const hechas = mias.filter(x=>x.entregada).length;
   document.getElementById('av').hidden = false;
@@ -1520,7 +1521,7 @@ try{ if(localStorage.getItem('aviso_ruta')) document.getElementById('aviso').hid
    muestra el dinosaurio. */
 if('serviceWorker' in navigator){
   addEventListener('load', ()=> navigator.serviceWorker
-    .register('sw-ruta.js?v=4.1.0').catch(()=>{}));
+    .register('sw-ruta.js?v=4.1.1').catch(()=>{}));
 }
 
 /* Cuántos están mirando esta misma ruta ahora. En la calle sirve para saber
