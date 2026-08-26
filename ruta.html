@@ -486,7 +486,7 @@ body{background:var(--pp);color:var(--tin);font:15px/1.5 Inter,system-ui,sans-se
 </div>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="js/config.js?v=4.2.0"></script>
+<script src="js/config.js?v=4.3.0"></script>
 <script>
 const esc = s => String(s??'').replace(/[<>&"]/g, m => ({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[m]));
 const NEC = {alimentos:'Mercado', aseo:'Aseo', arriendo:'Arriendo', agua:'Agua',
@@ -522,9 +522,11 @@ function dirHallable(d, barrio){
   return t.toLowerCase() !== String(barrio||'').trim().toLowerCase();
 }
 
-/* Qué parada cuenta para el avance: todas menos las que se cambiaron por
-   otra casa. Una cerrada sin reemplazo cuenta y se ve como no entregada. */
-const cuenta = p => !p.fallida || !p.reemplazada_por;
+/* Cuentan todas. Si el equipo 1 recibió 10 casas, cerró 4 y tomó 4 nuevas,
+   pasó por 14 puertas y el resumen tiene que decir 14: es lo que permite
+   cuadrar el inventario contra lo que salió de la bodega. Esconder las
+   cerradas hacía ver 9/9 donde fueron 9 de 10. */
+const cuenta = () => true;
 
 let FILAS = [], EQ = null, DESDE_COPIA = false;
 
@@ -673,7 +675,7 @@ function pintar(){
   // esconderla del denominador hace ver 9/9 cuando fueron 9 de 10. La única
   // que no cuenta es la que se cambió por otra con el Plan B: ahí la
   // suplente ya la representa y contar las dos sería contar doble.
-  const mias  = todas.filter(cuenta);   // solo para el avance
+  const mias  = todas.filter(x=>!x.suplente || x.entregada || x.fallida);
   // Las cerradas SÍ se pintan, en su puesto: si la 7 desaparece entre la 6 y
   // la 8, el equipo cree que se borró y pregunta. Se ven en rojo, con el
   // motivo y con el botón de reabrir.
@@ -693,12 +695,10 @@ function pintar(){
   const pista = document.getElementById('pista');
   if(eqs.length > 1){
     const porEq = eqs.map(n=>{
-      const f = FILAS.filter(x=>x.equipo===n && cuenta(x) &&
-                                (!x.suplente || x.entregada));
-      // Los reemplazos se señalan aparte: el denominador no los delata
-      // porque sale una y entra otra.
-      const cerradas = FILAS.filter(x=>x.equipo===n && x.fallida &&
-                                       x.reemplazada_por).length;
+      // Las suplentes solo entran si se usaron: las que quedaron sin tocar
+      // no eran trabajo de nadie.
+      const f = FILAS.filter(x=>x.equipo===n && (!x.suplente || x.entregada || x.fallida));
+      const cerradas = FILAS.filter(x=>x.equipo===n && x.fallida).length;
       return {n, total:f.length, cerradas,
               hechas:f.filter(x=>x.entregada).length};
     });
@@ -724,11 +724,10 @@ function pintar(){
       return `<button type="button" class="tramo${x.n===EQ?' yo':''}${
           pct===100?' full':''}" data-eq="${x.n}" style="flex:${x.total||1}"
           title="Equipo ${x.n}: ${x.hechas} de ${x.total} entregadas${
-            x.cerradas?` · ${x.cerradas} casa${x.cerradas>1?'s':''} cambiada${
-            x.cerradas>1?'s':''} por otra${x.cerradas>1?'s':''} cerca`:''}"
+            x.cerradas?` · ${x.cerradas} sin entregar`:''}"
           aria-label="Equipo ${x.n}, ${x.hechas} de ${x.total}${
             x.cerradas?`, ${x.cerradas} cambiadas`:''}">
-        <span class="tn">E${x.n}${x.cerradas?`<i class="cmb">↻${x.cerradas}</i>`:''}</span>
+        <span class="tn">E${x.n}${x.cerradas?`<i class="cmb">✕${x.cerradas}</i>`:''}</span>
         <span class="tc">${x.hechas}<s>/${x.total}</s></span>
         <span class="tp"><i style="width:${pct}%"></i></span></button>`;
     }).join('');
@@ -1529,7 +1528,7 @@ try{ if(localStorage.getItem('aviso_ruta')) document.getElementById('aviso').hid
    muestra el dinosaurio. */
 if('serviceWorker' in navigator){
   addEventListener('load', ()=> navigator.serviceWorker
-    .register('sw-ruta.js?v=4.2.0').catch(()=>{}));
+    .register('sw-ruta.js?v=4.3.0').catch(()=>{}));
 }
 
 /* Cuántos están mirando esta misma ruta ahora. En la calle sirve para saber
